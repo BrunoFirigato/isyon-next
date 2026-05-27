@@ -85,6 +85,14 @@ export default function LoginPage() {
       return
     }
 
+    // 3. Registrar último acesso (fire-and-forget)
+    supabase
+      .from('usuarios')
+      .update({ ultimo_acesso: new Date().toISOString() })
+      .eq('email', email.trim().toLowerCase())
+      .eq('tenant_id', tenantId)
+      .then(() => {})
+
     router.push('/dashboard')
     router.refresh()
   }

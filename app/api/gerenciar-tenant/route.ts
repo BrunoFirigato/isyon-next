@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
   /* ── Criar tenant + usuário admin ── */
   if (action === 'criar_tenant') {
-    const { nome, plano, email, senha, nomeAdmin } = body
+    const { nome, plano, email, senha, nomeAdmin, expiracao_contrato } = body
 
     if (!nome?.trim() || !email?.trim() || !senha?.trim()) {
       return NextResponse.json({ error: 'nome, email e senha são obrigatórios' }, { status: 400 })
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     // 1. Criar tenant
     const { data: tenant, error: errTenant } = await admin
       .from('tenants')
-      .insert({ nome: nome.trim(), plano: plano ?? 'Básico', status: 'ativo' })
+      .insert({ nome: nome.trim(), plano: plano ?? 'Básico', status: 'ativo', expiracao_contrato: expiracao_contrato || null })
       .select('id, nome, plano, status, criado_em')
       .single()
 
@@ -97,13 +97,13 @@ export async function POST(req: NextRequest) {
 
   /* ── Atualizar dados do tenant ── */
   if (action === 'atualizar_tenant') {
-    const { id, nome, plano } = body
+    const { id, nome, plano, expiracao_contrato } = body
 
     if (!id) return NextResponse.json({ error: 'id obrigatório' }, { status: 400 })
 
     const { error } = await admin
       .from('tenants')
-      .update({ nome: nome?.trim(), plano })
+      .update({ nome: nome?.trim(), plano, expiracao_contrato: expiracao_contrato || null })
       .eq('id', id)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

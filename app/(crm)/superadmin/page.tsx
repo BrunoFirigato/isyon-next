@@ -13,11 +13,19 @@ export default async function SuperadminPage() {
 
   const admin = createAdminClient()
 
-  const [{ data: tenants }, { data: usuarios }] = await Promise.all([
-    admin.from('tenants').select('id, nome, plano, status, criado_em').order('nome'),
+  const [
+    { data: tenants },
+    { data: usuarios },
+    { data: ultimosAcessos },
+    { data: configs },
+  ] = await Promise.all([
+    admin.from('tenants').select('id, nome, plano, status, criado_em, expiracao_contrato').order('nome'),
     admin.from('usuarios').select('tenant_id'),
+    admin.from('usuarios').select('tenant_id, nome, ultimo_acesso').order('ultimo_acesso', { ascending: false }),
+    admin.from('sistema_config').select('chave, valor, atualizado_em'),
   ])
 
+  /* ── Contagem de usuários por tenant ── */
   const contagem = (usuarios ?? []).reduce<Record<string, number>>((acc, u) => {
     if (u.tenant_id) acc[u.tenant_id] = (acc[u.tenant_id] ?? 0) + 1
     return acc
@@ -25,8 +33,48 @@ export default async function SuperadminPage() {
 
   const tenantsComContagem = (tenants ?? []).map((t) => ({
     ...t,
+    expiracao_contrato: (t as Record<string, unknown>).expiracao_contrato as string | null ?? null,
     total_usuarios: contagem[t.id] ?? 0,
   }))
 
-  return <SuperadminView tenants={tenantsComContagem} />
+  /* ── Último acesso por tenant ── */
+  const acessoMap = (ultimosAcessos ?? []).reduce<Record<string, { nome: string; data: string }>>((acc, u) => {
+    if (!u.ultimo_acesso) return acc
+    if (!acc[u.tenant_id] || u.ultimo_acesso > acc[u.tenant_id].data) {
+      acc[u.tenant_id] = { nome: u.nome, data: u.ultimo_acesso }
+    }
+    return acc
+  }, {})
+
+  const logsAcesso = tenantsComContagem
+    .map((t) => ({
+      tenant_id:    t.id,
+      nome_tenant:  t.nome,
+      status_tenant: t.status,
+      ultimo_acesso: acessoMap[t.id]?.data   ?? null,
+      nome_usuario:  acessoMap[t.id]?.nome   ?? null,
+    }))
+    .sort((a, b) => {
+      if (a.ultimo_acesso && b.ultimo_acesso) return b.ultimo_acesso.localeCompare(a.ultimo_acesso)
+      if (a.ultimo_acesso) return -1
+      if (b.ultimo_acesso) return 1
+      return a.nome_tenant.localeCompare(b.nome_tenant)
+    })
+
+  /* ── Configs — mascara valores secretos ── */
+  const configsSafe = (configs ?? []).map((row) => ({
+    chave: row.chave,
+    valor: row.chave.includes('key') || row.chave.includes('senha')
+      ? row.valor ? '••••••••' + row.valor.slice(-4) : ''
+      : row.valor ?? '',
+    atualizado_em: row.atualizado_em,
+  }))
+
+  return (
+    <SuperadminView
+      tenants={tenantsComContagem}
+      logsAcesso={logsAcesso}
+      configs={configsSafe}
+    />
+  )
 }
