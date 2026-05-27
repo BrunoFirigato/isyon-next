@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getResend, FROM_EMAIL } from '@/lib/email/resend'
+import { createResend } from '@/lib/email/resend'
 import {
   propostaEmailHtml, propostaEmailSubject,
   conviteEmailHtml, conviteEmailSubject,
@@ -21,7 +21,6 @@ async function assertAuthenticated() {
 
   if (!usuario?.tenant_id) return null
 
-  // Busca nome da empresa (tenant)
   const { data: tenant } = await supabase
     .from('tenants')
     .select('nome')
@@ -45,9 +44,9 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const { action } = body
 
-  let resend
+  let resend: Awaited<ReturnType<typeof createResend>>
   try {
-    resend = getResend()
+    resend = await createResend()
   } catch {
     return NextResponse.json(
       { error: 'email_not_configured', message: 'Integração de e-mail não configurada.' },
@@ -57,20 +56,14 @@ export async function POST(req: NextRequest) {
 
   /* ── Enviar proposta por e-mail ── */
   if (action === 'proposta') {
-    const { to, proposta } = body as {
-      to: string
-      proposta: PropostaEmailData
-    }
+    const { to, proposta } = body as { to: string; proposta: PropostaEmailData }
 
     if (!to?.trim()) {
       return NextResponse.json({ error: 'Destinatário obrigatório' }, { status: 400 })
     }
-    if (!proposta?.tituloProposta) {
-      return NextResponse.json({ error: 'Dados da proposta inválidos' }, { status: 400 })
-    }
 
-    const { error } = await resend.emails.send({
-      from:    FROM_EMAIL,
+    const { error } = await resend.resend.emails.send({
+      from:    resend.fromEmail,
       to:      [to.trim()],
       subject: propostaEmailSubject(proposta),
       html:    propostaEmailHtml({ ...proposta, remetenteNome: caller.nomeUsuario }),
@@ -93,7 +86,6 @@ export async function POST(req: NextRequest) {
     }
 
     const urlApp = process.env.NEXT_PUBLIC_APP_URL ?? 'https://isyon-next.vercel.app'
-
     const data: ConviteEmailData = {
       nomeUsuario: nomeUsuario ?? email,
       email:       email.trim(),
@@ -102,8 +94,8 @@ export async function POST(req: NextRequest) {
       urlApp,
     }
 
-    const { error } = await resend.emails.send({
-      from:    FROM_EMAIL,
+    const { error } = await resend.resend.emails.send({
+      from:    resend.fromEmail,
       to:      [email.trim()],
       subject: conviteEmailSubject(caller.nomeEmpresa),
       html:    conviteEmailHtml(data),
@@ -111,8 +103,31 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('[email/convite]', error)
-      // Não falha — e-mail é secundário ao cadastro
       return NextResponse.json({ ok: true, emailError: error.message })
+    }
+
+    return NextResponse.json({ ok: true })
+  }
+
+  /* ── Testar configuração de e-mail ── */
+  if (action === 'testar') {
+    const { destinatario } = body as { destinatario: string }
+
+    if (!destinatario?.trim()) {
+      return NextResponse.json({ error: 'Destinatário obrigatório' }, { status: 400 })
+    }
+
+    const { error } = await resend.resend.emails.send({
+      from:    resend.fromEmail,
+      to:      [destinatario.trim()],
+      subject: 'Teste de e-mail — Isyon CRM',
+      html:    `<p>A integração de e-mail está funcionando corretamente. ✅</p>
+                <p style="color:#6b7280;font-size:13px;">Enviado por: ${resend.fromEmail}</p>`,
+    })
+
+    if (error) {
+      console.error('[email/testar]', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({ ok: true })

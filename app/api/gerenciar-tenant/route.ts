@@ -168,5 +168,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  /* ── Ler configurações do sistema ── */
+  if (action === 'get_config') {
+    const { data } = await admin
+      .from('sistema_config')
+      .select('chave, valor, atualizado_em')
+
+    // Mascara valores de chaves secretas
+    const resultado = (data ?? []).map((row) => ({
+      chave: row.chave,
+      valor: row.chave.includes('key') || row.chave.includes('senha')
+        ? row.valor ? '••••••••' + row.valor.slice(-4) : ''
+        : row.valor ?? '',
+      atualizado_em: row.atualizado_em,
+    }))
+
+    return NextResponse.json({ configs: resultado })
+  }
+
+  /* ── Salvar configuração do sistema ── */
+  if (action === 'set_config') {
+    const { chave, valor } = body
+
+    if (!chave) return NextResponse.json({ error: 'chave obrigatória' }, { status: 400 })
+
+    const { error } = await admin
+      .from('sistema_config')
+      .upsert({ chave, valor: valor ?? null, atualizado_em: new Date().toISOString() })
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
   return NextResponse.json({ error: 'Ação desconhecida' }, { status: 400 })
 }
