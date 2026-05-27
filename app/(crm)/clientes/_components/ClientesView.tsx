@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, Trash2, MapPin } from 'lucide-react'
+import { Plus, Search, X, Pencil, Trash2, MapPin, LayoutGrid } from 'lucide-react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import ClienteFormModal from './ClienteFormModal'
 import {
@@ -183,7 +184,12 @@ export default function ClientesView({ clientes, currentTipo, currentQ }: Props)
                       {brl(c.valor_total) ?? '—'}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Link href={`/clientes/${c.id}`}
+                          title="Ver 360°"
+                          className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors">
+                          <LayoutGrid size={15} />
+                        </Link>
                         <button onClick={() => { setEditingCliente(c); setFormOpen(true) }}
                           className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
                           <Pencil size={15} />
@@ -254,6 +260,10 @@ export default function ClientesView({ clientes, currentTipo, currentQ }: Props)
                   )}
                 </div>
                 <div className="flex gap-1">
+                  <Link href={`/clientes/${c.id}`}
+                    className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600">
+                    <LayoutGrid size={15} />
+                  </Link>
                   <button onClick={() => { setEditingCliente(c); setFormOpen(true) }}
                     className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
                     <Pencil size={15} />
