@@ -19,6 +19,7 @@ import {
   UserCog,
   LogOut,
   X,
+  BookOpen,
 } from 'lucide-react'
 
 type Perfil = 'admin' | 'gestor' | 'vendedor' | 'financeiro'
@@ -51,6 +52,12 @@ const moreItems: MoreItem[] = [
     href: '/vendedores',
     label: 'Vendedores',
     icon: Users2,
+    perfis: ['admin', 'gestor'],
+  },
+  {
+    href: '/cadastros',
+    label: 'Cadastros',
+    icon: BookOpen,
     perfis: ['admin', 'gestor'],
   },
   {
