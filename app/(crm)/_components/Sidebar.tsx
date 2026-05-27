@@ -63,6 +63,12 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { href: '/configuracoes', label: 'Configurações', icon: Settings2 },
       {
+        href: '/vendedores',
+        label: 'Vendedores',
+        icon: Users2,
+        perfis: ['admin', 'gestor'],
+      },
+      {
         href: '/usuarios',
         label: 'Usuários',
         icon: UserCog,
