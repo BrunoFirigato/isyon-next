@@ -7,9 +7,10 @@ import { createClient } from '@/lib/supabase/client'
 import ClienteFormModal from './ClienteFormModal'
 import {
   type Cliente, TIPOS, tipoStyle, tipoLabel,
-  segmentoLabel, brl, formatDate,
+  brl, formatDate,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useSegmentos, segmentoLabel } from '@/app/(crm)/_components/SegmentosContext'
 
 interface Props {
   clientes: Cliente[]
@@ -22,6 +23,7 @@ export default function ClientesView({ clientes, currentTipo, currentQ }: Props)
   const pathname = usePathname()
   const [, startTransition] = useTransition()
   const toast = useToast()
+  const segmentos = useSegmentos()
 
   const [search, setSearch] = useState(currentQ)
   const [formOpen, setFormOpen] = useState(false)
@@ -176,7 +178,7 @@ export default function ClientesView({ clientes, currentTipo, currentQ }: Props)
                         {tipoLabel(c.tipo)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{segmentoLabel(c.segmento)}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{segmentoLabel(c.segmento, segmentos)}</td>
                     <td className="px-4 py-3 text-gray-700 font-medium text-sm">
                       {brl(c.valor_total) ?? '—'}
                     </td>
@@ -244,7 +246,7 @@ export default function ClientesView({ clientes, currentTipo, currentQ }: Props)
                 <div className="flex gap-2">
                   {c.segmento && (
                     <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg font-medium">
-                      {segmentoLabel(c.segmento)}
+                      {segmentoLabel(c.segmento, segmentos)}
                     </span>
                   )}
                   {brl(c.valor_total) && (

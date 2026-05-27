@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { type Vendedor, SEGMENTOS } from './types'
+import { type Vendedor } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 
 interface Props {
   vendedor?: Vendedor
@@ -17,6 +18,7 @@ export default function VendedorFormModal({ vendedor, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
   const tenantId = useTenantId()
+  const segmentos = useSegmentos()
   const isEditing = !!vendedor
 
   const [form, setForm] = useState({
@@ -192,7 +194,7 @@ export default function VendedorFormModal({ vendedor, onClose }: Props) {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Segmentos</label>
             <div className="flex gap-3">
-              {SEGMENTOS.map(({ value, label }) => (
+              {segmentos.map(({ value, label }) => (
                 <label
                   key={value}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition-colors ${

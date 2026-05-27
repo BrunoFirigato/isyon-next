@@ -13,6 +13,7 @@ import {
   statusStyle, statusLabel, brl, formatDate, calcTotal,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useSegmentos, segmentoLabel } from '@/app/(crm)/_components/SegmentosContext'
 
 interface Props {
   pedidos: Pedido[]
@@ -25,6 +26,7 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
   const pathname = usePathname()
   const [, startTransition] = useTransition()
   const toast = useToast()
+  const segmentos = useSegmentos()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingPedido, setEditingPedido] = useState<Pedido | null>(null)
@@ -146,7 +148,7 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       {p.segmento && (
-                        <span className="text-xs text-gray-400 capitalize">{p.segmento === 'maquinas' ? 'Máquinas' : 'Peças'}</span>
+                        <span className="text-xs text-gray-400">{segmentoLabel(p.segmento, segmentos)}</span>
                       )}
                       {p.criado_em && (
                         <span className="text-xs text-gray-400 shrink-0">

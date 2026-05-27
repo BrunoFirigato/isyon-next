@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { type Oportunidade, ETAPAS, SEGMENTOS } from './types'
+import { type Oportunidade, ETAPAS } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 
 interface Props {
   op?: Oportunidade
@@ -18,6 +19,7 @@ export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
   const tenantId = useTenantId()
+  const segmentos = useSegmentos()
   const isEditing = !!op
 
   const [form, setForm] = useState({
@@ -133,7 +135,7 @@ export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               <option value="">Selecione...</option>
-              {SEGMENTOS.map((s) => (
+              {segmentos.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
               ))}
             </select>

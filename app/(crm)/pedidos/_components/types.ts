@@ -34,11 +34,6 @@ export const STATUS_PEDIDO = [
   { value: 'cancelado', label: 'Cancelado' },
 ] as const
 
-export const SEGMENTOS = [
-  { value: 'maquinas', label: 'Máquinas' },
-  { value: 'pecas', label: 'Peças' },
-]
-
 export function statusStyle(status: string) {
   switch (status) {
     case 'aguardando':  return 'bg-yellow-100 text-yellow-700'

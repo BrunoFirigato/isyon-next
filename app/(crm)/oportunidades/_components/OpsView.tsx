@@ -10,9 +10,10 @@ import OpFormModal from './OpFormModal'
 import LostModal from './LostModal'
 import {
   type Oportunidade, ETAPAS, brl, formatDate,
-  etapaCanonica, proximaEtapa, SEGMENTOS,
+  etapaCanonica, proximaEtapa,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useSegmentos, segmentoLabel } from '@/app/(crm)/_components/SegmentosContext'
 
 interface Props {
   ops: Oportunidade[]
@@ -23,6 +24,7 @@ type Tab = 'abertas' | 'ganhas' | 'perdidas'
 export default function OpsView({ ops }: Props) {
   const router = useRouter()
   const toast = useToast()
+  const segmentos = useSegmentos()
 
   const [tab, setTab] = useState<Tab>('abertas')
   const [mobileEtapa, setMobileEtapa] = useState<string>(ETAPAS[0])
@@ -77,7 +79,7 @@ export default function OpsView({ ops }: Props) {
   // ── Kanban card ─────────────────────────────────────────────────────────────
   function OpCard({ op, compact = false }: { op: Oportunidade; compact?: boolean }) {
     const proxima = proximaEtapa(op.etapa)
-    const seg = SEGMENTOS.find((s) => s.value === op.segmento)
+    const seg = segmentos.find((s) => s.value === op.segmento)
 
     return (
       <div className="bg-white border border-gray-200 rounded-xl p-3.5 group hover:border-blue-200 hover:shadow-sm transition-all">

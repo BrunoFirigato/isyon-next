@@ -17,11 +17,6 @@ export interface Oportunidade {
 export const ETAPAS = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação'] as const
 export type Etapa = (typeof ETAPAS)[number]
 
-export const SEGMENTOS = [
-  { value: 'maquinas', label: 'Máquinas' },
-  { value: 'pecas', label: 'Peças' },
-]
-
 export function brl(value: number | null) {
   if (value == null) return '—'
   return new Intl.NumberFormat('pt-BR', {

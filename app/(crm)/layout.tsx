@@ -4,6 +4,7 @@ import Sidebar from './_components/Sidebar'
 import BottomTabBar from './_components/BottomTabBar'
 import { ToastProvider } from './_components/Toast'
 import { TenantProvider } from './_components/TenantContext'
+import { SegmentosProvider, DEFAULT_SEGMENTOS } from './_components/SegmentosContext'
 
 export default async function CrmLayout({
   children,
@@ -17,7 +18,7 @@ export default async function CrmLayout({
 
   if (!user) redirect('/login')
 
-  // Busca perfil e tenant_id do usuário (uma única query)
+  // Busca perfil e tenant_id do usuário
   const { data: usuario } = await supabase
     .from('usuarios')
     .select('perfil, tenant_id')
@@ -29,19 +30,30 @@ export default async function CrmLayout({
 
   if (!tenantId) redirect('/login')
 
+  // Busca segmentos configurados pelo tenant
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('segmentos')
+    .eq('id', tenantId)
+    .maybeSingle()
+
+  const segmentos = (tenant?.segmentos as typeof DEFAULT_SEGMENTOS | null) ?? DEFAULT_SEGMENTOS
+
   return (
     <TenantProvider tenantId={tenantId}>
-      <ToastProvider>
-        <div className="flex h-screen overflow-hidden bg-gray-50">
-          <Sidebar userEmail={user.email ?? ''} perfil={perfil} />
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
-              {children}
-            </main>
+      <SegmentosProvider segmentos={segmentos}>
+        <ToastProvider>
+          <div className="flex h-screen overflow-hidden bg-gray-50">
+            <Sidebar userEmail={user.email ?? ''} perfil={perfil} />
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+              <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
+                {children}
+              </main>
+            </div>
+            <BottomTabBar perfil={perfil} />
           </div>
-          <BottomTabBar perfil={perfil} />
-        </div>
-      </ToastProvider>
+        </ToastProvider>
+      </SegmentosProvider>
     </TenantProvider>
   )
 }

@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, Building2 } from 'lucide-react'
+import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { type Segmento } from '@/app/(crm)/_components/SegmentosContext'
 
 interface Tenant {
   id: string
@@ -25,6 +26,7 @@ interface Props {
   tenant: Tenant
   configs: ConfigUsuario[]
   usuarioId: string
+  segmentosIniciais: Segmento[]
 }
 
 const CONFIG_LABELS: Record<string, string> = {
@@ -43,14 +45,25 @@ const CONFIG_DEFAULTS: Record<string, string> = {
   meta_global:      '0',
 }
 
-export default function ConfiguracoesView({ tenant, configs, usuarioId }: Props) {
+export default function ConfiguracoesView({ tenant, configs, usuarioId, segmentosIniciais }: Props) {
   const router = useRouter()
   const toast = useToast()
 
+  // ─── Empresa ────────────────────────────────────────────────────────────────
   const [nomeEmpresa, setNomeEmpresa] = useState(tenant.nome)
   const [savingEmpresa, setSavingEmpresa] = useState(false)
-  const [successEmpresa, setSuccessEmpresa] = useState(false)
 
+  async function salvarEmpresa(e: React.FormEvent) {
+    e.preventDefault()
+    setSavingEmpresa(true)
+    const supabase = createClient()
+    await supabase.from('tenants').update({ nome: nomeEmpresa.trim() }).eq('id', tenant.id)
+    setSavingEmpresa(false)
+    toast('Dados da empresa salvos!')
+    router.refresh()
+  }
+
+  // ─── Preferências comerciais ─────────────────────────────────────────────
   const configMap = new Map(configs.map((c) => [c.chave, c]))
   const [valores, setValores] = useState<Record<string, string>>(
     Object.keys(CONFIG_LABELS).reduce((acc, chave) => {
@@ -59,25 +72,11 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId }: Props)
     }, {} as Record<string, string>)
   )
   const [savingConfig, setSavingConfig] = useState(false)
-  const [successConfig, setSuccessConfig] = useState(false)
-
-  async function salvarEmpresa(e: React.FormEvent) {
-    e.preventDefault()
-    setSavingEmpresa(true)
-    const supabase = createClient()
-    await supabase.from('tenants').update({ nome: nomeEmpresa.trim() }).eq('id', tenant.id)
-    setSavingEmpresa(false)
-    setSuccessEmpresa(true)
-    setTimeout(() => setSuccessEmpresa(false), 2000)
-    toast('Dados da empresa salvos!')
-    router.refresh()
-  }
 
   async function salvarConfigs(e: React.FormEvent) {
     e.preventDefault()
     setSavingConfig(true)
     const supabase = createClient()
-
     for (const [chave, valor] of Object.entries(valores)) {
       const existing = configMap.get(chave)
       if (existing) {
@@ -86,11 +85,68 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId }: Props)
         await supabase.from('config_usuario').insert({ usuario_id: usuarioId, chave, valor })
       }
     }
-
     setSavingConfig(false)
-    setSuccessConfig(true)
-    setTimeout(() => setSuccessConfig(false), 2000)
     toast('Preferências salvas!')
+    router.refresh()
+  }
+
+  // ─── Segmentos ───────────────────────────────────────────────────────────
+  const [segmentos, setSegmentos] = useState<Segmento[]>(segmentosIniciais)
+  const [novoLabel, setNovoLabel] = useState('')
+  const [editingIdx, setEditingIdx] = useState<number | null>(null)
+  const [editLabel, setEditLabel] = useState('')
+  const [savingSegs, setSavingSegs] = useState(false)
+
+  function gerarValue(label: string): string {
+    return label
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+  }
+
+  function addSegmento() {
+    const label = novoLabel.trim()
+    if (!label) return
+    const value = gerarValue(label)
+    if (segmentos.some((s) => s.value === value)) {
+      toast('Segmento já existe', 'error')
+      return
+    }
+    setSegmentos([...segmentos, { value, label }])
+    setNovoLabel('')
+  }
+
+  function removeSegmento(idx: number) {
+    setSegmentos(segmentos.filter((_, i) => i !== idx))
+  }
+
+  function startEdit(idx: number) {
+    setEditingIdx(idx)
+    setEditLabel(segmentos[idx].label)
+  }
+
+  function confirmEdit() {
+    if (editingIdx === null) return
+    const label = editLabel.trim()
+    if (!label) { setEditingIdx(null); return }
+    const updated = [...segmentos]
+    updated[editingIdx] = { ...updated[editingIdx], label }
+    setSegmentos(updated)
+    setEditingIdx(null)
+  }
+
+  async function salvarSegmentos() {
+    setSavingSegs(true)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('tenants')
+      .update({ segmentos })
+      .eq('id', tenant.id)
+    setSavingSegs(false)
+    if (error) { toast('Erro ao salvar segmentos', 'error'); return }
+    toast('Segmentos salvos!')
     router.refresh()
   }
 
@@ -102,7 +158,8 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId }: Props)
       </div>
 
       <div className="space-y-6 max-w-2xl">
-        {/* Dados da empresa */}
+
+        {/* ─── Dados da empresa ──────────────────────────────────────────── */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
             <Building2 size={16} className="text-gray-400" />
@@ -117,7 +174,6 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId }: Props)
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1.5">Plano</label>
@@ -132,23 +188,109 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId }: Props)
                 </span>
               </div>
             </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="submit" disabled={savingEmpresa}
-                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-              >
-                <Save size={14} />
-                {savingEmpresa ? 'Salvando...' : 'Salvar'}
-              </button>
-              {successEmpresa && (
-                <span className="text-sm text-green-600 font-medium">Salvo!</span>
-              )}
-            </div>
+            <button
+              type="submit" disabled={savingEmpresa}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              <Save size={14} />
+              {savingEmpresa ? 'Salvando...' : 'Salvar'}
+            </button>
           </form>
         </div>
 
-        {/* Preferências comerciais */}
+        {/* ─── Segmentos ─────────────────────────────────────────────────── */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
+            <Tag size={16} className="text-gray-400" />
+            <div>
+              <h2 className="text-sm font-semibold text-gray-700">Segmentos de negócio</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Usados em oportunidades, propostas, pedidos e vendedores</p>
+            </div>
+          </div>
+          <div className="p-5 space-y-3">
+            {/* Lista */}
+            <div className="space-y-2">
+              {segmentos.length === 0 && (
+                <p className="text-sm text-gray-400 text-center py-4">Nenhum segmento cadastrado.</p>
+              )}
+              {segmentos.map((seg, idx) => (
+                <div
+                  key={seg.value}
+                  className="flex items-center gap-2 p-2.5 rounded-lg border border-gray-100 bg-gray-50 group"
+                >
+                  <GripVertical size={14} className="text-gray-300 shrink-0" />
+
+                  {editingIdx === idx ? (
+                    <>
+                      <input
+                        autoFocus
+                        value={editLabel}
+                        onChange={(e) => setEditLabel(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') confirmEdit(); if (e.key === 'Escape') setEditingIdx(null) }}
+                        className="flex-1 text-sm border border-blue-400 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <button onClick={confirmEdit} className="p-1 text-green-600 hover:bg-green-50 rounded">
+                        <Check size={14} />
+                      </button>
+                      <button onClick={() => setEditingIdx(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded">
+                        <X size={14} />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="flex-1 text-sm text-gray-800">{seg.label}</span>
+                      <span className="text-xs text-gray-400 font-mono shrink-0">{seg.value}</span>
+                      <button
+                        onClick={() => startEdit(idx)}
+                        className="p-1 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        onClick={() => removeSegmento(idx)}
+                        className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Adicionar novo */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={novoLabel}
+                onChange={(e) => setNovoLabel(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSegmento() } }}
+                placeholder="Nome do novo segmento..."
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={addSegmento}
+                disabled={!novoLabel.trim()}
+                className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+              >
+                <Plus size={14} />
+                Adicionar
+              </button>
+            </div>
+
+            <button
+              onClick={salvarSegmentos}
+              disabled={savingSegs}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              <Save size={14} />
+              {savingSegs ? 'Salvando...' : 'Salvar segmentos'}
+            </button>
+          </div>
+        </div>
+
+        {/* ─── Preferências comerciais ────────────────────────────────────── */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100">
             <h2 className="text-sm font-semibold text-gray-700">Preferências comerciais</h2>
@@ -167,21 +309,16 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId }: Props)
                 </div>
               ))}
             </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="submit" disabled={savingConfig}
-                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-              >
-                <Save size={14} />
-                {savingConfig ? 'Salvando...' : 'Salvar preferências'}
-              </button>
-              {successConfig && (
-                <span className="text-sm text-green-600 font-medium">Salvo!</span>
-              )}
-            </div>
+            <button
+              type="submit" disabled={savingConfig}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              <Save size={14} />
+              {savingConfig ? 'Salvando...' : 'Salvar preferências'}
+            </button>
           </form>
         </div>
+
       </div>
     </>
   )

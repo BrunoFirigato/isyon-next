@@ -27,11 +27,6 @@ export const TIPOS = [
   { value: 'ex-cliente', label: 'Ex-cliente', bg: 'bg-gray-100', text: 'text-gray-600' },
 ] as const
 
-export const SEGMENTOS = [
-  { value: 'maquinas', label: 'Máquinas' },
-  { value: 'pecas', label: 'Peças' },
-]
-
 export const STATUS_CLIENTE = [
   { value: 'ativo', label: 'Ativo' },
   { value: 'inativo', label: 'Inativo' },
@@ -52,9 +47,7 @@ export function tipoLabel(tipo: string | null) {
   return TIPOS.find((t) => t.value === tipo)?.label ?? tipo ?? '—'
 }
 
-export function segmentoLabel(seg: string | null) {
-  return SEGMENTOS.find((s) => s.value === seg)?.label ?? seg ?? '—'
-}
+// segmentoLabel movido para SegmentosContext — use useSegmentos() nos componentes
 
 export function brl(value: number | null) {
   if (value == null || value === 0) return null

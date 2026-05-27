@@ -19,23 +19,13 @@ export const STATUS_VENDEDOR = [
   { value: 'inativo', label: 'Inativo' },
 ]
 
-export const SEGMENTOS = [
-  { value: 'maquinas', label: 'Máquinas' },
-  { value: 'pecas', label: 'Peças' },
-]
-
 export function statusStyle(status: string) {
   return status === 'ativo'
     ? 'bg-green-100 text-green-700'
     : 'bg-gray-100 text-gray-500'
 }
 
-export function segmentosLabel(segs: string[]) {
-  if (!segs || segs.length === 0) return '—'
-  return segs
-    .map((s) => SEGMENTOS.find((x) => x.value === s)?.label ?? s)
-    .join(', ')
-}
+// segmentosLabel movido para SegmentosContext — use useSegmentos() nos componentes
 
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', {

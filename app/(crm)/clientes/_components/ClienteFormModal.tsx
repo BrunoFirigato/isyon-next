@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { type Cliente, SEGMENTOS, STATUS_CLIENTE, ESTADOS_BR, TIPOS } from './types'
+import { type Cliente, STATUS_CLIENTE, ESTADOS_BR, TIPOS } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 
 type FormData = {
   nome: string
@@ -35,6 +36,7 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
   const tenantId = useTenantId()
+  const segmentos = useSegmentos()
   const isEditing = !!cliente
 
   const [form, setForm] = useState<FormData>({
@@ -211,7 +213,7 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                     <select value={form.segmento} onChange={(e) => set('segmento', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                       <option value="">Selecione...</option>
-                      {SEGMENTOS.map((s) => (
+                      {segmentos.map((s) => (
                         <option key={s.value} value={s.value}>{s.label}</option>
                       ))}
                     </select>

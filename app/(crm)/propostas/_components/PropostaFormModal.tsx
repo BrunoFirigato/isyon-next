@@ -6,10 +6,11 @@ import { X, Plus, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
   type Proposta, type ItemProposta, type ClienteRef,
-  SEGMENTOS, STATUS_PROPOSTA, brl, calcTotal, novoItem,
+  STATUS_PROPOSTA, brl, calcTotal, novoItem,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 
 interface Props {
   proposta?: Proposta
@@ -20,6 +21,7 @@ export default function PropostaFormModal({ proposta, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
   const tenantId = useTenantId()
+  const segmentos = useSegmentos()
   const isEditing = !!proposta
 
   const [titulo, setTitulo] = useState(proposta?.titulo ?? '')
@@ -152,7 +154,7 @@ export default function PropostaFormModal({ proposta, onClose }: Props) {
                 <select value={segmento} onChange={(e) => setSegmento(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                   <option value="">Selecione...</option>
-                  {SEGMENTOS.map((s) => (
+                  {segmentos.map((s) => (
                     <option key={s.value} value={s.value}>{s.label}</option>
                   ))}
                 </select>

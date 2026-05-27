@@ -34,11 +34,6 @@ export const STATUS_PROPOSTA = [
   { value: 'recusada', label: 'Recusada', bg: 'bg-red-100', text: 'text-red-700' },
 ] as const
 
-export const SEGMENTOS = [
-  { value: 'maquinas', label: 'Máquinas' },
-  { value: 'pecas', label: 'Peças' },
-]
-
 export function statusStyle(status: string) {
   const s = STATUS_PROPOSTA.find((x) => x.value === status)
   return s && s.value !== 'todos' ? `${s.bg} ${s.text}` : 'bg-gray-100 text-gray-600'

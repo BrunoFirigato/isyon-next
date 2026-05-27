@@ -1,26 +1,37 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ConfiguracoesView from './_components/ConfiguracoesView'
+import { DEFAULT_SEGMENTOS } from '@/app/(crm)/_components/SegmentosContext'
 
 export default async function ConfiguracoesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: tenants }, { data: usuario }, { data: configs }] = await Promise.all([
-    supabase.from('tenants').select('id, nome, plano, status, criado_em').limit(1),
-    supabase.from('usuarios').select('id').eq('auth_id', user.id).limit(1).maybeSingle(),
+  const [{ data: usuario }, { data: configs }] = await Promise.all([
+    supabase.from('usuarios').select('id, tenant_id').eq('auth_id', user.id).limit(1).maybeSingle(),
     supabase.from('config_usuario').select('id, usuario_id, chave, valor'),
   ])
 
-  const tenant = tenants?.[0]
-  if (!tenant) redirect('/dashboard')
+  const tenantId = usuario?.tenant_id
+  if (!tenantId) redirect('/dashboard')
+
+  const { data: tenantData } = await supabase
+    .from('tenants')
+    .select('id, nome, plano, status, criado_em, segmentos')
+    .eq('id', tenantId)
+    .maybeSingle()
+
+  if (!tenantData) redirect('/dashboard')
+
+  const segmentosIniciais = (tenantData.segmentos as typeof DEFAULT_SEGMENTOS | null) ?? DEFAULT_SEGMENTOS
 
   return (
     <ConfiguracoesView
-      tenant={tenant}
+      tenant={tenantData}
       configs={configs ?? []}
       usuarioId={usuario?.id ?? ''}
+      segmentosIniciais={segmentosIniciais}
     />
   )
 }

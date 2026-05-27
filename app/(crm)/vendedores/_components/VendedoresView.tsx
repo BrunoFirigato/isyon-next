@@ -7,9 +7,10 @@ import { createClient } from '@/lib/supabase/client'
 import VendedorFormModal from './VendedorFormModal'
 import {
   type Vendedor, STATUS_VENDEDOR,
-  statusStyle, segmentosLabel, formatDate,
+  statusStyle, formatDate,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useSegmentos, segmentosLabel } from '@/app/(crm)/_components/SegmentosContext'
 
 interface Props {
   vendedores: Vendedor[]
@@ -22,6 +23,7 @@ export default function VendedoresView({ vendedores, currentStatus, currentQ }: 
   const pathname = usePathname()
   const [, startTransition] = useTransition()
   const toast = useToast()
+  const segmentos = useSegmentos()
 
   const [search, setSearch] = useState(currentQ)
   const [formOpen, setFormOpen] = useState(false)
@@ -164,7 +166,7 @@ export default function VendedoresView({ vendedores, currentStatus, currentQ }: 
                     {v.telefone && <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"><Phone size={11} className="text-gray-400" />{v.telefone}</p>}
                   </td>
                   <td className="px-4 py-3 text-gray-500">{v.cargo ?? '—'}{v.ramal ? ` · r.${v.ramal}` : ''}</td>
-                  <td className="px-4 py-3 text-gray-500">{segmentosLabel(v.segmentos)}</td>
+                  <td className="px-4 py-3 text-gray-500">{segmentosLabel(v.segmentos, segmentos)}</td>
                   <td className="px-4 py-3 text-gray-500">
                     {v.perc_comissao != null ? `${v.perc_comissao}%` : '—'}
                   </td>
@@ -222,7 +224,7 @@ export default function VendedoresView({ vendedores, currentStatus, currentQ }: 
 
               <div className="flex items-center justify-between">
                 <div className="text-xs text-gray-400 space-y-0.5">
-                  {v.segmentos.length > 0 && <p>{segmentosLabel(v.segmentos)}</p>}
+                  {v.segmentos.length > 0 && <p>{segmentosLabel(v.segmentos, segmentos)}</p>}
                   {v.perc_comissao != null && <p>{v.perc_comissao}% comissão</p>}
                 </div>
                 <div className="flex gap-1">
