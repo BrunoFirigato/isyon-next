@@ -58,7 +58,6 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
   }
 
   const ativos = [
-    { value: 'todos',   label: 'Todos' },
     { value: 'ativo',   label: 'Ativos' },
     { value: 'inativo', label: 'Inativos' },
   ]
@@ -103,7 +102,11 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
         {ativos.map(({ value, label }) => (
           <button
             key={value}
-            onClick={() => updateParams({ tipo: currentTipo, ativo: value, q: search })}
+            onClick={() => updateParams({
+              tipo: currentTipo,
+              ativo: currentAtivo === value ? 'todos' : value,
+              q: search,
+            })}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               currentAtivo === value
                 ? 'bg-gray-800 text-white'
