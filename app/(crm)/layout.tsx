@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import Sidebar from './_components/Sidebar'
 import BottomTabBar from './_components/BottomTabBar'
 import { ToastProvider } from './_components/Toast'
+import { TenantProvider } from './_components/TenantContext'
 
 export default async function CrmLayout({
   children,
@@ -16,26 +17,31 @@ export default async function CrmLayout({
 
   if (!user) redirect('/login')
 
-  // Busca perfil do usuário para passar para os componentes de navegação
+  // Busca perfil e tenant_id do usuário (uma única query)
   const { data: usuario } = await supabase
     .from('usuarios')
-    .select('perfil')
+    .select('perfil, tenant_id')
     .eq('auth_id', user.id)
     .maybeSingle()
 
   const perfil = usuario?.perfil ?? 'vendedor'
+  const tenantId = usuario?.tenant_id ?? ''
+
+  if (!tenantId) redirect('/login')
 
   return (
-    <ToastProvider>
-      <div className="flex h-screen overflow-hidden bg-gray-50">
-        <Sidebar userEmail={user.email ?? ''} perfil={perfil} />
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
-            {children}
-          </main>
+    <TenantProvider tenantId={tenantId}>
+      <ToastProvider>
+        <div className="flex h-screen overflow-hidden bg-gray-50">
+          <Sidebar userEmail={user.email ?? ''} perfil={perfil} />
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
+              {children}
+            </main>
+          </div>
+          <BottomTabBar perfil={perfil} />
         </div>
-        <BottomTabBar perfil={perfil} />
-      </div>
-    </ToastProvider>
+      </ToastProvider>
+    </TenantProvider>
   )
 }

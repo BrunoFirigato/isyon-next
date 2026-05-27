@@ -6,6 +6,7 @@ import { X, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Cliente, SEGMENTOS, STATUS_CLIENTE, ESTADOS_BR, TIPOS } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 type FormData = {
   nome: string
@@ -33,6 +34,7 @@ interface Props {
 export default function ClienteFormModal({ cliente, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
+  const tenantId = useTenantId()
   const isEditing = !!cliente
 
   const [form, setForm] = useState<FormData>({
@@ -111,7 +113,7 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
 
     const { error: err } = isEditing
       ? await supabase.from('clientes').update(payload).eq('id', cliente!.id)
-      : await supabase.from('clientes').insert(payload)
+      : await supabase.from('clientes').insert({ ...payload, tenant_id: tenantId })
 
     if (err) {
       setError(err.message)

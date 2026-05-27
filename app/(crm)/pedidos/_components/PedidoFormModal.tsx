@@ -9,6 +9,7 @@ import {
   SEGMENTOS, STATUS_PEDIDO, brl, calcTotal, novoItem,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 interface Props {
   pedido?: Pedido
@@ -18,6 +19,7 @@ interface Props {
 export default function PedidoFormModal({ pedido, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
+  const tenantId = useTenantId()
   const isEditing = !!pedido
 
   const [clienteId, setClienteId] = useState(pedido?.cliente_id ?? '')
@@ -76,7 +78,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
 
     const { error: err } = isEditing
       ? await supabase.from('pedidos').update(payload).eq('id', pedido!.id)
-      : await supabase.from('pedidos').insert(payload)
+      : await supabase.from('pedidos').insert({ ...payload, tenant_id: tenantId })
 
     if (err) {
       setError(err.message)

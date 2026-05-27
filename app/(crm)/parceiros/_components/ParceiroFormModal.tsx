@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Parceiro, type Vendedor, ESTADOS_BR } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 interface Props {
   parceiro?: Parceiro
@@ -15,6 +16,7 @@ interface Props {
 export default function ParceiroFormModal({ parceiro, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
+  const tenantId = useTenantId()
   const isEditing = !!parceiro
 
   const [nome, setNome] = useState(parceiro?.nome ?? '')
@@ -60,7 +62,7 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
 
     const { error: err } = isEditing
       ? await supabase.from('parceiros').update(payload).eq('id', parceiro!.id)
-      : await supabase.from('parceiros').insert(payload)
+      : await supabase.from('parceiros').insert({ ...payload, tenant_id: tenantId })
 
     if (err) {
       setError(err.message)

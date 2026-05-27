@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Lead } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 const STATUS_OPTIONS = [
   { value: 'novo', label: 'Novo' },
@@ -28,6 +29,7 @@ interface Props {
 export default function LeadFormModal({ lead, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
+  const tenantId = useTenantId()
   const isEditing = !!lead
 
   const [form, setForm] = useState({
@@ -64,7 +66,7 @@ export default function LeadFormModal({ lead, onClose }: Props) {
 
     const { error: err } = isEditing
       ? await supabase.from('leads').update(payload).eq('id', lead!.id)
-      : await supabase.from('leads').insert(payload)
+      : await supabase.from('leads').insert({ ...payload, tenant_id: tenantId })
 
     if (err) {
       setError(err.message)

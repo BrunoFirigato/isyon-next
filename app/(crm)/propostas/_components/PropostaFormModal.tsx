@@ -9,6 +9,7 @@ import {
   SEGMENTOS, STATUS_PROPOSTA, brl, calcTotal, novoItem,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 interface Props {
   proposta?: Proposta
@@ -18,6 +19,7 @@ interface Props {
 export default function PropostaFormModal({ proposta, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
+  const tenantId = useTenantId()
   const isEditing = !!proposta
 
   const [titulo, setTitulo] = useState(proposta?.titulo ?? '')
@@ -84,7 +86,7 @@ export default function PropostaFormModal({ proposta, onClose }: Props) {
 
     const { error: err } = isEditing
       ? await supabase.from('propostas').update(payload).eq('id', proposta!.id)
-      : await supabase.from('propostas').insert(payload)
+      : await supabase.from('propostas').insert({ ...payload, tenant_id: tenantId })
 
     if (err) {
       setError(err.message)

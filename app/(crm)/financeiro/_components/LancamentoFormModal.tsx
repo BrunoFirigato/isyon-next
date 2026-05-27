@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Lancamento, CATEGORIAS_RECEITA, CATEGORIAS_DESPESA } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 interface Props {
   lancamento?: Lancamento
@@ -15,6 +16,7 @@ interface Props {
 export default function LancamentoFormModal({ lancamento, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
+  const tenantId = useTenantId()
   const isEditing = !!lancamento
 
   const [tipo, setTipo] = useState(lancamento?.tipo ?? 'receita')
@@ -47,7 +49,7 @@ export default function LancamentoFormModal({ lancamento, onClose }: Props) {
 
     const { error: err } = isEditing
       ? await supabase.from('lancamentos').update(payload).eq('id', lancamento!.id)
-      : await supabase.from('lancamentos').insert(payload)
+      : await supabase.from('lancamentos').insert({ ...payload, tenant_id: tenantId })
 
     if (err) {
       setError(err.message)

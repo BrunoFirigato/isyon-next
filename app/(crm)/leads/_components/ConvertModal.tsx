@@ -6,6 +6,7 @@ import { X, TrendingUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Lead } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 const ETAPAS = [
   'Prospecção',
@@ -22,6 +23,7 @@ interface Props {
 export default function ConvertModal({ lead, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
+  const tenantId = useTenantId()
   const [titulo, setTitulo] = useState(lead.empresa ? `${lead.empresa} — ${lead.nome}` : lead.nome)
   const [valor, setValor] = useState('')
   const [etapa, setEtapa] = useState('Prospecção')
@@ -41,6 +43,7 @@ export default function ConvertModal({ lead, onClose }: Props) {
       valor: valor ? parseFloat(valor.replace(',', '.')) : null,
       etapa,
       status: 'aberta',
+      tenant_id: tenantId,
     })
 
     if (opErr) {

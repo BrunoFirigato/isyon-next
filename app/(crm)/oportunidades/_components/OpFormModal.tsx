@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Oportunidade, ETAPAS, SEGMENTOS } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 interface Props {
   op?: Oportunidade
@@ -16,6 +17,7 @@ interface Props {
 export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
+  const tenantId = useTenantId()
   const isEditing = !!op
 
   const [form, setForm] = useState({
@@ -51,7 +53,7 @@ export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
 
     const { error: err } = isEditing
       ? await supabase.from('oportunidades').update(payload).eq('id', op!.id)
-      : await supabase.from('oportunidades').insert(payload)
+      : await supabase.from('oportunidades').insert({ ...payload, tenant_id: tenantId })
 
     if (err) {
       setError(err.message)
