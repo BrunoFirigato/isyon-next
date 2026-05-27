@@ -1,0 +1,292 @@
+'use client'
+
+import { useState, useTransition } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { Plus, Search, X, Pencil, Trash2, MapPin } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import ParceiroFormModal from './ParceiroFormModal'
+import {
+  type Parceiro, type Vendedor, STATUS_PARCEIRO,
+  statusStyle, statusLabel,
+} from './types'
+import { useToast } from '@/app/(crm)/_components/Toast'
+
+interface Props {
+  parceiros: Parceiro[]
+  vendedores: Vendedor[]
+  currentStatus: string
+  currentQ: string
+}
+
+export default function ParceirosView({ parceiros, vendedores, currentStatus, currentQ }: Props) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const [, startTransition] = useTransition()
+  const toast = useToast()
+
+  const [search, setSearch] = useState(currentQ)
+  const [formOpen, setFormOpen] = useState(false)
+  const [editingParceiro, setEditingParceiro] = useState<Parceiro | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  function updateParams(params: { status: string; q: string }) {
+    const sp = new URLSearchParams()
+    if (params.status && params.status !== 'todos') sp.set('status', params.status)
+    if (params.q.trim()) sp.set('q', params.q.trim())
+    const qs = sp.toString()
+    startTransition(() => {
+      router.push(pathname + (qs ? '?' + qs : ''))
+    })
+  }
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    updateParams({ status: currentStatus, q: search })
+  }
+
+  function clearSearch() {
+    setSearch('')
+    updateParams({ status: currentStatus, q: '' })
+  }
+
+  async function handleDelete(id: string) {
+    const supabase = createClient()
+    const { error } = await supabase.from('parceiros').delete().eq('id', id)
+    setDeletingId(null)
+    if (error) { toast('Erro ao excluir parceiro', 'error'); return }
+    toast('Parceiro excluído', 'info')
+    router.refresh()
+  }
+
+  function vendedorNome(id: string | null) {
+    if (!id) return null
+    return vendedores.find((v) => v.id === id)?.nome ?? null
+  }
+
+  return (
+    <>
+      {/* Cabeçalho */}
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Parceiros</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {parceiros.length} parceiro{parceiros.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <button
+          onClick={() => { setEditingParceiro(null); setFormOpen(true) }}
+          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+        >
+          <Plus size={16} />
+          <span className="hidden sm:inline">Novo parceiro</span>
+          <span className="sm:hidden">Novo</span>
+        </button>
+      </div>
+
+      {/* Filtros de status */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4">
+        {STATUS_PARCEIRO.map(({ value, label }) => (
+          <button
+            key={value}
+            onClick={() => updateParams({ status: value, q: search })}
+            className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              currentStatus === value
+                ? 'bg-blue-600 text-white'
+                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Busca */}
+      <form onSubmit={handleSearch} className="flex gap-2 mb-5">
+        <div className="relative flex-1">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por nome, e-mail, CNPJ..."
+            className="w-full pl-9 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {search && (
+            <button type="button" onClick={clearSearch}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        <button type="submit"
+          className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+          Buscar
+        </button>
+      </form>
+
+      {/* Lista vazia */}
+      {parceiros.length === 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
+          <p className="text-gray-400 text-sm">Nenhum parceiro encontrado.</p>
+          <button onClick={() => { setEditingParceiro(null); setFormOpen(true) }}
+            className="mt-4 text-sm text-blue-600 hover:underline">
+            Cadastrar o primeiro parceiro
+          </button>
+        </div>
+      )}
+
+      {/* Tabela — desktop */}
+      {parceiros.length > 0 && (
+        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nome</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Contato</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">CNPJ</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Localização</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendedores</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {parceiros.map((p) => {
+                const vMaq = vendedorNome(p.vendedor_maq_id)
+                const vPec = vendedorNome(p.vendedor_pec_id)
+                return (
+                  <tr key={p.id} className="hover:bg-gray-50 transition-colors group">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-gray-900">{p.nome}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      {p.email && <p className="text-gray-600">{p.email}</p>}
+                      {p.telefone && <p className="text-xs text-gray-500 mt-0.5">{p.telefone}</p>}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">{p.cnpj ?? '—'}</td>
+                    <td className="px-4 py-3">
+                      {(p.cidade || p.estado) ? (
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                          <MapPin size={11} className="text-gray-400" />
+                          {[p.cidade, p.estado].filter(Boolean).join(' / ')}
+                        </p>
+                      ) : '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {vMaq && (
+                        <p className="text-xs text-gray-600">
+                          <span className="text-gray-400">Maq:</span> {vMaq}
+                        </p>
+                      )}
+                      {vPec && (
+                        <p className="text-xs text-gray-600 mt-0.5">
+                          <span className="text-gray-400">Peç:</span> {vPec}
+                        </p>
+                      )}
+                      {!vMaq && !vPec && <span className="text-gray-400 text-xs">—</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block text-xs font-medium px-2 py-1 rounded-lg ${statusStyle(p.status)}`}>
+                        {statusLabel(p.status)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => { setEditingParceiro(p); setFormOpen(true) }}
+                          className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
+                          <Pencil size={15} />
+                        </button>
+                        <button onClick={() => setDeletingId(p.id)}
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Cards — mobile */}
+      {parceiros.length > 0 && (
+        <div className="md:hidden space-y-3">
+          {parceiros.map((p) => {
+            const vMaq = vendedorNome(p.vendedor_maq_id)
+            const vPec = vendedorNome(p.vendedor_pec_id)
+            return (
+              <div key={p.id} className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p className="font-medium text-gray-900">{p.nome}</p>
+                  <span className={`shrink-0 text-xs font-medium px-2 py-1 rounded-lg ${statusStyle(p.status)}`}>
+                    {statusLabel(p.status)}
+                  </span>
+                </div>
+
+                {(p.email || p.telefone) && (
+                  <div className="text-sm text-gray-600 space-y-0.5 mb-2">
+                    {p.email && <p>{p.email}</p>}
+                    {p.telefone && <p>{p.telefone}</p>}
+                  </div>
+                )}
+
+                {(p.cidade || p.estado) && (
+                  <p className="text-xs text-gray-400 flex items-center gap-1 mb-2">
+                    <MapPin size={10} />
+                    {[p.cidade, p.estado].filter(Boolean).join(' / ')}
+                  </p>
+                )}
+
+                {(vMaq || vPec) && (
+                  <div className="text-xs text-gray-500 mb-3 space-y-0.5">
+                    {vMaq && <p><span className="text-gray-400">Maq:</span> {vMaq}</p>}
+                    {vPec && <p><span className="text-gray-400">Peç:</span> {vPec}</p>}
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-1">
+                  <button onClick={() => { setEditingParceiro(p); setFormOpen(true) }}
+                    className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+                    <Pencil size={15} />
+                  </button>
+                  <button onClick={() => setDeletingId(p.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500">
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Confirmar exclusão */}
+      {deletingId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setDeletingId(null)} />
+          <div className="relative bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-base font-semibold text-gray-900 mb-2">Excluir parceiro?</h3>
+            <p className="text-sm text-gray-500 mb-5">Esta ação não pode ser desfeita.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeletingId(null)}
+                className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+                Cancelar
+              </button>
+              <button onClick={() => handleDelete(deletingId)}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-lg text-sm transition-colors">
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {formOpen && (
+        <ParceiroFormModal
+          parceiro={editingParceiro ?? undefined}
+          onClose={() => { setFormOpen(false); setEditingParceiro(null) }}
+        />
+      )}
+    </>
+  )
+}
