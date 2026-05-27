@@ -2,42 +2,42 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Mail, Phone, MapPin, Building2,
   FileText, ShoppingCart, TrendingUp, DollarSign,
-  Calendar, Pencil, ChevronRight,
+  Calendar, Pencil, ChevronRight, Receipt, MessageSquare,
+  Plus, X, Save, Landmark,
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import ClienteFormModal from '../../_components/ClienteFormModal'
 import { type Cliente, tipoStyle, tipoLabel, brl as brlCliente } from '../../_components/types'
+import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
-/* ─────────────── Types ── */
+/* ─────────────────────── Types ── */
 
 interface OpData {
-  id: string
-  titulo: string
-  numero: string | null
-  status: string
-  etapa: string | null
-  valor: number | null
-  criado_em: string
+  id: string; titulo: string; numero: string | null
+  status: string; etapa: string | null; valor: number | null; criado_em: string
 }
-
 interface PropostaData {
-  id: string
-  titulo: string
-  numero: string | null
-  status: string
-  valor: number | null
-  validade: string | null
-  criado_em: string
+  id: string; titulo: string; numero: string | null
+  status: string; valor: number | null; validade: string | null; criado_em: string
 }
-
 interface PedidoData {
-  id: string
-  numero: string | null
-  status: string
-  valor: number | null
-  criado_em: string
+  id: string; numero: string | null; status: string; valor: number | null; criado_em: string
+}
+interface FaturaData {
+  id: string; numero: string | null; status: string
+  valor: number | null; pedido_id: string | null; obs: string | null; criado_em: string
+}
+interface HistoricoData {
+  id: string; tipo: string | null; descricao: string | null
+  valor: number | null; usuario_nome: string | null; criado_em: string
+}
+interface NotaFiscalData {
+  id: string; numero: string | null; status: string | null
+  valor: number | null; data_emissao: string | null; obs: string | null; criado_em: string
 }
 
 interface Props {
@@ -45,32 +45,35 @@ interface Props {
   oportunidades: OpData[]
   propostas: PropostaData[]
   pedidos: PedidoData[]
+  faturas: FaturaData[]
+  historico: HistoricoData[]
+  notas: NotaFiscalData[]
 }
 
-/* ─────────────── Helpers ── */
+/* ─────────────────────── Helpers ── */
 
-function fmt(iso: string) {
+function fmt(iso: string | null) {
+  if (!iso) return '—'
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
-
+function fmtDatetime(iso: string) {
+  return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+}
 function brl(v: number | null | undefined) {
   if (v == null) return '—'
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 }).format(v)
 }
-
 function initials(nome: string) {
   const p = nome.trim().split(/\s+/)
-  if (p.length === 1) return p[0][0].toUpperCase()
-  return (p[0][0] + p[p.length - 1][0]).toUpperCase()
+  return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[p.length - 1][0]).toUpperCase()
 }
-
 function avatarBg(nome: string) {
   const palette = ['bg-blue-500','bg-indigo-500','bg-violet-500','bg-emerald-500','bg-teal-500','bg-amber-500','bg-rose-500','bg-cyan-500']
   let h = 0; for (const c of nome) h = h * 31 + c.charCodeAt(0)
   return palette[Math.abs(h) % palette.length]
 }
 
-/* ─────────── Op status ── */
+/* ── Badges ── */
 function opBadge(status: string, etapa: string | null) {
   if (status === 'ganho')   return { label: 'Ganho',   cls: 'bg-green-100 text-green-700' }
   if (status === 'perdido') return { label: 'Perdido', cls: 'bg-red-100 text-red-600' }
@@ -81,59 +84,72 @@ function opBadge(status: string, etapa: string | null) {
     default:             return { label: etapa ?? 'Prospecção', cls: 'bg-gray-100 text-gray-600' }
   }
 }
-
-/* ─────────── Proposta status ── */
-function propostaBadge(status: string) {
-  switch (status) {
-    case 'enviada':   return { label: 'Enviada',   cls: 'bg-blue-100 text-blue-700' }
-    case 'aprovada':  return { label: 'Aprovada',  cls: 'bg-green-100 text-green-700' }
-    case 'recusada':  return { label: 'Recusada',  cls: 'bg-red-100 text-red-600' }
-    default:          return { label: 'Rascunho',  cls: 'bg-gray-100 text-gray-500' }
+function propostaBadge(s: string) {
+  if (s === 'enviada')  return { label: 'Enviada',  cls: 'bg-blue-100 text-blue-700' }
+  if (s === 'aprovada') return { label: 'Aprovada', cls: 'bg-green-100 text-green-700' }
+  if (s === 'recusada') return { label: 'Recusada', cls: 'bg-red-100 text-red-600' }
+  return { label: 'Rascunho', cls: 'bg-gray-100 text-gray-500' }
+}
+function pedidoBadge(s: string) {
+  if (s === 'em_producao') return { label: 'Em produção', cls: 'bg-blue-100 text-blue-700' }
+  if (s === 'entregue')    return { label: 'Entregue',    cls: 'bg-green-100 text-green-700' }
+  if (s === 'cancelado')   return { label: 'Cancelado',   cls: 'bg-red-100 text-red-600' }
+  return { label: 'Aguardando', cls: 'bg-yellow-100 text-yellow-700' }
+}
+function faturaBadge(s: string) {
+  if (s === 'pago')      return { label: 'Pago',      cls: 'bg-green-100 text-green-700' }
+  if (s === 'vencido')   return { label: 'Vencido',   cls: 'bg-red-100 text-red-600' }
+  if (s === 'cancelado') return { label: 'Cancelado', cls: 'bg-gray-100 text-gray-500' }
+  return { label: 'Pendente', cls: 'bg-yellow-100 text-yellow-700' }
+}
+function notaBadge(s: string | null) {
+  if (s === 'cancelada') return { label: 'Cancelada', cls: 'bg-red-100 text-red-600' }
+  return { label: 'Emitida', cls: 'bg-green-100 text-green-700' }
+}
+function tipoHistoricoIcon(tipo: string | null) {
+  switch (tipo) {
+    case 'ligacao':  return { icon: '📞', label: 'Ligação' }
+    case 'reuniao':  return { icon: '🤝', label: 'Reunião' }
+    case 'email':    return { icon: '📧', label: 'E-mail' }
+    case 'visita':   return { icon: '🏢', label: 'Visita' }
+    case 'whatsapp': return { icon: '💬', label: 'WhatsApp' }
+    case 'proposta': return { icon: '📄', label: 'Proposta' }
+    case 'pedido':   return { icon: '📦', label: 'Pedido' }
+    case 'op':       return { icon: '🏆', label: 'Oportunidade' }
+    default:         return { icon: '📝', label: 'Nota' }
   }
 }
 
-/* ─────────── Pedido status ── */
-function pedidoBadge(status: string) {
-  switch (status) {
-    case 'em_producao': return { label: 'Em produção', cls: 'bg-blue-100 text-blue-700' }
-    case 'entregue':    return { label: 'Entregue',    cls: 'bg-green-100 text-green-700' }
-    case 'cancelado':   return { label: 'Cancelado',   cls: 'bg-red-100 text-red-600' }
-    default:            return { label: 'Aguardando',  cls: 'bg-yellow-100 text-yellow-700' }
-  }
-}
+/* ─────────────────────── Main ── */
 
-/* ─────────────── Main ── */
-
-export default function Cliente360View({ cliente, oportunidades, propostas, pedidos }: Props) {
+export default function Cliente360View({ cliente, oportunidades, propostas, pedidos, faturas, historico, notas }: Props) {
+  const router    = useRouter()
+  const tenantId  = useTenantId()
   const [editOpen, setEditOpen] = useState(false)
 
   const opsAbertas  = oportunidades.filter(o => o.status !== 'ganho' && o.status !== 'perdido')
   const opsGanhas   = oportunidades.filter(o => o.status === 'ganho')
-  const totalPedido = pedidos.reduce((s, p) => s + (p.valor ?? 0), 0)
+  const totalFatura = faturas.filter(f => f.status === 'pago').reduce((s, f) => s + (f.valor ?? 0), 0)
   const endereco    = [cliente.cidade, cliente.estado].filter(Boolean).join(' / ')
   const endFull     = [cliente.rua, cliente.numero, cliente.complemento, cliente.bairro, cliente.cidade, cliente.estado].filter(Boolean).join(', ')
 
   return (
     <>
-      {/* Cabeçalho de navegação */}
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/clientes"
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 mb-6">
+        <Link href="/clientes" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
           <ArrowLeft size={15} /> Clientes
         </Link>
         <ChevronRight size={13} className="text-gray-300" />
         <span className="text-sm text-gray-700 font-medium truncate">{cliente.nome}</span>
       </div>
 
-      {/* Card principal do cliente */}
+      {/* Card do cliente */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-5">
         <div className="flex items-start gap-4">
-          {/* Avatar */}
           <div className={`w-12 h-12 rounded-xl ${avatarBg(cliente.nome)} text-white font-bold text-lg flex items-center justify-center shrink-0`}>
             {initials(cliente.nome)}
           </div>
-
-          {/* Info principal */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
@@ -148,25 +164,20 @@ export default function Cliente360View({ cliente, oportunidades, propostas, pedi
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-lg ${tipoStyle(cliente.tipo)}`}>
                   {tipoLabel(cliente.tipo)}
                 </span>
-                <button
-                  onClick={() => setEditOpen(true)}
+                <button onClick={() => setEditOpen(true)}
                   className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 border border-gray-200 hover:border-blue-300 px-2.5 py-1 rounded-lg transition-colors">
                   <Pencil size={11} /> Editar
                 </button>
               </div>
             </div>
-
-            {/* Contato */}
             <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3">
               {cliente.email && (
-                <a href={`mailto:${cliente.email}`}
-                  className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                <a href={`mailto:${cliente.email}`} className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors">
                   <Mail size={13} className="text-gray-400 shrink-0" /> {cliente.email}
                 </a>
               )}
               {cliente.telefone && (
-                <a href={`tel:${cliente.telefone}`}
-                  className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                <a href={`tel:${cliente.telefone}`} className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors">
                   <Phone size={13} className="text-gray-400 shrink-0" /> {cliente.telefone}
                 </a>
               )}
@@ -181,173 +192,374 @@ export default function Cliente360View({ cliente, oportunidades, propostas, pedi
             </div>
           </div>
         </div>
-
-        {/* Linha de data */}
         <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-4 pt-4 border-t border-gray-100">
-          <Calendar size={11} />
-          Cliente desde {fmt(cliente.criado_em)}
+          <Calendar size={11} /> Cliente desde {fmt(cliente.criado_em)}
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <StatCard
-          icon={TrendingUp}
-          label="Ops abertas"
+        <StatCard icon={TrendingUp} label="Ops abertas"
           value={String(opsAbertas.length)}
           sub={opsGanhas.length > 0 ? `${opsGanhas.length} ganha${opsGanhas.length > 1 ? 's' : ''}` : undefined}
-          color="blue"
-        />
-        <StatCard
-          icon={FileText}
-          label="Propostas"
+          color="blue" />
+        <StatCard icon={FileText} label="Propostas"
           value={String(propostas.length)}
           sub={propostas.filter(p => p.status === 'aprovada').length > 0
             ? `${propostas.filter(p => p.status === 'aprovada').length} aprovada${propostas.filter(p => p.status === 'aprovada').length > 1 ? 's' : ''}`
             : undefined}
-          color="indigo"
-        />
-        <StatCard
-          icon={ShoppingCart}
-          label="Pedidos"
+          color="indigo" />
+        <StatCard icon={ShoppingCart} label="Pedidos"
           value={String(pedidos.length)}
           sub={pedidos.filter(p => p.status === 'entregue').length > 0
             ? `${pedidos.filter(p => p.status === 'entregue').length} entregue${pedidos.filter(p => p.status === 'entregue').length > 1 ? 's' : ''}`
             : undefined}
-          color="emerald"
-        />
-        <StatCard
-          icon={DollarSign}
-          label="Total comprado"
-          value={totalPedido > 0 ? brl(totalPedido) : brlCliente(cliente.valor_total) ?? '—'}
-          color="violet"
-        />
+          color="emerald" />
+        <StatCard icon={DollarSign} label="Total recebido"
+          value={totalFatura > 0 ? brl(totalFatura) : brlCliente(cliente.valor_total) ?? '—'}
+          color="violet" />
       </div>
 
-      {/* Seção: Oportunidades */}
-      <Section
-        titulo="Oportunidades"
-        count={oportunidades.length}
-        icon={TrendingUp}
-        emptyMsg="Nenhuma oportunidade vinculada."
-        linkHref="/oportunidades"
-        linkLabel="Ver oportunidades"
-      >
+      {/* ── Oportunidades ── */}
+      <Section titulo="Oportunidades" count={oportunidades.length} icon={TrendingUp} emptyMsg="Nenhuma oportunidade vinculada." linkHref="/oportunidades" linkLabel="Ver todas">
         {oportunidades.map((op) => {
           const badge = opBadge(op.status, op.etapa)
           return (
-            <div key={op.id} className="flex items-center justify-between gap-3 py-3 border-b border-gray-50 last:border-0">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  {op.numero && <span className="text-xs font-mono text-gray-400">{op.numero}</span>}
-                  <span className="text-sm font-medium text-gray-800 truncate">{op.titulo}</span>
-                </div>
-                <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                  <Calendar size={10} /> {fmt(op.criado_em)}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className={`text-xs font-medium px-2 py-1 rounded-lg ${badge.cls}`}>{badge.label}</span>
-                <span className="text-sm font-semibold text-gray-700">{brl(op.valor)}</span>
-              </div>
-            </div>
+            <ItemRow key={op.id}
+              numero={op.numero}
+              titulo={op.titulo}
+              data={fmt(op.criado_em)}
+              badge={badge}
+              valor={brl(op.valor)}
+            />
           )
         })}
       </Section>
 
-      {/* Seção: Propostas */}
-      <Section
-        titulo="Propostas"
-        count={propostas.length}
-        icon={FileText}
-        emptyMsg="Nenhuma proposta vinculada."
-        linkHref="/propostas"
-        linkLabel="Ver propostas"
-      >
+      {/* ── Propostas ── */}
+      <Section titulo="Propostas" count={propostas.length} icon={FileText} emptyMsg="Nenhuma proposta vinculada." linkHref="/propostas" linkLabel="Ver todas">
         {propostas.map((p) => {
           const badge = propostaBadge(p.status)
           return (
-            <div key={p.id} className="flex items-center justify-between gap-3 py-3 border-b border-gray-50 last:border-0">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  {p.numero && <span className="text-xs font-mono text-gray-400">{p.numero}</span>}
-                  <span className="text-sm font-medium text-gray-800 truncate">{p.titulo}</span>
-                </div>
-                <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                  <Calendar size={10} />
-                  {fmt(p.criado_em)}
-                  {p.validade && <span className="ml-2">· válida até {fmt(p.validade)}</span>}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className={`text-xs font-medium px-2 py-1 rounded-lg ${badge.cls}`}>{badge.label}</span>
-                <span className="text-sm font-semibold text-gray-700">{brl(p.valor)}</span>
-              </div>
-            </div>
+            <ItemRow key={p.id}
+              numero={p.numero}
+              titulo={p.titulo}
+              data={`${fmt(p.criado_em)}${p.validade ? ` · válida até ${fmt(p.validade)}` : ''}`}
+              badge={badge}
+              valor={brl(p.valor)}
+            />
           )
         })}
       </Section>
 
-      {/* Seção: Pedidos */}
-      <Section
-        titulo="Pedidos"
-        count={pedidos.length}
-        icon={ShoppingCart}
-        emptyMsg="Nenhum pedido vinculado."
-        linkHref="/pedidos"
-        linkLabel="Ver pedidos"
-      >
+      {/* ── Pedidos ── */}
+      <Section titulo="Pedidos" count={pedidos.length} icon={ShoppingCart} emptyMsg="Nenhum pedido vinculado." linkHref="/pedidos" linkLabel="Ver todos">
         {pedidos.map((p) => {
           const badge = pedidoBadge(p.status)
           return (
-            <div key={p.id} className="flex items-center justify-between gap-3 py-3 border-b border-gray-50 last:border-0">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  {p.numero && <span className="text-xs font-mono text-gray-400">{p.numero}</span>}
-                  <span className="text-sm font-medium text-gray-800">{p.numero ? '' : 'Pedido sem número'}</span>
-                </div>
-                <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                  <Calendar size={10} /> {fmt(p.criado_em)}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className={`text-xs font-medium px-2 py-1 rounded-lg ${badge.cls}`}>{badge.label}</span>
-                <span className="text-sm font-semibold text-gray-700">{brl(p.valor)}</span>
-              </div>
-            </div>
+            <ItemRow key={p.id}
+              numero={p.numero}
+              titulo={p.numero ? undefined : 'Pedido sem número'}
+              data={fmt(p.criado_em)}
+              badge={badge}
+              valor={brl(p.valor)}
+            />
           )
         })}
       </Section>
 
-      {/* Modal de edição */}
+      {/* ── Financeiro ── */}
+      <Section titulo="Financeiro" count={faturas.length} icon={Landmark} emptyMsg="Nenhuma fatura vinculada." linkHref="/financeiro" linkLabel="Ver financeiro">
+        {faturas.map((f) => {
+          const badge = faturaBadge(f.status)
+          return (
+            <ItemRow key={f.id}
+              numero={f.numero}
+              titulo={f.obs ?? undefined}
+              data={fmt(f.criado_em)}
+              badge={badge}
+              valor={brl(f.valor)}
+            />
+          )
+        })}
+      </Section>
+
+      {/* ── Notas Fiscais ── */}
+      <NotasFiscaisSection
+        clienteId={cliente.id}
+        tenantId={tenantId}
+        notas={notas}
+        onSaved={() => router.refresh()}
+      />
+
+      {/* ── Histórico de Interações ── */}
+      <HistoricoSection
+        clienteId={cliente.id}
+        tenantId={tenantId}
+        historico={historico}
+        onSaved={() => router.refresh()}
+      />
+
       {editOpen && (
-        <ClienteFormModal
-          cliente={cliente}
-          onClose={() => setEditOpen(false)}
-        />
+        <ClienteFormModal cliente={cliente} onClose={() => setEditOpen(false)} />
       )}
     </>
   )
 }
 
+/* ──────────────────── Notas Fiscais section ── */
+
+function NotasFiscaisSection({
+  clienteId, tenantId, notas, onSaved,
+}: { clienteId: string; tenantId: string; notas: NotaFiscalData[]; onSaved: () => void }) {
+  const [showForm, setShowForm] = useState(false)
+  const [numero, setNumero]     = useState('')
+  const [status, setStatus]     = useState('emitida')
+  const [valor, setValor]       = useState('')
+  const [data, setData]         = useState(new Date().toISOString().slice(0, 10))
+  const [obs, setObs]           = useState('')
+  const [saving, setSaving]     = useState(false)
+  const [erro, setErro]         = useState('')
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+    if (!valor || Number(valor) <= 0) { setErro('Informe o valor.'); return }
+    setSaving(true); setErro('')
+    const supabase = createClient()
+    const { error } = await supabase.from('notas_fiscais').insert({
+      tenant_id: tenantId,
+      cliente_id: clienteId,
+      numero: numero.trim() || null,
+      status,
+      valor: Number(valor),
+      data_emissao: data,
+      obs: obs.trim() || null,
+    })
+    setSaving(false)
+    if (error) { setErro(error.message); return }
+    setNumero(''); setValor(''); setObs(''); setStatus('emitida')
+    setShowForm(false)
+    onSaved()
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 mb-4">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <Receipt size={15} className="text-gray-400" />
+          <h2 className="text-sm font-semibold text-gray-900">Notas Fiscais</h2>
+          {notas.length > 0 && (
+            <span className="text-xs font-medium bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{notas.length}</span>
+          )}
+        </div>
+        <button onClick={() => setShowForm(s => !s)}
+          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
+          {showForm ? <><X size={12} /> Cancelar</> : <><Plus size={12} /> Registrar</>}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSave} className="px-5 py-4 border-b border-gray-100 bg-gray-50/50 space-y-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Número</label>
+              <input value={numero} onChange={e => setNumero(e.target.value)} placeholder="NF-000001"
+                className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+              <select value={status} onChange={e => setStatus(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option value="emitida">Emitida</option>
+                <option value="cancelada">Cancelada</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Valor *</label>
+              <input type="number" min="0.01" step="0.01" value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00"
+                className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Data</label>
+              <input type="date" value={data} onChange={e => setData(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Observação</label>
+            <input value={obs} onChange={e => setObs(e.target.value)} placeholder="Descrição do serviço/produto..."
+              className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          {erro && <p className="text-xs text-red-600">{erro}</p>}
+          <button type="submit" disabled={saving}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors">
+            <Save size={13} /> {saving ? 'Salvando...' : 'Salvar nota'}
+          </button>
+        </form>
+      )}
+
+      <div className="px-5">
+        {notas.length === 0 && !showForm
+          ? <p className="py-6 text-sm text-gray-400 text-center">Nenhuma nota fiscal registrada.</p>
+          : notas.map((n) => {
+              const badge = notaBadge(n.status)
+              return (
+                <div key={n.id} className="flex items-center justify-between gap-3 py-3 border-b border-gray-50 last:border-0">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      {n.numero && <span className="text-xs font-mono text-gray-400">{n.numero}</span>}
+                      {n.obs && <span className="text-sm text-gray-700 truncate">{n.obs}</span>}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                      <Calendar size={10} /> {fmt(n.data_emissao ?? n.criado_em)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-xs font-medium px-2 py-1 rounded-lg ${badge.cls}`}>{badge.label}</span>
+                    <span className="text-sm font-semibold text-gray-700">{brl(n.valor)}</span>
+                  </div>
+                </div>
+              )
+            })
+        }
+      </div>
+    </div>
+  )
+}
+
+/* ──────────────────── Histórico section ── */
+
+const TIPOS_HISTORICO = [
+  { value: 'ligacao',  label: '📞 Ligação' },
+  { value: 'reuniao',  label: '🤝 Reunião' },
+  { value: 'email',    label: '📧 E-mail' },
+  { value: 'visita',   label: '🏢 Visita' },
+  { value: 'whatsapp', label: '💬 WhatsApp' },
+  { value: 'nota',     label: '📝 Nota interna' },
+  { value: 'outros',   label: '💡 Outros' },
+]
+
+function HistoricoSection({
+  clienteId, tenantId, historico, onSaved,
+}: { clienteId: string; tenantId: string; historico: HistoricoData[]; onSaved: () => void }) {
+  const [showForm, setShowForm]   = useState(false)
+  const [tipo, setTipo]           = useState('ligacao')
+  const [descricao, setDescricao] = useState('')
+  const [valor, setValor]         = useState('')
+  const [saving, setSaving]       = useState(false)
+  const [erro, setErro]           = useState('')
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+    if (!descricao.trim()) { setErro('Descreva a interação.'); return }
+    setSaving(true); setErro('')
+    const supabase = createClient()
+    const { error } = await supabase.from('historico').insert({
+      tenant_id:  tenantId,
+      cliente_id: clienteId,
+      tipo,
+      descricao:  descricao.trim(),
+      valor:      valor ? Number(valor) : null,
+      criado_em:  new Date().toISOString(),
+    })
+    setSaving(false)
+    if (error) { setErro(error.message); return }
+    setDescricao(''); setValor(''); setTipo('ligacao')
+    setShowForm(false)
+    onSaved()
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 mb-4">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <MessageSquare size={15} className="text-gray-400" />
+          <h2 className="text-sm font-semibold text-gray-900">Histórico de Interações</h2>
+          {historico.length > 0 && (
+            <span className="text-xs font-medium bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{historico.length}</span>
+          )}
+        </div>
+        <button onClick={() => setShowForm(s => !s)}
+          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
+          {showForm ? <><X size={12} /> Cancelar</> : <><Plus size={12} /> Registrar</>}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSave} className="px-5 py-4 border-b border-gray-100 bg-gray-50/50 space-y-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
+              <select value={tipo} onChange={e => setTipo(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                {TIPOS_HISTORICO.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Valor (opcional)</label>
+              <input type="number" min="0" step="0.01" value={valor} onChange={e => setValor(e.target.value)} placeholder="R$ 0,00"
+                className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Descrição *</label>
+            <textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={2}
+              placeholder="Descreva o que foi tratado nessa interação..."
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+          </div>
+          {erro && <p className="text-xs text-red-600">{erro}</p>}
+          <button type="submit" disabled={saving}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors">
+            <Save size={13} /> {saving ? 'Salvando...' : 'Registrar interação'}
+          </button>
+        </form>
+      )}
+
+      <div className="px-5">
+        {historico.length === 0 && !showForm
+          ? <p className="py-6 text-sm text-gray-400 text-center">Nenhuma interação registrada.</p>
+          : historico.map((h) => {
+              const { icon, label } = tipoHistoricoIcon(h.tipo)
+              return (
+                <div key={h.id} className="flex gap-3 py-3 border-b border-gray-50 last:border-0">
+                  <span className="text-lg leading-none mt-0.5 shrink-0">{icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</span>
+                        {h.usuario_nome && <span className="text-xs text-gray-400 ml-2">por {h.usuario_nome}</span>}
+                        {h.descricao && (
+                          <p className="text-sm text-gray-700 mt-0.5">{h.descricao}</p>
+                        )}
+                      </div>
+                      {h.valor != null && (
+                        <span className="text-sm font-semibold text-gray-700 shrink-0">{brl(h.valor)}</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">{fmtDatetime(h.criado_em)}</p>
+                  </div>
+                </div>
+              )
+            })
+        }
+      </div>
+    </div>
+  )
+}
+
 /* ──────────────── Stat card ── */
 
-function StatCard({
-  icon: Icon, label, value, sub, color,
-}: {
-  icon: React.ElementType; label: string; value: string; sub?: string; color: 'blue' | 'indigo' | 'emerald' | 'violet'
+function StatCard({ icon: Icon, label, value, sub, color }: {
+  icon: React.ElementType; label: string; value: string; sub?: string
+  color: 'blue' | 'indigo' | 'emerald' | 'violet'
 }) {
-  const colors = {
-    blue:    { bg: 'bg-blue-50',    icon: 'text-blue-500' },
-    indigo:  { bg: 'bg-indigo-50',  icon: 'text-indigo-500' },
-    emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-500' },
-    violet:  { bg: 'bg-violet-50',  icon: 'text-violet-500' },
-  }
-  const c = colors[color]
+  const c = { blue: { bg: 'bg-blue-50', ic: 'text-blue-500' }, indigo: { bg: 'bg-indigo-50', ic: 'text-indigo-500' }, emerald: { bg: 'bg-emerald-50', ic: 'text-emerald-500' }, violet: { bg: 'bg-violet-50', ic: 'text-violet-500' } }[color]
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <div className={`w-8 h-8 rounded-lg ${c.bg} flex items-center justify-center mb-3`}>
-        <Icon size={15} className={c.icon} />
+        <Icon size={15} className={c.ic} />
       </div>
       <p className="text-xl font-bold text-gray-900 leading-none">{value}</p>
       <p className="text-xs text-gray-500 mt-1">{label}</p>
@@ -358,12 +570,9 @@ function StatCard({
 
 /* ──────────────── Section wrapper ── */
 
-function Section({
-  titulo, count, icon: Icon, emptyMsg, linkHref, linkLabel, children,
-}: {
+function Section({ titulo, count, icon: Icon, emptyMsg, linkHref, linkLabel, children }: {
   titulo: string; count: number; icon: React.ElementType
-  emptyMsg: string; linkHref: string; linkLabel: string
-  children: React.ReactNode
+  emptyMsg: string; linkHref: string; linkLabel: string; children: React.ReactNode
 }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 mb-4">
@@ -375,15 +584,38 @@ function Section({
             <span className="text-xs font-medium bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{count}</span>
           )}
         </div>
-        <Link href={linkHref} className="text-xs text-blue-600 hover:underline">
-          {linkLabel}
-        </Link>
+        <Link href={linkHref} className="text-xs text-blue-600 hover:underline">{linkLabel}</Link>
       </div>
       <div className="px-5">
         {count === 0
           ? <p className="py-6 text-sm text-gray-400 text-center">{emptyMsg}</p>
           : children
         }
+      </div>
+    </div>
+  )
+}
+
+/* ──────────────── Item row ── */
+
+function ItemRow({ numero, titulo, data, badge, valor }: {
+  numero?: string | null; titulo?: string; data: string
+  badge: { label: string; cls: string }; valor: string
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-3 border-b border-gray-50 last:border-0">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          {numero && <span className="text-xs font-mono text-gray-400">{numero}</span>}
+          {titulo  && <span className="text-sm font-medium text-gray-800 truncate">{titulo}</span>}
+        </div>
+        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+          <Calendar size={10} /> {data}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <span className={`text-xs font-medium px-2 py-1 rounded-lg ${badge.cls}`}>{badge.label}</span>
+        <span className="text-sm font-semibold text-gray-700">{valor}</span>
       </div>
     </div>
   )

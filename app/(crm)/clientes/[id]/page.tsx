@@ -15,6 +15,9 @@ export default async function Cliente360Page({ params }: Props) {
     { data: oportunidades },
     { data: propostas },
     { data: pedidos },
+    { data: faturasData, error: errFaturas },
+    { data: historicoData, error: errHistorico },
+    { data: notasData, error: errNotas },
   ] = await Promise.all([
     supabase
       .from('clientes')
@@ -36,6 +39,22 @@ export default async function Cliente360Page({ params }: Props) {
       .select('id, numero, status, valor, criado_em')
       .eq('cliente_id', id)
       .order('criado_em', { ascending: false }),
+    supabase
+      .from('faturas')
+      .select('id, numero, status, valor, pedido_id, obs, criado_em')
+      .eq('cliente_id', id)
+      .order('criado_em', { ascending: false }),
+    supabase
+      .from('historico')
+      .select('id, tipo, descricao, valor, usuario_nome, criado_em')
+      .eq('cliente_id', id)
+      .order('criado_em', { ascending: false })
+      .limit(30),
+    supabase
+      .from('notas_fiscais')
+      .select('id, numero, status, valor, data_emissao, obs, criado_em')
+      .eq('cliente_id', id)
+      .order('data_emissao', { ascending: false }),
   ])
 
   if (!cliente) notFound()
@@ -46,6 +65,9 @@ export default async function Cliente360Page({ params }: Props) {
       oportunidades={oportunidades ?? []}
       propostas={propostas ?? []}
       pedidos={pedidos ?? []}
+      faturas={errFaturas ? [] : (faturasData ?? [])}
+      historico={errHistorico ? [] : (historicoData ?? [])}
+      notas={errNotas ? [] : (notasData ?? [])}
     />
   )
 }
