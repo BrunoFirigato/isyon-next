@@ -44,7 +44,16 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
   const { action } = body
-  const resend = getResend()
+
+  let resend
+  try {
+    resend = getResend()
+  } catch {
+    return NextResponse.json(
+      { error: 'email_not_configured', message: 'Integração de e-mail não configurada.' },
+      { status: 503 }
+    )
+  }
 
   /* ── Enviar proposta por e-mail ── */
   if (action === 'proposta') {

@@ -33,6 +33,7 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
   const [emailModal, setEmailModal] = useState<Proposta | null>(null)
   const [emailTo, setEmailTo] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailError, setEmailError] = useState<'not_configured' | 'generic' | null>(null)
 
   function clienteNome(id: string | null) {
     if (!id) return null
@@ -48,6 +49,7 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
   function openEmailModal(p: Proposta) {
     setEmailModal(p)
     setEmailTo(clienteEmail(p.cliente_id) ?? '')
+    setEmailError(null)
   }
 
   async function handleSendEmail() {
@@ -55,6 +57,7 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
     setSendingEmail(true)
     const itens = emailModal.itens ?? []
     try {
+      setEmailError(null)
       const res = await fetch('/api/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,10 +81,10 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
         }),
       })
       const data = await res.json()
-      if (!res.ok) { toast(data.error ?? 'Erro ao enviar e-mail', 'error') }
-      else {
+      if (!res.ok) {
+        setEmailError(data.error === 'email_not_configured' ? 'not_configured' : 'generic')
+      } else {
         toast('Proposta enviada por e-mail!')
-        // Atualiza status para "enviada" se ainda for rascunho
         if (emailModal.status === 'rascunho') {
           const supabase = createClient()
           await supabase.from('propostas').update({ status: 'enviada' }).eq('id', emailModal.id)
@@ -397,11 +400,51 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
                 </button>
               )}
             </div>
-            {emailModal.status === 'rascunho' && (
+            {emailModal.status === 'rascunho' && !emailError && (
               <p className="mt-3 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
                 O status da proposta será alterado para <strong>Enviada</strong> automaticamente.
               </p>
             )}
+
+            {/* Mensagens de erro */}
+            {emailError === 'not_configured' && (
+              <div className="mt-4 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3.5">
+                <p className="text-sm font-semibold text-orange-800 mb-1">
+                  Envio de e-mail não habilitado
+                </p>
+                <p className="text-xs text-orange-700 leading-relaxed">
+                  A integração de e-mail ainda não foi configurada neste sistema.
+                  Entre em contato com o suporte para ativar essa funcionalidade.
+                </p>
+                <a
+                  href="mailto:suporte@isyon.com.br"
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-orange-800 underline underline-offset-2"
+                >
+                  <Mail size={11} />
+                  suporte@isyon.com.br
+                </a>
+              </div>
+            )}
+
+            {emailError === 'generic' && (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3.5">
+                <p className="text-sm font-semibold text-red-800 mb-1">
+                  Falha ao enviar e-mail
+                </p>
+                <p className="text-xs text-red-700 leading-relaxed">
+                  Ocorreu um erro ao processar o envio. Tente novamente em instantes.
+                  Se o problema persistir, acione o suporte.
+                </p>
+                <a
+                  href="mailto:suporte@isyon.com.br"
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-red-800 underline underline-offset-2"
+                >
+                  <Mail size={11} />
+                  suporte@isyon.com.br
+                </a>
+              </div>
+            )}
+
             <div className="flex gap-3 mt-5">
               <button
                 onClick={() => setEmailModal(null)}
