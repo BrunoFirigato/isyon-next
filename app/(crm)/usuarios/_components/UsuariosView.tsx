@@ -455,7 +455,19 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
 
     if (!res.ok) { setError(data.error ?? 'Erro ao criar usuário'); return }
 
-    toast('Usuário criado com sucesso!')
+    // Enviar e-mail de boas-vindas (não bloqueia o fluxo se falhar)
+    fetch('/api/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'convite',
+        nomeUsuario: form.nome,
+        email: form.email,
+        senha: form.senha,
+      }),
+    }).catch(() => { /* silencioso */ })
+
+    toast('Usuário criado! E-mail de boas-vindas enviado.')
     onSuccess()
   }
 

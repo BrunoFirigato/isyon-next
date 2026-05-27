@@ -20,7 +20,7 @@ export default async function PropostasPage({ searchParams }: Props) {
 
   const [{ data: propostas }, { data: clientes }] = await Promise.all([
     query,
-    supabase.from('clientes').select('id, nome, empresa').order('nome'),
+    supabase.from('clientes').select('id, nome, empresa, email').order('nome'),
   ])
 
   return (

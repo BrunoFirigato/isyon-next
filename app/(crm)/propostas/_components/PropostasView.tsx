@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
-  CheckCircle, XCircle, Send,
+  CheckCircle, XCircle, Send, Mail, X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import PropostaFormModal from './PropostaFormModal'
@@ -30,11 +30,68 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
   const [editingProposta, setEditingProposta] = useState<Proposta | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [emailModal, setEmailModal] = useState<Proposta | null>(null)
+  const [emailTo, setEmailTo] = useState('')
+  const [sendingEmail, setSendingEmail] = useState(false)
 
   function clienteNome(id: string | null) {
     if (!id) return null
     const c = clientes.find((x) => x.id === id)
     return c ? (c.empresa ?? c.nome) : null
+  }
+
+  function clienteEmail(id: string | null) {
+    if (!id) return ''
+    return clientes.find((x) => x.id === id)?.email ?? ''
+  }
+
+  function openEmailModal(p: Proposta) {
+    setEmailModal(p)
+    setEmailTo(clienteEmail(p.cliente_id) ?? '')
+  }
+
+  async function handleSendEmail() {
+    if (!emailModal || !emailTo.trim()) return
+    setSendingEmail(true)
+    const itens = emailModal.itens ?? []
+    try {
+      const res = await fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'proposta',
+          to: emailTo.trim(),
+          proposta: {
+            numeroProposta: emailModal.numero,
+            tituloProposta: emailModal.titulo,
+            nomeCliente: clienteNome(emailModal.cliente_id) ?? '',
+            nomeEmpresa: clientes.find((c) => c.id === emailModal.cliente_id)?.empresa ?? null,
+            valor: emailModal.valor,
+            validade: emailModal.validade,
+            obs: emailModal.obs,
+            itens: itens.map((i) => ({
+              descricao: i.descricao,
+              quantidade: i.quantidade,
+              valorUnitario: i.valorUnitario,
+            })),
+          },
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { toast(data.error ?? 'Erro ao enviar e-mail', 'error') }
+      else {
+        toast('Proposta enviada por e-mail!')
+        // Atualiza status para "enviada" se ainda for rascunho
+        if (emailModal.status === 'rascunho') {
+          const supabase = createClient()
+          await supabase.from('propostas').update({ status: 'enviada' }).eq('id', emailModal.id)
+          router.refresh()
+        }
+        setEmailModal(null)
+      }
+    } finally {
+      setSendingEmail(false)
+    }
   }
 
   function setStatusFilter(s: string) {
@@ -187,6 +244,13 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
                         </button>
                       </>
                     )}
+                    <button
+                      onClick={() => openEmailModal(p)}
+                      title="Enviar por e-mail"
+                      className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors"
+                    >
+                      <Mail size={14} />
+                    </button>
                     <button onClick={() => { setEditingProposta(p); setFormOpen(true) }}
                       className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
                       <Pencil size={14} />
@@ -290,6 +354,71 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
               <button onClick={() => handleDelete(deletingId)}
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-lg text-sm transition-colors">
                 Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Enviar por e-mail ──────────────────────────────────────── */}
+      {emailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setEmailModal(null)} />
+          <div className="relative bg-white rounded-2xl w-full max-w-sm shadow-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-gray-900">Enviar proposta por e-mail</h3>
+              <button onClick={() => setEmailModal(null)} className="p-1 rounded-full hover:bg-gray-100 text-gray-400">
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mb-1 truncate">
+              <span className="font-medium text-gray-700">{emailModal.titulo}</span>
+              {emailModal.numero && <span className="text-gray-400 font-mono ml-2">{emailModal.numero}</span>}
+            </p>
+            <div className="mt-4">
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                Destinatário <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+                placeholder="email@cliente.com.br"
+                autoFocus
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {clienteEmail(emailModal.cliente_id) && emailTo !== clienteEmail(emailModal.cliente_id) && (
+                <button
+                  type="button"
+                  onClick={() => setEmailTo(clienteEmail(emailModal.cliente_id) ?? '')}
+                  className="mt-1 text-xs text-blue-600 hover:underline"
+                >
+                  Usar e-mail do cliente ({clienteEmail(emailModal.cliente_id)})
+                </button>
+              )}
+            </div>
+            {emailModal.status === 'rascunho' && (
+              <p className="mt-3 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                O status da proposta será alterado para <strong>Enviada</strong> automaticamente.
+              </p>
+            )}
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setEmailModal(null)}
+                className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSendEmail}
+                disabled={sendingEmail || !emailTo.trim()}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors"
+              >
+                {sendingEmail ? (
+                  <span>Enviando...</span>
+                ) : (
+                  <><Mail size={14} /> Enviar</>
+                )}
               </button>
             </div>
           </div>
