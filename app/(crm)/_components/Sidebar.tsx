@@ -18,6 +18,7 @@ import {
   LogOut,
   ShieldAlert,
   BookOpen,
+  Package,
 } from 'lucide-react'
 
 type Perfil = 'admin' | 'gestor' | 'vendedor' | 'financeiro'
@@ -38,6 +39,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { href: '/oportunidades', label: 'Oportunidades', icon: Briefcase },
       { href: '/clientes', label: 'Clientes', icon: Building2 },
       { href: '/parceiros', label: 'Parceiros', icon: Users2 },
+      { href: '/produtos', label: 'Produtos', icon: Package },
       { href: '/propostas', label: 'Propostas', icon: FileText },
       { href: '/pedidos', label: 'Pedidos', icon: ShoppingCart },
     ],

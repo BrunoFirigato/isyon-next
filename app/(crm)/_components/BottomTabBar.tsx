@@ -20,6 +20,7 @@ import {
   LogOut,
   X,
   BookOpen,
+  Package,
 } from 'lucide-react'
 
 type Perfil = 'admin' | 'gestor' | 'vendedor' | 'financeiro'
@@ -33,6 +34,7 @@ interface MoreItem {
 
 const moreItems: MoreItem[] = [
   { href: '/parceiros', label: 'Parceiros', icon: Users2 },
+  { href: '/produtos', label: 'Produtos', icon: Package },
   { href: '/propostas', label: 'Propostas', icon: FileText },
   { href: '/pedidos', label: 'Pedidos', icon: ShoppingCart },
   {
