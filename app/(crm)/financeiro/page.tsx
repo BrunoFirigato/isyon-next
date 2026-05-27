@@ -4,15 +4,27 @@ import FinanceiroView from './_components/FinanceiroView'
 type Aba = 'lancamentos' | 'faturas' | 'comissoes'
 
 interface Props {
-  searchParams: Promise<{ aba?: string }>
+  searchParams: Promise<{
+    aba?: string
+    mes?: string
+    ano?: string
+  }>
 }
 
 export default async function FinanceiroPage({ searchParams }: Props) {
-  const { aba } = await searchParams
+  const params = await searchParams
   const currentAba: Aba =
-    aba === 'faturas' || aba === 'comissoes' ? aba : 'lancamentos'
+    params.aba === 'faturas' || params.aba === 'comissoes' ? params.aba : 'lancamentos'
+
+  const now = new Date()
+  const currentMes = params.mes ? parseInt(params.mes) : now.getMonth() + 1
+  const currentAno = params.ano ? parseInt(params.ano) : now.getFullYear()
 
   const supabase = await createClient()
+
+  // Período: primeiro e último dia do mês selecionado
+  const from = `${currentAno}-${String(currentMes).padStart(2, '0')}-01`
+  const to   = new Date(currentAno, currentMes, 0).toISOString().slice(0, 10)
 
   const [
     { data: lancamentos },
@@ -24,6 +36,8 @@ export default async function FinanceiroPage({ searchParams }: Props) {
     supabase
       .from('lancamentos')
       .select('id, tipo, descricao, valor, data, categoria, criado_em')
+      .gte('data', from)
+      .lte('data', to)
       .order('data', { ascending: false }),
     supabase
       .from('faturas')
@@ -45,6 +59,8 @@ export default async function FinanceiroPage({ searchParams }: Props) {
       clientes={clientes ?? []}
       vendedores={vendedores ?? []}
       currentAba={currentAba}
+      currentMes={currentMes}
+      currentAno={currentAno}
     />
   )
 }
