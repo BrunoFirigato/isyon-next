@@ -54,6 +54,47 @@ export interface Transportadora {
   created_at: string
 }
 
+// ─── Condição de Pagamento ────────────────────────────────────────────────────
+export interface CondPagamento {
+  id: string
+  tenant_id: string
+  nome: string
+  forma: string | null        // 'pix' | 'boleto' | 'cartao' | 'dinheiro' | 'transferencia'
+  parcelas: number
+  intervalo: number           // dias entre parcelas
+  entrada: number | null      // valor de entrada (R$)
+  obs: string | null
+  ativo: boolean
+  desconto: number | null     // % de desconto
+  criado_em: string
+  atualizado_em: string | null
+}
+
+export const FORMAS_PAGAMENTO = [
+  { value: 'pix',           label: 'Pix' },
+  { value: 'boleto',        label: 'Boleto' },
+  { value: 'cartao',        label: 'Cartão' },
+  { value: 'dinheiro',      label: 'Dinheiro' },
+  { value: 'transferencia', label: 'Transferência' },
+  { value: 'cheque',        label: 'Cheque' },
+]
+
+export function formaLabel(forma: string | null) {
+  return FORMAS_PAGAMENTO.find((f) => f.value === forma)?.label ?? forma ?? '—'
+}
+
+export function formaStyle(forma: string | null) {
+  switch (forma) {
+    case 'pix':           return 'bg-green-50 text-green-700'
+    case 'boleto':        return 'bg-blue-50 text-blue-700'
+    case 'cartao':        return 'bg-purple-50 text-purple-700'
+    case 'dinheiro':      return 'bg-amber-50 text-amber-700'
+    case 'transferencia': return 'bg-indigo-50 text-indigo-700'
+    case 'cheque':        return 'bg-gray-100 text-gray-600'
+    default:              return 'bg-gray-100 text-gray-500'
+  }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 export function formatDate(str: string | null) {
   if (!str) return '—'
