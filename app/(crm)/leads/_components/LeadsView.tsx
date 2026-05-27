@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, TrendingUp, Trash2 } from 'lucide-react'
+import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid } from 'lucide-react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LeadFormModal from './LeadFormModal'
 import ConvertModal from './ConvertModal'
@@ -174,6 +175,13 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                   <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(lead.criado_em)}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Link
+                        href={`/leads/${lead.id}`}
+                        title="Visão 360°"
+                        className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors"
+                      >
+                        <LayoutGrid size={15} />
+                      </Link>
                       {lead.status !== 'convertido' && (
                         <button
                           onClick={() => setConvertingLead(lead)}
@@ -240,6 +248,13 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                       Converter
                     </button>
                   )}
+                  <Link
+                    href={`/leads/${lead.id}`}
+                    className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600"
+                    title="Visão 360°"
+                  >
+                    <LayoutGrid size={15} />
+                  </Link>
                   <button
                     onClick={() => { setEditingLead(lead); setFormOpen(true) }}
                     className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
