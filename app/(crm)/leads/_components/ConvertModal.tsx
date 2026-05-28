@@ -65,7 +65,7 @@ export default function ConvertModal({ lead, onClose }: Props) {
       titulo:     titulo.trim(),
       valor:      valor ? parseFloat(valor.replace(',', '.')) : null,
       etapa,
-      status:     'aberta',
+      status:     'aberto',
       tenant_id:  tenantId,
       lead_id:    lead.id,
       cliente_id: prospect.id,

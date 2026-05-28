@@ -59,7 +59,7 @@ export default async function RelatoriosPage({ searchParams }: Props) {
   const funil: FunilData = {
     leads: contarPor(leads ?? [], 'status'),
     oportunidades: contarPor(
-      (oportunidades ?? []).filter((o) => o.status === 'aberta'),
+      (oportunidades ?? []).filter((o) => o.status === 'aberto'),
       'etapa'
     ),
     propostas: contarPor(propostas ?? [], 'status'),

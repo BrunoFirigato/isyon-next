@@ -34,9 +34,9 @@ export default function OpsView({ ops }: Props) {
   const [lostOp, setLostOp] = useState<Oportunidade | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const abertas = ops.filter((o) => o.status !== 'ganho' && o.status !== 'perdida' && o.status !== 'perdido')
-  const ganhas = ops.filter((o) => o.status === 'ganho')
-  const perdidas = ops.filter((o) => o.status === 'perdida' || o.status === 'perdido')
+  const abertas = ops.filter((o) => o.status === 'aberto')
+  const ganhas   = ops.filter((o) => o.status === 'ganho')
+  const perdidas = ops.filter((o) => o.status === 'perdido')
 
   const totalPipeline = abertas.reduce((s, o) => s + (o.valor ?? 0), 0)
 

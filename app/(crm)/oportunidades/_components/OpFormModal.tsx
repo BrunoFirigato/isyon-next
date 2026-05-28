@@ -50,7 +50,7 @@ export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
       etapa: form.etapa,
       valor: valorNum,
       segmento: form.segmento || null,
-      status: op?.status ?? 'aberta',
+      status: op?.status ?? 'aberto',
     }
 
     const { error: err } = isEditing

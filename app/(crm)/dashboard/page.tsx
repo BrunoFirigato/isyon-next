@@ -55,11 +55,9 @@ function KpiCard({
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    ganho: 'bg-green-100 text-green-700',
-    perdida: 'bg-red-100 text-red-700',
+    ganho:   'bg-green-100 text-green-700',
     perdido: 'bg-red-100 text-red-700',
-    aberta: 'bg-blue-100 text-blue-700',
-    aberto: 'bg-blue-100 text-blue-700',
+    aberto:  'bg-blue-100 text-blue-700',
   }
   return (
     <span
@@ -104,9 +102,7 @@ export default async function DashboardPage() {
 
   const opList = ops ?? []
   const opDoMes = opList.filter((o) => o.criado_em >= inicio)
-  const opAbertas = opList.filter(
-    (o) => o.status !== 'ganho' && o.status !== 'perdida' && o.status !== 'perdido'
-  )
+  const opAbertas = opList.filter((o) => o.status === 'aberto')
   const opGanhasDoMes = opDoMes.filter((o) => o.status === 'ganho')
   const taxaConversao =
     opDoMes.length > 0 ? Math.round((opGanhasDoMes.length / opDoMes.length) * 100) : 0
