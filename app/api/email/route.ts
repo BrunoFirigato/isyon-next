@@ -56,17 +56,24 @@ export async function POST(req: NextRequest) {
 
   /* ── Enviar proposta por e-mail ── */
   if (action === 'proposta') {
-    const { to, proposta } = body as { to: string; proposta: PropostaEmailData }
+    const { to, proposta, assunto, mensagemAbertura } = body as {
+      to: string
+      proposta: PropostaEmailData
+      assunto?: string
+      mensagemAbertura?: string
+    }
 
     if (!to?.trim()) {
       return NextResponse.json({ error: 'Destinatário obrigatório' }, { status: 400 })
     }
 
+    const subject = assunto?.trim() || propostaEmailSubject(proposta)
+
     const { error } = await resend.resend.emails.send({
       from:    resend.fromEmail,
       to:      [to.trim()],
-      subject: propostaEmailSubject(proposta),
-      html:    propostaEmailHtml({ ...proposta, remetenteNome: caller.nomeUsuario }),
+      subject,
+      html:    propostaEmailHtml({ ...proposta, remetenteNome: caller.nomeUsuario, mensagemAbertura: mensagemAbertura || null }),
     })
 
     if (error) {

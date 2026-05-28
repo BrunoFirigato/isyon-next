@@ -56,6 +56,7 @@ export interface PropostaEmailData {
   obs: string | null
   itens: { descricao: string; quantidade: number; valorUnitario: number }[]
   remetenteNome: string
+  mensagemAbertura?: string | null
 }
 
 export function propostaEmailHtml(d: PropostaEmailData): string {
@@ -97,6 +98,12 @@ export function propostaEmailHtml(d: PropostaEmailData): string {
   `
 
   const body = `
+    ${d.mensagemAbertura ? `
+    <p style="margin:0 0 24px;font-size:14px;color:#374151;white-space:pre-line;line-height:1.6;">
+      ${d.mensagemAbertura.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+    </p>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 24px;" />
+    ` : ''}
     <p style="margin:0 0 4px;font-size:13px;color:#6b7280;">
       ${d.nomeEmpresa ? `${d.nomeEmpresa} — ` : ''}${d.nomeCliente}
     </p>

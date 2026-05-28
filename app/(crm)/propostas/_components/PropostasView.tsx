@@ -32,6 +32,8 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [emailModal, setEmailModal] = useState<Proposta | null>(null)
   const [emailTo, setEmailTo] = useState('')
+  const [emailAssunto, setEmailAssunto] = useState('')
+  const [emailMensagem, setEmailMensagem] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
   const [emailError, setEmailError] = useState<'not_configured' | 'generic' | null>(null)
 
@@ -47,8 +49,14 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
   }
 
   function openEmailModal(p: Proposta) {
+    const nomeCliente = clienteNome(p.cliente_id) ?? ''
+    const nomeEmpresa = clientes.find((c) => c.id === p.cliente_id)?.empresa ?? null
+    const num = p.numero ? `[${p.numero}] ` : ''
+    const empresa = nomeEmpresa ? ` — ${nomeEmpresa}` : ''
     setEmailModal(p)
     setEmailTo(clienteEmail(p.cliente_id) ?? '')
+    setEmailAssunto(`${num}${p.titulo}${empresa}`)
+    setEmailMensagem(`Olá${nomeCliente ? ` ${nomeCliente}` : ''},\n\nSegue em anexo nossa proposta comercial. Estamos à disposição para esclarecer qualquer dúvida.\n\nAtenciosamente.`)
     setEmailError(null)
   }
 
@@ -64,6 +72,8 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
         body: JSON.stringify({
           action: 'proposta',
           to: emailTo.trim(),
+          assunto: emailAssunto.trim() || undefined,
+          mensagemAbertura: emailMensagem.trim() || undefined,
           proposta: {
             numeroProposta: emailModal.numero,
             tituloProposta: emailModal.titulo,
@@ -412,10 +422,34 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
                     Usar e-mail do cliente ({clienteEmail(emailModal.cliente_id)})
                   </button>
                 )}
-                <p className="mt-1 text-xs text-gray-400">O cliente receberá a proposta completa com todos os itens e valores.</p>
               </div>
 
-              {/* Avisos de status */}
+              {/* Assunto */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  Assunto <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={emailAssunto}
+                  onChange={(e) => setEmailAssunto(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Mensagem */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">Mensagem</label>
+                <textarea
+                  value={emailMensagem}
+                  onChange={(e) => setEmailMensagem(e.target.value)}
+                  rows={5}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                />
+                <p className="mt-1 text-xs text-gray-400">Aparece no topo do e-mail, antes dos detalhes da proposta.</p>
+              </div>
+
+              {/* Aviso de status */}
               {emailModal.status === 'rascunho' && !emailError && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-700">
                   ✓ O status da proposta será alterado para <strong>Enviada</strong> automaticamente.
