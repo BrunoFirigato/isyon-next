@@ -122,7 +122,7 @@ export default function Sidebar({
       </div>
 
       {/* ── Navegação ──────────────────────────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto py-3 space-y-4 px-2">
+      <nav className="sidebar-nav flex-1 overflow-y-auto py-3 space-y-4 px-2">
         {navGroups.map((group) => {
           const visibleItems = group.items.filter(canSee)
           if (visibleItems.length === 0) return null
