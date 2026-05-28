@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { type Cliente, STATUS_CLIENTE, ESTADOS_BR, TIPOS } from './types'
+import { type Cliente, STATUS_CLIENTE, ESTADOS_BR, TIPOS, tipoLabel } from './types'
 
 const ORIGEM_OPTIONS = [
   'Site', 'Indicação', 'LinkedIn', 'WhatsApp',
@@ -51,9 +51,9 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
     email: cliente?.email ?? '',
     telefone: cliente?.telefone ?? '',
     cpf_cnpj: cliente?.cpf_cnpj ?? '',
-    tipo: cliente?.tipo ?? 'prospect',
+    tipo: cliente?.tipo ?? 'direto',
     segmento: cliente?.segmento ?? '',
-    status: cliente?.status ?? 'ativo',
+    status: cliente?.status ?? 'prospect',
     origem: cliente?.origem ?? '',
     cep: cliente?.cep ?? '',
     rua: cliente?.rua ?? '',
@@ -210,8 +210,8 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                     <label className="block text-xs font-medium text-gray-600 mb-1.5">Tipo</label>
                     <select value={form.tipo} onChange={(e) => set('tipo', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                      {TIPOS.filter((t) => t.value !== 'todos').map((t) => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
+                      {TIPOS.filter(t => t.value !== 'todos').map((t) => (
+                        <option key={t.value} value={t.value}>{tipoLabel(t.value)}</option>
                       ))}
                     </select>
                   </div>
@@ -231,7 +231,7 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                     <label className="block text-xs font-medium text-gray-600 mb-1.5">Status</label>
                     <select value={form.status} onChange={(e) => set('status', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                      {STATUS_CLIENTE.map((s) => (
+                      {STATUS_CLIENTE.filter(s => s.value !== 'todos').map((s) => (
                         <option key={s.value} value={s.value}>{s.label}</option>
                       ))}
                     </select>

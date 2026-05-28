@@ -2,11 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import ClientesView from './_components/ClientesView'
 
 interface Props {
-  searchParams: Promise<{ tipo?: string; q?: string }>
+  searchParams: Promise<{ status?: string; q?: string }>
 }
 
 export default async function ClientesPage({ searchParams }: Props) {
-  const { tipo, q } = await searchParams
+  const { status, q } = await searchParams
   const supabase = await createClient()
 
   let query = supabase
@@ -16,8 +16,8 @@ export default async function ClientesPage({ searchParams }: Props) {
     )
     .order('nome', { ascending: true })
 
-  if (tipo && tipo !== 'todos') {
-    query = query.eq('tipo', tipo)
+  if (status && status !== 'todos') {
+    query = query.eq('status', status)
   }
 
   if (q?.trim()) {
@@ -32,7 +32,7 @@ export default async function ClientesPage({ searchParams }: Props) {
   return (
     <ClientesView
       clientes={clientes ?? []}
-      currentTipo={tipo ?? 'todos'}
+      currentStatus={status ?? 'todos'}
       currentQ={q ?? ''}
     />
   )

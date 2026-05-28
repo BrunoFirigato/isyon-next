@@ -46,8 +46,8 @@ export default function ConvertModal({ lead, onClose }: Props) {
         empresa:   lead.empresa   ?? null,
         email:     lead.email     ?? null,
         telefone:  lead.telefone  ?? null,
-        tipo:      'prospect',
-        status:    'ativo',
+        tipo:      'direto',
+        status:    'prospect',
         origem:    lead.origem    ?? null,
         lead_id:   lead.id,
       })

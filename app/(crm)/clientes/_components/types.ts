@@ -22,19 +22,20 @@ export interface Cliente {
   atualizado_em: string
 }
 
+// tipo = canal comercial (não muda no tempo)
 export const TIPOS = [
-  { value: 'todos',      label: 'Todos' },
-  { value: 'prospect',   label: 'Prospect',   bg: 'bg-yellow-100', text: 'text-yellow-700' },
-  { value: 'cliente',    label: 'Cliente',    bg: 'bg-green-100',  text: 'text-green-700'  },
-  { value: 'ex-cliente', label: 'Ex-cliente', bg: 'bg-gray-100',   text: 'text-gray-600'   },
-  { value: 'direto',     label: 'Direto',     bg: 'bg-blue-100',   text: 'text-blue-700'   },
-  { value: 'revenda',    label: 'Revenda',    bg: 'bg-indigo-100', text: 'text-indigo-700' },
+  { value: 'todos',   label: 'Todos' },
+  { value: 'direto',  label: 'Direto',  bg: 'bg-blue-100',   text: 'text-blue-700'   },
+  { value: 'revenda', label: 'Revenda', bg: 'bg-indigo-100', text: 'text-indigo-700' },
 ] as const
 
+// status = fase no fluxo comercial (evolui no tempo)
 export const STATUS_CLIENTE = [
-  { value: 'ativo', label: 'Ativo' },
-  { value: 'inativo', label: 'Inativo' },
-]
+  { value: 'todos',    label: 'Todos' },
+  { value: 'prospect', label: 'Prospect', dot: 'bg-blue-500',   text: 'text-blue-700',  bg: 'bg-blue-50'  },
+  { value: 'ativo',    label: 'Ativo',    dot: 'bg-green-500',  text: 'text-green-700', bg: 'bg-green-50' },
+  { value: 'inativo',  label: 'Inativo',  dot: 'bg-gray-400',   text: 'text-gray-500',  bg: 'bg-gray-50'  },
+] as const
 
 export const ESTADOS_BR = [
   'AC','AL','AP','AM','BA','CE','DF','ES','GO',
@@ -49,6 +50,17 @@ export function tipoStyle(tipo: string | null) {
 
 export function tipoLabel(tipo: string | null) {
   return TIPOS.find((t) => t.value === tipo)?.label ?? tipo ?? '—'
+}
+
+export function statusStyle(status: string | null) {
+  const found = STATUS_CLIENTE.find((s) => s.value === status)
+  return found && found.value !== 'todos'
+    ? { dot: found.dot, text: found.text, bg: found.bg }
+    : { dot: 'bg-gray-400', text: 'text-gray-500', bg: 'bg-gray-50' }
+}
+
+export function statusLabel(status: string | null) {
+  return STATUS_CLIENTE.find((s) => s.value === status)?.label ?? status ?? '—'
 }
 
 // segmentoLabel movido para SegmentosContext — use useSegmentos() nos componentes

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ClienteFormModal from '../../_components/ClienteFormModal'
-import { type Cliente, tipoStyle, tipoLabel, brl as brlCliente } from '../../_components/types'
+import { type Cliente, tipoLabel, statusStyle, statusLabel, brl as brlCliente } from '../../_components/types'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 /* ─────────────────────── Types ── */
@@ -161,9 +161,19 @@ export default function Cliente360View({ cliente, oportunidades, propostas, pedi
                 )}
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-lg ${tipoStyle(cliente.tipo)}`}>
-                  {tipoLabel(cliente.tipo)}
-                </span>
+                {/* Status — badge com ponto colorido */}
+                {(() => { const st = statusStyle(cliente.status); return (
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${st.bg} ${st.text}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
+                    {statusLabel(cliente.status)}
+                  </span>
+                )})()}
+                {/* Tipo — Direto / Revenda */}
+                {cliente.tipo && (
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">
+                    {tipoLabel(cliente.tipo)}
+                  </span>
+                )}
                 <button onClick={() => setEditOpen(true)}
                   className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 border border-gray-200 hover:border-blue-300 px-2.5 py-1 rounded-lg transition-colors">
                   <Pencil size={11} /> Editar
