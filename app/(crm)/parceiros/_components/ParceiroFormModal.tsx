@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { type Parceiro, type Vendedor, ESTADOS_BR } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 import { fetchCnpj, maskCnpj } from '@/lib/cnpj'
 
 interface Props {
@@ -18,6 +19,7 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
   const tenantId = useTenantId()
+  const segmentos = useSegmentos()
   const isEditing = !!parceiro
 
   const [nome, setNome] = useState(parceiro?.nome ?? '')
@@ -27,8 +29,9 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
   const [cidade, setCidade] = useState(parceiro?.cidade ?? '')
   const [estado, setEstado] = useState(parceiro?.estado ?? '')
   const [status, setStatus] = useState(parceiro?.status ?? 'ativo')
-  const [vendedorMaqId, setVendedorMaqId] = useState(parceiro?.vendedor_maq_id ?? '')
-  const [vendedorPecId, setVendedorPecId] = useState(parceiro?.vendedor_pec_id ?? '')
+  // slot 0 → vendedor_maq_id, slot 1 → vendedor_pec_id (rótulos vêm dos segmentos configurados)
+  const [vendedor0, setVendedor0] = useState(parceiro?.vendedor_maq_id ?? '')
+  const [vendedor1, setVendedor1] = useState(parceiro?.vendedor_pec_id ?? '')
 
   const [buscandoCnpj, setBuscandoCnpj] = useState(false)
   const [cnpjStatus, setCnpjStatus] = useState<'success' | 'notfound' | null>(null)
@@ -77,8 +80,8 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
       cidade: cidade.trim() || null,
       estado: estado || null,
       status: status || null,
-      vendedor_maq_id: vendedorMaqId || null,
-      vendedor_pec_id: vendedorPecId || null,
+      vendedor_maq_id: vendedor0 || null,
+      vendedor_pec_id: vendedor1 || null,
     }
 
     const { error: err } = isEditing
@@ -199,33 +202,41 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
                 </select>
               </div>
 
-              {/* Vendedor Máquinas */}
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Vendedor — Máquinas</label>
-                <select
-                  value={vendedorMaqId} onChange={(e) => setVendedorMaqId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option value="">Nenhum</option>
-                  {vendedores.map((v) => (
-                    <option key={v.id} value={v.id}>{v.nome}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Vendedor Peças */}
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Vendedor — Peças</label>
-                <select
-                  value={vendedorPecId} onChange={(e) => setVendedorPecId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option value="">Nenhum</option>
-                  {vendedores.map((v) => (
-                    <option key={v.id} value={v.id}>{v.nome}</option>
-                  ))}
-                </select>
-              </div>
+              {/* Vendedores — dinâmico por segmento */}
+              {segmentos.length === 0 ? (
+                /* Sem segmentos: campo único */
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Vendedor responsável</label>
+                  <select
+                    value={vendedor0} onChange={(e) => setVendedor0(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="">Nenhum</option>
+                    {vendedores.map((v) => (
+                      <option key={v.id} value={v.id}>{v.nome}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                /* Com segmentos: um seletor por segmento (máx. 2 slots no banco) */
+                segmentos.slice(0, 2).map((seg, idx) => (
+                  <div key={seg.value}>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                      Vendedor — {seg.label}
+                    </label>
+                    <select
+                      value={idx === 0 ? vendedor0 : vendedor1}
+                      onChange={(e) => idx === 0 ? setVendedor0(e.target.value) : setVendedor1(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="">Nenhum</option>
+                      {vendedores.map((v) => (
+                        <option key={v.id} value={v.id}>{v.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))
+              )}
             </div>
 
             {error && (
