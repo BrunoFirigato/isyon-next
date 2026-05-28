@@ -27,7 +27,7 @@ export default async function LeadPage({ params }: Props) {
       .order('criado_em', { ascending: false }),
     supabase
       .from('historico')
-      .select('id, tipo, descricao, valor, usuario_nome, criado_em')
+      .select('id, tipo, texto, valor, usuario_nome, criado_em')
       .eq('lead_id', id)
       .order('criado_em', { ascending: false })
       .limit(50),

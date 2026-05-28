@@ -21,7 +21,7 @@ interface OpData {
   status: string; etapa: string | null; valor: number | null; criado_em: string
 }
 interface HistoricoData {
-  id: string; tipo: string | null; descricao: string | null
+  id: string; tipo: string | null; texto: string | null
   valor: number | null; usuario_nome: string | null; criado_em: string
 }
 interface Props {
@@ -178,7 +178,7 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
       tenant_id:  tenantId,
       lead_id:    lead.id,
       tipo,
-      descricao:  descricao.trim(),
+      texto:      descricao.trim(),
       valor:      valor ? Number(valor) : null,
       criado_em:  new Date().toISOString(),
     })
@@ -371,8 +371,8 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
                           {h.usuario_nome && (
                             <span className="text-xs text-gray-400 ml-2">por {h.usuario_nome}</span>
                           )}
-                          {h.descricao && (
-                            <p className="text-sm text-gray-700 mt-0.5">{h.descricao}</p>
+                          {h.texto && (
+                            <p className="text-sm text-gray-700 mt-0.5">{h.texto}</p>
                           )}
                         </div>
                         {h.valor != null && (

@@ -32,7 +32,7 @@ interface FaturaData {
   valor: number | null; pedido_id: string | null; obs: string | null; criado_em: string
 }
 interface HistoricoData {
-  id: string; tipo: string | null; descricao: string | null
+  id: string; tipo: string | null; texto: string | null
   valor: number | null; usuario_nome: string | null; criado_em: string
 }
 interface NotaFiscalData {
@@ -458,7 +458,7 @@ function HistoricoSection({
       tenant_id:  tenantId,
       cliente_id: clienteId,
       tipo,
-      descricao:  descricao.trim(),
+      texto:      descricao.trim(),
       valor:      valor ? Number(valor) : null,
       criado_em:  new Date().toISOString(),
     })
@@ -530,8 +530,8 @@ function HistoricoSection({
                       <div className="min-w-0">
                         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</span>
                         {h.usuario_nome && <span className="text-xs text-gray-400 ml-2">por {h.usuario_nome}</span>}
-                        {h.descricao && (
-                          <p className="text-sm text-gray-700 mt-0.5">{h.descricao}</p>
+                        {h.texto && (
+                          <p className="text-sm text-gray-700 mt-0.5">{h.texto}</p>
                         )}
                       </div>
                       {h.valor != null && (
