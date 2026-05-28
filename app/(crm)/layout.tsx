@@ -6,6 +6,7 @@ import BottomTabBar from './_components/BottomTabBar'
 import { ToastProvider } from './_components/Toast'
 import { TenantProvider } from './_components/TenantContext'
 import { SegmentosProvider, DEFAULT_SEGMENTOS } from './_components/SegmentosContext'
+import { BreadcrumbProvider } from './_components/BreadcrumbContext'
 
 export default async function CrmLayout({
   children,
@@ -51,6 +52,7 @@ export default async function CrmLayout({
       emailTemplateCorpo={emailTemplateCorpo}
     >
       <SegmentosProvider segmentos={segmentos}>
+        <BreadcrumbProvider>
         <ToastProvider>
           <div className="flex h-screen overflow-hidden bg-gray-50">
             <Sidebar userEmail={user.email ?? ''} perfil={perfil} />
@@ -63,6 +65,7 @@ export default async function CrmLayout({
             <BottomTabBar perfil={perfil} />
           </div>
         </ToastProvider>
+        </BreadcrumbProvider>
       </SegmentosProvider>
     </TenantProvider>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Mail, Phone, MapPin, Building2,
@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client'
 import ClienteFormModal from '../../_components/ClienteFormModal'
 import { type Cliente, tipoLabel, statusStyle, statusLabel, brl as brlCliente } from '../../_components/types'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { useBreadcrumb } from '@/app/(crm)/_components/BreadcrumbContext'
 
 /* ─────────────────────── Types ── */
 
@@ -125,7 +126,14 @@ function tipoHistoricoIcon(tipo: string | null) {
 export default function Cliente360View({ cliente, oportunidades, propostas, pedidos, faturas, historico, notas }: Props) {
   const router    = useRouter()
   const tenantId  = useTenantId()
+  const { setBreadcrumb } = useBreadcrumb()
   const [editOpen, setEditOpen] = useState(false)
+
+  useEffect(() => {
+    const label = cliente.empresa ?? cliente.nome
+    setBreadcrumb({ parentLabel: 'Clientes', parentHref: '/clientes', currentLabel: label })
+    return () => setBreadcrumb(null)
+  }, [cliente, setBreadcrumb])
 
   const opsAbertas  = oportunidades.filter(o => o.status !== 'ganho' && o.status !== 'perdido')
   const opsGanhas   = oportunidades.filter(o => o.status === 'ganho')

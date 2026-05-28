@@ -1,0 +1,186 @@
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { Bell, Clock, FileText, Calendar, X } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+
+interface Notificacao {
+  id: string
+  tipo: 'compromisso' | 'proposta'
+  titulo: string
+  subtitulo: string
+  href: string
+  urgente: boolean
+}
+
+export default function NotificationBell() {
+  const router = useRouter()
+  const ref    = useRef<HTMLDivElement>(null)
+  const [open,   setOpen]   = useState(false)
+  const [items,  setItems]  = useState<Notificacao[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const now = new Date()
+      const hoje = now.toISOString()
+      const em7dias = new Date(now.getTime() + 7 * 86_400_000).toISOString()
+
+      const [{ data: compromissos }, { data: propostas }] = await Promise.all([
+        // Compromissos pendentes atrasados OU vencendo hoje
+        supabase
+          .from('compromissos')
+          .select('id, titulo, tipo, data_hora, status')
+          .eq('status', 'pendente')
+          .lte('data_hora', hoje)
+          .order('data_hora', { ascending: true })
+          .limit(10),
+        // Propostas próximas de vencer (dentro de 7 dias)
+        supabase
+          .from('propostas')
+          .select('id, titulo, numero, validade, status')
+          .in('status', ['enviada', 'em_analise', 'aguardando'])
+          .not('validade', 'is', null)
+          .lte('validade', em7dias)
+          .gte('validade', hoje)
+          .order('validade', { ascending: true })
+          .limit(10),
+      ])
+
+      const notifs: Notificacao[] = [
+        ...(compromissos ?? []).map(c => {
+          const d = new Date(c.data_hora)
+          const isToday =
+            d.toDateString() === now.toDateString()
+          const diffH = Math.round((now.getTime() - d.getTime()) / 3_600_000)
+          return {
+            id: `comp_${c.id}`,
+            tipo: 'compromisso' as const,
+            titulo: c.titulo,
+            subtitulo: isToday
+              ? `Hoje às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+              : `${diffH >= 24 ? `${Math.floor(diffH / 24)}d atrás` : `${diffH}h atrás`}`,
+            href: '/agenda',
+            urgente: !isToday,
+          }
+        }),
+        ...(propostas ?? []).map(p => {
+          const validade = new Date(p.validade!)
+          const diffDays = Math.round((validade.getTime() - now.getTime()) / 86_400_000)
+          return {
+            id: `prop_${p.id}`,
+            tipo: 'proposta' as const,
+            titulo: p.titulo,
+            subtitulo: diffDays === 0
+              ? 'Vence hoje!'
+              : `Vence em ${diffDays} dia${diffDays !== 1 ? 's' : ''}`,
+            href: '/propostas',
+            urgente: diffDays <= 1,
+          }
+        }),
+      ]
+
+      setItems(notifs)
+      setLoaded(true)
+    }
+    load()
+  }, [])
+
+  // Fecha ao clicar fora
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  function navegar(href: string) {
+    router.push(href)
+    setOpen(false)
+  }
+
+  const urgentes = items.filter(i => i.urgente).length
+  const count    = items.length
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="relative w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 transition-colors"
+        title="Notificações"
+      >
+        <Bell size={18} strokeWidth={1.75} />
+        {loaded && count > 0 && (
+          <span className={`absolute top-1 right-1 w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center ${
+            urgentes > 0 ? 'bg-red-500' : 'bg-blue-500'
+          }`}>
+            {count > 9 ? '9+' : count}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-11 w-80 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden z-50">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <span className="text-sm font-semibold text-gray-900">Notificações</span>
+            <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <X size={14} />
+            </button>
+          </div>
+
+          {/* Lista */}
+          <div className="max-h-80 overflow-y-auto">
+            {!loaded && (
+              <p className="text-sm text-gray-400 text-center py-6">Carregando...</p>
+            )}
+            {loaded && items.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+                <Bell size={24} className="text-gray-200 mb-2" />
+                <p className="text-sm text-gray-400">Nenhuma notificação</p>
+                <p className="text-xs text-gray-300 mt-0.5">Tudo em dia! 🎉</p>
+              </div>
+            )}
+            {loaded && items.map(item => {
+              const Icon = item.tipo === 'compromisso' ? Calendar : FileText
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => navegar(item.href)}
+                  className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 last:border-0"
+                >
+                  <span className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                    item.urgente ? 'bg-red-50' : 'bg-blue-50'
+                  }`}>
+                    <Icon size={13} className={item.urgente ? 'text-red-500' : 'text-blue-500'} />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">{item.titulo}</p>
+                    <p className={`text-xs mt-0.5 ${item.urgente ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                      <Clock size={10} className="inline mr-1" />
+                      {item.subtitulo}
+                    </p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
+          {loaded && items.length > 0 && (
+            <div className="px-4 py-2.5 border-t border-gray-100">
+              <button
+                onClick={() => navegar('/agenda')}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Ver agenda completa →
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
