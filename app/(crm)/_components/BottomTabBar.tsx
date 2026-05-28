@@ -50,7 +50,7 @@ const moreGroups: MoreGroup[] = [
     items: [
       { href: '/produtos',   label: 'Produtos',   icon: Package },
       { href: '/vendedores', label: 'Vendedores', icon: UserCog,  perfis: ['admin', 'gestor'] },
-      { href: '/parceiros',  label: 'Parceiros',  icon: Users2 },
+      { href: '/parceiros',  label: 'Parc. Comerciais', icon: Users2 },
       { href: '/cadastros',  label: 'Outros',     icon: BookOpen, perfis: ['admin', 'gestor'] },
     ],
   },

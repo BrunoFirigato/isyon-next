@@ -103,7 +103,7 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
           <h2 className="text-base font-semibold text-gray-900">
-            {isEditing ? 'Editar parceiro' : 'Novo parceiro'}
+            {isEditing ? 'Editar parceiro comercial' : 'Novo parceiro comercial'}
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
             <X size={18} />
@@ -243,7 +243,7 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
             </button>
             <button type="submit" disabled={saving}
               className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition-colors">
-              {saving ? 'Salvando...' : isEditing ? 'Salvar' : 'Criar parceiro'}
+              {saving ? 'Salvando...' : isEditing ? 'Salvar' : 'Criar parceiro comercial'}
             </button>
           </div>
         </form>

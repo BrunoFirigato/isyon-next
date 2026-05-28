@@ -14,7 +14,7 @@ const PAGE_LABELS: Record<string, string> = {
   '/leads':         'Leads',
   '/oportunidades': 'Oportunidades',
   '/clientes':      'Clientes',
-  '/parceiros':     'Parceiros',
+  '/parceiros':     'Parceiros Comerciais',
   '/produtos':      'Produtos',
   '/propostas':     'Propostas',
   '/pedidos':       'Pedidos',

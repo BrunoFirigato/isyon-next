@@ -68,7 +68,7 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
       {/* Cabeçalho */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Parceiros</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Parceiros Comerciais</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             {parceiros.length} parceiro{parceiros.length !== 1 ? 's' : ''}
           </p>
@@ -78,7 +78,7 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
           className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
         >
           <Plus size={16} />
-          <span className="hidden sm:inline">Novo parceiro</span>
+          <span className="hidden sm:inline">Novo parceiro comercial</span>
           <span className="sm:hidden">Novo</span>
         </button>
       </div>
@@ -128,7 +128,7 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
           <p className="text-gray-400 text-sm">Nenhum parceiro encontrado.</p>
           <button onClick={() => { setEditingParceiro(null); setFormOpen(true) }}
             className="mt-4 text-sm text-blue-600 hover:underline">
-            Cadastrar o primeiro parceiro
+            Cadastrar o primeiro parceiro comercial
           </button>
         </div>
       )}
@@ -265,7 +265,7 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeletingId(null)} />
           <div className="relative bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-base font-semibold text-gray-900 mb-2">Excluir parceiro?</h3>
+            <h3 className="text-base font-semibold text-gray-900 mb-2">Excluir parceiro comercial?</h3>
             <p className="text-sm text-gray-500 mb-5">Esta ação não pode ser desfeita.</p>
             <div className="flex gap-3">
               <button onClick={() => setDeletingId(null)}
