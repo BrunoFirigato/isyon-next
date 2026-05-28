@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid, Mail, MessageCircle } from 'lucide-react'
+import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid, Mail, MessageCircle, Send } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LeadFormModal from './LeadFormModal'
@@ -32,13 +32,20 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
   const pathname = usePathname()
   const [, startTransition] = useTransition()
   const toast = useToast()
-  const { tenantId, whatsappTemplate } = useTenantConfig()
+  const { tenantId, whatsappTemplate, emailTemplateAssunto, emailTemplateCorpo } = useTenantConfig()
 
   const [search, setSearch] = useState(currentQ)
   const [formOpen, setFormOpen] = useState(false)
   const [editingLead, setEditingLead] = useState<Lead | null>(null)
   const [convertingLead, setConvertingLead] = useState<Lead | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // Modal de compose de e-mail
+  const [composingLead, setComposingLead] = useState<Lead | null>(null)
+  const [emailAssunto,  setEmailAssunto]  = useState('')
+  const [emailCorpo,    setEmailCorpo]    = useState('')
+  const [sendingEmail,  setSendingEmail]  = useState(false)
+  const [emailErro,     setEmailErro]     = useState('')
 
   function updateParams(params: Record<string, string>) {
     const sp = new URLSearchParams()
@@ -90,10 +97,44 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
     handleContato(lead, 'whatsapp')
   }
 
-  function openEmail(lead: Lead) {
-    if (!lead.email) return
-    window.open(`mailto:${lead.email}`, '_blank')
-    handleContato(lead, 'email')
+  function openEmailModal(lead: Lead) {
+    const DEFAULT_ASSUNTO = `Olá ${lead.nome}`
+    const DEFAULT_CORPO   = ''
+    setEmailAssunto(emailTemplateAssunto ? applyTemplate(emailTemplateAssunto, lead) : DEFAULT_ASSUNTO)
+    setEmailCorpo(emailTemplateCorpo   ? applyTemplate(emailTemplateCorpo,   lead) : DEFAULT_CORPO)
+    setEmailErro('')
+    setComposingLead(lead)
+  }
+
+  function closeEmailModal() {
+    setComposingLead(null)
+    setEmailAssunto('')
+    setEmailCorpo('')
+    setEmailErro('')
+  }
+
+  async function handleSendEmail(e: React.FormEvent) {
+    e.preventDefault()
+    if (!composingLead?.email) return
+    setSendingEmail(true); setEmailErro('')
+    const res = await fetch('/api/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to:      composingLead.email,
+        subject: emailAssunto,
+        html:    emailCorpo.replace(/\n/g, '<br>'),
+      }),
+    })
+    setSendingEmail(false)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setEmailErro(data.error ?? 'Erro ao enviar e-mail.')
+      return
+    }
+    await handleContato(composingLead, 'email')
+    toast('E-mail enviado!')
+    closeEmailModal()
   }
 
   async function handleDelete(id: string) {
@@ -233,7 +274,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                         </button>
                       )}
                       {lead.status !== 'convertido' && lead.email && (
-                        <button onClick={() => openEmail(lead)} title="Enviar e-mail"
+                        <button onClick={() => openEmailModal(lead)} title="Enviar e-mail"
                           className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
                           <Mail size={15} />
                         </button>
@@ -377,6 +418,64 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
           lead={convertingLead}
           onClose={() => setConvertingLead(null)}
         />
+      )}
+
+      {/* Modal compose e-mail */}
+      {composingLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40" onClick={closeEmailModal} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Mail size={16} className="text-blue-500" />
+                <h3 className="text-base font-semibold text-gray-900">Enviar e-mail</h3>
+                <span className="text-xs text-gray-400">→ {composingLead.email}</span>
+              </div>
+              <button onClick={closeEmailModal} className="text-gray-400 hover:text-gray-600">
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleSendEmail} className="space-y-3">
+              <input
+                type="text"
+                value={emailAssunto}
+                onChange={e => setEmailAssunto(e.target.value)}
+                placeholder="Assunto"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <textarea
+                value={emailCorpo}
+                onChange={e => setEmailCorpo(e.target.value)}
+                rows={7}
+                placeholder={`Olá ${composingLead.nome},\n\n`}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              />
+              {emailErro && <p className="text-xs text-red-600">{emailErro}</p>}
+              {composingLead.status === 'novo' && (
+                <p className="text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">
+                  ✓ Status do lead será atualizado para <strong>Em contato</strong> ao enviar.
+                </p>
+              )}
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={closeEmailModal}
+                  className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingEmail}
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
+                >
+                  <Send size={13} />
+                  {sendingEmail ? 'Enviando...' : 'Enviar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </>
   )
