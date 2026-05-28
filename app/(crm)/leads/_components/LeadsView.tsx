@@ -200,13 +200,15 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                           <Pencil size={15} />
                         </button>
                       )}
-                      <button
-                        onClick={() => setDeletingId(lead.id)}
-                        title="Excluir"
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                      {lead.status !== 'convertido' && (
+                        <button
+                          onClick={() => setDeletingId(lead.id)}
+                          title="Excluir"
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -265,12 +267,14 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                       <Pencil size={15} />
                     </button>
                   )}
-                  <button
-                    onClick={() => setDeletingId(lead.id)}
-                    className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500"
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                  {lead.status !== 'convertido' && (
+                    <button
+                      onClick={() => setDeletingId(lead.id)}
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
