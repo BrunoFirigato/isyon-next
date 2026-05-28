@@ -88,7 +88,7 @@ export default function TopBar({ userEmail, userName: userNameProp }: { userEmai
 
   return (
     <>
-      <header className="hidden md:flex items-center justify-between h-14 px-6 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shrink-0">
+      <header className="flex items-center justify-between h-14 px-4 md:px-6 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shrink-0">
 
         {/* Breadcrumb / Page title */}
         <div className="flex items-center gap-1.5 text-sm min-w-0">
@@ -111,10 +111,10 @@ export default function TopBar({ userEmail, userName: userNameProp }: { userEmai
         {/* Right side */}
         <div className="flex items-center gap-2">
 
-          {/* Search trigger */}
+          {/* Search trigger — visível só no desktop */}
           <button
             onClick={() => setSearchOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm"
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm"
           >
             <Search size={13} />
             <span className="text-xs hidden lg:inline">Buscar</span>
