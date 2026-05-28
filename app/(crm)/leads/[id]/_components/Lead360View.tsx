@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, ChevronRight, Mail, Phone,
   TrendingUp, Calendar, Pencil,
-  MessageSquare, Plus, X, Save,
+  MessageSquare, Plus, X, Save, Lock,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import LeadFormModal from '../../_components/LeadFormModal'
@@ -309,13 +309,45 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
               <span className="text-xs font-medium bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{historico.length}</span>
             )}
           </div>
-          <button onClick={() => setShowForm(s => !s)}
-            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
-            {showForm ? <><X size={12} /> Cancelar</> : <><Plus size={12} /> Registrar</>}
-          </button>
+          {/* Só permite registrar se o lead ainda está ativo */}
+          {!isConvertido && !isPerdido && (
+            <button onClick={() => setShowForm(s => !s)}
+              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
+              {showForm ? <><X size={12} /> Cancelar</> : <><Plus size={12} /> Registrar</>}
+            </button>
+          )}
         </div>
 
-        {showForm && (
+        {/* Banner de bloqueio para leads encerrados */}
+        {(isConvertido || isPerdido) && (
+          <div className={`mx-5 mt-4 mb-2 flex items-start gap-2.5 rounded-lg px-3.5 py-3 text-sm ${
+            isConvertido
+              ? 'bg-purple-50 border border-purple-100 text-purple-700'
+              : 'bg-red-50 border border-red-100 text-red-700'
+          }`}>
+            <Lock size={14} className="shrink-0 mt-0.5" />
+            <div>
+              {isConvertido ? (
+                <>
+                  <span className="font-semibold">Lead convertido.</span>{' '}
+                  Novas interações devem ser registradas na oportunidade ou no cliente.
+                  {oportunidades.length > 0 && (
+                    <Link href="/oportunidades" className="ml-1 underline font-medium hover:opacity-80">
+                      Ver oportunidades →
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <>
+                  <span className="font-semibold">Lead perdido.</span>{' '}
+                  O histórico abaixo é mantido como registro.
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {showForm && !isConvertido && !isPerdido && (
           <form onSubmit={handleSaveInteracao} className="px-5 py-4 border-b border-gray-100 bg-gray-50/50 space-y-3">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div className="col-span-2 md:col-span-1">
@@ -353,10 +385,12 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
             ? (
               <div className="py-8 text-center">
                 <p className="text-sm text-gray-400">Nenhuma interação registrada ainda.</p>
-                <button onClick={() => setShowForm(true)}
-                  className="mt-2 text-sm text-blue-600 hover:underline">
-                  Registrar primeira interação
-                </button>
+                {!isConvertido && !isPerdido && (
+                  <button onClick={() => setShowForm(true)}
+                    className="mt-2 text-sm text-blue-600 hover:underline">
+                    Registrar primeira interação
+                  </button>
+                )}
               </div>
             )
             : historico.map((h) => {

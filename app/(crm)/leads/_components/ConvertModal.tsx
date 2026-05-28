@@ -37,13 +37,14 @@ export default function ConvertModal({ lead, onClose }: Props) {
 
     const supabase = createClient()
 
-    // Cria a oportunidade
+    // Cria a oportunidade vinculada ao lead
     const { error: opErr } = await supabase.from('oportunidades').insert({
       titulo: titulo.trim(),
       valor: valor ? parseFloat(valor.replace(',', '.')) : null,
       etapa,
       status: 'aberta',
       tenant_id: tenantId,
+      lead_id: lead.id,
     })
 
     if (opErr) {
