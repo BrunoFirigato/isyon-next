@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useRef, useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { LogOut } from 'lucide-react'
@@ -9,10 +9,41 @@ function avatarInitials(email: string) {
   return email.split('@')[0].slice(0, 2).toUpperCase()
 }
 
+const PAGE_LABELS: Record<string, string> = {
+  '/dashboard':     'Dashboard',
+  '/leads':         'Leads',
+  '/oportunidades': 'Oportunidades',
+  '/clientes':      'Clientes',
+  '/parceiros':     'Parceiros',
+  '/produtos':      'Produtos',
+  '/propostas':     'Propostas',
+  '/pedidos':       'Pedidos',
+  '/financeiro':    'Financeiro',
+  '/relatorios':    'Relatórios',
+  '/configuracoes': 'Configurações',
+  '/vendedores':    'Vendedores',
+  '/cadastros':     'Cadastros',
+  '/usuarios':      'Usuários',
+  '/superadmin':    'Superadmin',
+}
+
+function getPageLabel(pathname: string): string {
+  // Exact match first
+  if (PAGE_LABELS[pathname]) return PAGE_LABELS[pathname]
+  // Match by prefix (e.g. /leads/123 → "Leads")
+  const match = Object.keys(PAGE_LABELS).find(
+    (key) => key !== '/dashboard' && pathname.startsWith(key + '/')
+  )
+  return match ? PAGE_LABELS[match] : ''
+}
+
 export default function TopBar({ userEmail }: { userEmail: string }) {
-  const router  = useRouter()
+  const router   = useRouter()
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+
+  const pageLabel = getPageLabel(pathname)
 
   // Fecha ao clicar fora
   useEffect(() => {
@@ -36,7 +67,12 @@ export default function TopBar({ userEmail }: { userEmail: string }) {
   const userName = userEmail.split('@')[0]
 
   return (
-    <header className="hidden md:flex items-center justify-end h-14 px-6 bg-white border-b border-gray-200 shrink-0">
+    <header className="hidden md:flex items-center justify-between h-14 px-6 bg-white border-b border-gray-200 shrink-0">
+      {/* Page title */}
+      <h1 className="text-sm font-semibold text-gray-800 truncate">
+        {pageLabel}
+      </h1>
+
       <div ref={ref} className="relative">
         {/* Avatar — botão de abertura */}
         <button

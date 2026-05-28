@@ -145,13 +145,13 @@ export default function Sidebar({
                         flex items-center rounded-lg text-sm transition-colors
                         ${collapsed ? 'justify-center w-11 h-11 mx-auto' : 'gap-2.5 px-2 py-2'}
                         ${isActive
-                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          ? 'bg-blue-600 text-white font-medium'
                           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
                       `}
                     >
                       <Icon
                         size={collapsed ? 18 : 15}
-                        className={isActive ? 'text-blue-600 shrink-0' : 'text-gray-400 shrink-0'}
+                        className={isActive ? 'text-white shrink-0' : 'text-gray-400 shrink-0'}
                       />
                       {!collapsed && <span className="truncate">{label}</span>}
                     </Link>

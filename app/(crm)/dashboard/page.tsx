@@ -17,7 +17,8 @@ function inicioDeMes() {
 }
 
 function nomeMesAno() {
-  return new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  const s = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
@@ -37,18 +38,27 @@ function KpiCard({
   icon: React.ReactNode
   color: KpiColor
 }) {
-  const bg: Record<KpiColor, string> = {
-    blue: 'bg-blue-50 text-blue-600',
+  const iconBg: Record<KpiColor, string> = {
+    blue:   'bg-blue-50 text-blue-600',
     purple: 'bg-purple-50 text-purple-600',
     orange: 'bg-orange-50 text-orange-600',
-    green: 'bg-green-50 text-green-600',
+    green:  'bg-emerald-50 text-emerald-600',
+  }
+  const accent: Record<KpiColor, string> = {
+    blue:   'bg-blue-500',
+    purple: 'bg-purple-500',
+    orange: 'bg-orange-500',
+    green:  'bg-emerald-500',
   }
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <div className={`inline-flex p-2 rounded-lg mb-3 ${bg[color]}`}>{icon}</div>
-      <p className="text-2xl font-bold text-gray-900 leading-none mb-1">{value}</p>
-      <p className="text-xs text-gray-500">{title}</p>
-      {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className={`h-1 ${accent[color]}`} />
+      <div className="p-5">
+        <div className={`inline-flex p-2 rounded-lg mb-4 ${iconBg[color]}`}>{icon}</div>
+        <p className="text-3xl font-bold text-gray-900 leading-none mb-1">{value}</p>
+        <p className="text-xs font-medium text-gray-500 mt-1.5">{title}</p>
+        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+      </div>
     </div>
   )
 }
@@ -134,7 +144,7 @@ export default async function DashboardPage() {
       {/* Cabeçalho */}
       <div>
         <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 capitalize">{nomeMesAno()}</p>
+        <p className="text-sm text-gray-400 mt-0.5">{nomeMesAno()}</p>
       </div>
 
       {/* KPIs */}
@@ -169,43 +179,53 @@ export default async function DashboardPage() {
       {/* Conversão + Pipeline */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Taxa de conversão */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
             Conversão do mês
           </p>
-          <p className="text-5xl font-bold text-gray-900">{taxaConversao}%</p>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className={`text-5xl font-bold leading-none ${
+            taxaConversao === 0 ? 'text-gray-200'
+            : taxaConversao < 30 ? 'text-orange-500'
+            : 'text-emerald-500'
+          }`}>
+            {taxaConversao}%
+          </p>
+          <p className="text-xs text-gray-400 mt-3">
             {opGanhasDoMes.length} ganha{opGanhasDoMes.length !== 1 ? 's' : ''} de{' '}
             {opDoMes.length} no mês
           </p>
-          <div className="mt-4 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-green-500 rounded-full transition-all"
-              style={{ width: `${taxaConversao}%` }}
+              className={`h-full rounded-full transition-all ${
+                taxaConversao === 0 ? 'bg-gray-200'
+                : taxaConversao < 30 ? 'bg-orange-400'
+                : 'bg-emerald-500'
+              }`}
+              style={{ width: `${Math.max(taxaConversao, taxaConversao === 0 ? 0 : 4)}%` }}
             />
           </div>
         </div>
 
         {/* Pipeline por etapa */}
-        <div className="md:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
+        <div className="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
             Pipeline por etapa
           </p>
           {pipeline.length === 0 ? (
             <p className="text-sm text-gray-400">Nenhuma oportunidade aberta.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {pipeline.map(({ etapa, count, valor }) => (
                 <div key={etapa}>
-                  <div className="flex justify-between items-center mb-1.5">
-                    <span className="text-sm text-gray-700 capitalize">{etapa}</span>
-                    <span className="text-xs text-gray-500">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-700 capitalize">{etapa}</span>
+                    <span className="text-xs text-gray-500 font-medium">
                       {count} · {brl(valor)}
                     </span>
                   </div>
-                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-blue-500 rounded-full"
+                      className="h-full bg-blue-500 rounded-full transition-all"
                       style={{ width: `${(valor / maxValor) * 100}%` }}
                     />
                   </div>
@@ -217,7 +237,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Oportunidades recentes */}
-      <div className="bg-white rounded-xl border border-gray-200">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="px-5 py-4 border-b border-gray-100">
           <h2 className="text-sm font-semibold text-gray-900">Oportunidades recentes</h2>
         </div>
