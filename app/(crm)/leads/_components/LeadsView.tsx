@@ -424,39 +424,71 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
       {composingLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={closeEmailModal} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
-            <div className="flex items-center justify-between mb-4">
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg">
+            {/* Cabeçalho */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <Mail size={16} className="text-blue-500" />
-                <h3 className="text-base font-semibold text-gray-900">Enviar e-mail</h3>
-                <span className="text-xs text-gray-400">→ {composingLead.email}</span>
+                <Mail size={16} className="text-blue-500 shrink-0" />
+                <h3 className="text-base font-semibold text-gray-900">Novo e-mail</h3>
               </div>
-              <button onClick={closeEmailModal} className="text-gray-400 hover:text-gray-600">
-                <X size={18} />
+              <button onClick={closeEmailModal} className="p-1 rounded-full hover:bg-gray-100 text-gray-400 transition-colors">
+                <X size={16} />
               </button>
             </div>
-            <form onSubmit={handleSendEmail} className="space-y-3">
-              <input
-                type="text"
-                value={emailAssunto}
-                onChange={e => setEmailAssunto(e.target.value)}
-                placeholder="Assunto"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <textarea
-                value={emailCorpo}
-                onChange={e => setEmailCorpo(e.target.value)}
-                rows={7}
-                placeholder={`Olá ${composingLead.nome},\n\n`}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              />
-              {emailErro && <p className="text-xs text-red-600">{emailErro}</p>}
-              {composingLead.status === 'novo' && (
-                <p className="text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">
-                  ✓ Status do lead será atualizado para <strong>Em contato</strong> ao enviar.
-                </p>
+
+            {/* Destinatário */}
+            <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-100 bg-gray-50">
+              <span className="text-xs font-medium text-gray-500 shrink-0">Para</span>
+              <span className="text-sm font-medium text-gray-800">{composingLead.nome}</span>
+              <span className="text-xs text-gray-400 truncate">&lt;{composingLead.email}&gt;</span>
+            </div>
+
+            <form onSubmit={handleSendEmail} className="p-6 space-y-4">
+              {/* Assunto */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  Assunto <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={emailAssunto}
+                  onChange={e => setEmailAssunto(e.target.value)}
+                  placeholder="Ex: Proposta comercial para {empresa}"
+                  required
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Mensagem */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  Mensagem <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={emailCorpo}
+                  onChange={e => setEmailCorpo(e.target.value)}
+                  rows={7}
+                  placeholder={`Olá ${composingLead.nome},\n\nEscreva sua mensagem aqui...`}
+                  required
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                />
+                <p className="mt-1 text-xs text-gray-400">Cada quebra de linha será preservada no e-mail enviado.</p>
+              </div>
+
+              {/* Avisos */}
+              {composingLead.status === 'novo' && !emailErro && (
+                <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-700">
+                  ✓ O status do lead será atualizado para <strong>Em contato</strong> ao enviar.
+                </div>
               )}
-              <div className="flex gap-2 pt-1">
+              {emailErro && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
+                  {emailErro}
+                </div>
+              )}
+
+              {/* Ações */}
+              <div className="flex gap-3 pt-1">
                 <button
                   type="button"
                   onClick={closeEmailModal}
@@ -470,7 +502,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                   className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
                 >
                   <Send size={13} />
-                  {sendingEmail ? 'Enviando...' : 'Enviar'}
+                  {sendingEmail ? 'Enviando...' : 'Enviar e-mail'}
                 </button>
               </div>
             </form>

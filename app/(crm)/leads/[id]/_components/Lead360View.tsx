@@ -356,41 +356,68 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
 
       {/* Modal inline de e-mail */}
       {showEmail && lead.email && (
-        <div className="bg-white rounded-xl border border-blue-200 p-5 mb-4 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-4 overflow-hidden">
+          {/* Cabeçalho */}
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <Mail size={15} className="text-blue-500" />
-              <h3 className="text-sm font-semibold text-gray-900">Enviar e-mail</h3>
-              <span className="text-xs text-gray-400">→ {lead.email}</span>
+              <Mail size={15} className="text-blue-500 shrink-0" />
+              <h3 className="text-sm font-semibold text-gray-900">Novo e-mail</h3>
             </div>
-            <button onClick={() => setShowEmail(false)} className="text-gray-400 hover:text-gray-600">
-              <X size={16} />
+            <button onClick={() => setShowEmail(false)} className="p-1 rounded-full hover:bg-gray-100 text-gray-400 transition-colors">
+              <X size={15} />
             </button>
           </div>
-          <form onSubmit={handleSendEmail} className="space-y-3">
-            <input
-              type="text" value={emailAssunto} onChange={e => setEmailAssunto(e.target.value)}
-              placeholder="Assunto"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <textarea
-              value={emailCorpo} onChange={e => setEmailCorpo(e.target.value)} rows={5}
-              placeholder={`Olá ${lead.nome},\n\n`}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            />
-            {emailErro && <p className="text-xs text-red-600">{emailErro}</p>}
-            {lead.status === 'novo' && (
-              <p className="text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">
-                ✓ Status do lead será atualizado para <strong>Em contato</strong> ao enviar.
-              </p>
+          {/* Destinatário */}
+          <div className="flex items-center gap-2 px-5 py-2.5 border-b border-gray-100 bg-gray-50">
+            <span className="text-xs font-medium text-gray-500 shrink-0">Para</span>
+            <span className="text-sm font-medium text-gray-800">{lead.nome}</span>
+            <span className="text-xs text-gray-400 truncate">&lt;{lead.email}&gt;</span>
+          </div>
+          <form onSubmit={handleSendEmail} className="p-5 space-y-4">
+            {/* Assunto */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                Assunto <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text" value={emailAssunto} onChange={e => setEmailAssunto(e.target.value)}
+                placeholder="Ex: Olá {nome}, temos uma proposta para você"
+                required
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            {/* Mensagem */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                Mensagem <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={emailCorpo} onChange={e => setEmailCorpo(e.target.value)} rows={5}
+                placeholder={`Olá ${lead.nome},\n\nEscreva sua mensagem aqui...`}
+                required
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              />
+              <p className="mt-1 text-xs text-gray-400">Cada quebra de linha será preservada no e-mail enviado.</p>
+            </div>
+            {/* Avisos */}
+            {lead.status === 'novo' && !emailErro && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-700">
+                ✓ O status do lead será atualizado para <strong>Em contato</strong> ao enviar.
+              </div>
             )}
-            <div className="flex gap-2">
+            {emailErro && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
+                {emailErro}
+              </div>
+            )}
+            {/* Ações */}
+            <div className="flex gap-3 pt-1">
               <button type="button" onClick={() => setShowEmail(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors">
+                className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
                 Cancelar
               </button>
               <button type="submit" disabled={sendingEmail}
-                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors">
+                className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition-colors">
                 <Send size={13} /> {sendingEmail ? 'Enviando...' : 'Enviar e-mail'}
               </button>
             </div>

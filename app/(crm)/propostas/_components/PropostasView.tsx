@@ -367,102 +367,105 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
       {emailModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setEmailModal(null)} />
-          <div className="relative bg-white rounded-2xl w-full max-w-sm shadow-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900">Enviar proposta por e-mail</h3>
-              <button onClick={() => setEmailModal(null)} className="p-1 rounded-full hover:bg-gray-100 text-gray-400">
+          <div className="relative bg-white rounded-2xl w-full max-w-lg shadow-xl">
+            {/* Cabeçalho */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <Mail size={16} className="text-blue-500 shrink-0" />
+                <h3 className="text-base font-semibold text-gray-900">Enviar proposta por e-mail</h3>
+              </div>
+              <button onClick={() => setEmailModal(null)} className="p-1 rounded-full hover:bg-gray-100 text-gray-400 transition-colors">
                 <X size={16} />
               </button>
             </div>
-            <p className="text-xs text-gray-500 mb-1 truncate">
-              <span className="font-medium text-gray-700">{emailModal.titulo}</span>
-              {emailModal.numero && <span className="text-gray-400 font-mono ml-2">{emailModal.numero}</span>}
-            </p>
-            <div className="mt-4">
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Destinatário <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                value={emailTo}
-                onChange={(e) => setEmailTo(e.target.value)}
-                placeholder="email@cliente.com.br"
-                autoFocus
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {clienteEmail(emailModal.cliente_id) && emailTo !== clienteEmail(emailModal.cliente_id) && (
-                <button
-                  type="button"
-                  onClick={() => setEmailTo(clienteEmail(emailModal.cliente_id) ?? '')}
-                  className="mt-1 text-xs text-blue-600 hover:underline"
-                >
-                  Usar e-mail do cliente ({clienteEmail(emailModal.cliente_id)})
-                </button>
-              )}
-            </div>
-            {emailModal.status === 'rascunho' && !emailError && (
-              <p className="mt-3 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-                O status da proposta será alterado para <strong>Enviada</strong> automaticamente.
-              </p>
-            )}
 
-            {/* Mensagens de erro */}
-            {emailError === 'not_configured' && (
-              <div className="mt-4 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3.5">
-                <p className="text-sm font-semibold text-orange-800 mb-1">
-                  Envio de e-mail não habilitado
-                </p>
-                <p className="text-xs text-orange-700 leading-relaxed">
-                  A integração de e-mail ainda não foi configurada neste sistema.
-                  Entre em contato com o suporte para ativar essa funcionalidade.
-                </p>
-                <a
-                  href="mailto:suporte@isyon.com.br"
-                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-orange-800 underline underline-offset-2"
-                >
-                  <Mail size={11} />
-                  suporte@isyon.com.br
-                </a>
-              </div>
-            )}
-
-            {emailError === 'generic' && (
-              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3.5">
-                <p className="text-sm font-semibold text-red-800 mb-1">
-                  Falha ao enviar e-mail
-                </p>
-                <p className="text-xs text-red-700 leading-relaxed">
-                  Ocorreu um erro ao processar o envio. Tente novamente em instantes.
-                  Se o problema persistir, acione o suporte.
-                </p>
-                <a
-                  href="mailto:suporte@isyon.com.br"
-                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-red-800 underline underline-offset-2"
-                >
-                  <Mail size={11} />
-                  suporte@isyon.com.br
-                </a>
-              </div>
-            )}
-
-            <div className="flex gap-3 mt-5">
-              <button
-                onClick={() => setEmailModal(null)}
-                className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSendEmail}
-                disabled={sendingEmail || !emailTo.trim()}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors"
-              >
-                {sendingEmail ? (
-                  <span>Enviando...</span>
-                ) : (
-                  <><Mail size={14} /> Enviar</>
+            {/* Proposta em destaque */}
+            <div className="flex items-center gap-3 px-6 py-3 border-b border-gray-100 bg-gray-50">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-800 truncate">{emailModal.titulo}</p>
+                {emailModal.numero && (
+                  <p className="text-xs text-gray-400 font-mono">{emailModal.numero}</p>
                 )}
-              </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Destinatário */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  Destinatário <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={emailTo}
+                  onChange={(e) => setEmailTo(e.target.value)}
+                  placeholder="email@cliente.com.br"
+                  autoFocus
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {clienteEmail(emailModal.cliente_id) && emailTo !== clienteEmail(emailModal.cliente_id) && (
+                  <button
+                    type="button"
+                    onClick={() => setEmailTo(clienteEmail(emailModal.cliente_id) ?? '')}
+                    className="mt-1.5 text-xs text-blue-600 hover:underline"
+                  >
+                    Usar e-mail do cliente ({clienteEmail(emailModal.cliente_id)})
+                  </button>
+                )}
+                <p className="mt-1 text-xs text-gray-400">O cliente receberá a proposta completa com todos os itens e valores.</p>
+              </div>
+
+              {/* Avisos de status */}
+              {emailModal.status === 'rascunho' && !emailError && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-700">
+                  ✓ O status da proposta será alterado para <strong>Enviada</strong> automaticamente.
+                </div>
+              )}
+
+              {/* Erros */}
+              {emailError === 'not_configured' && (
+                <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3.5">
+                  <p className="text-sm font-semibold text-orange-800 mb-1">Envio de e-mail não habilitado</p>
+                  <p className="text-xs text-orange-700 leading-relaxed">
+                    A integração de e-mail ainda não foi configurada neste sistema.
+                    Entre em contato com o suporte para ativar essa funcionalidade.
+                  </p>
+                  <a href="mailto:suporte@isyon.com.br"
+                    className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-orange-800 underline underline-offset-2">
+                    <Mail size={11} /> suporte@isyon.com.br
+                  </a>
+                </div>
+              )}
+              {emailError === 'generic' && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3.5">
+                  <p className="text-sm font-semibold text-red-800 mb-1">Falha ao enviar e-mail</p>
+                  <p className="text-xs text-red-700 leading-relaxed">
+                    Ocorreu um erro ao processar o envio. Tente novamente em instantes.
+                    Se o problema persistir, acione o suporte.
+                  </p>
+                  <a href="mailto:suporte@isyon.com.br"
+                    className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-red-800 underline underline-offset-2">
+                    <Mail size={11} /> suporte@isyon.com.br
+                  </a>
+                </div>
+              )}
+
+              {/* Ações */}
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => setEmailModal(null)}
+                  className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSendEmail}
+                  disabled={sendingEmail || !emailTo.trim()}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors"
+                >
+                  {sendingEmail ? <span>Enviando...</span> : <><Send size={13} /> Enviar proposta</>}
+                </button>
+              </div>
             </div>
           </div>
         </div>
