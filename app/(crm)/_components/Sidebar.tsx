@@ -98,34 +98,26 @@ export default function Sidebar({
       className={`
         hidden md:flex flex-col bg-white border-r border-gray-200 h-full shrink-0
         transition-all duration-200 ease-in-out
-        ${collapsed ? 'w-[60px]' : 'w-56'}
+        ${collapsed ? 'w-[68px]' : 'w-56'}
       `}
     >
       {/* ── Brand + Toggle ─────────────────────────────────────────────── */}
-      <div
-        className={`
-          flex items-center border-b border-gray-100 h-14 shrink-0
-          ${collapsed ? 'justify-center' : 'px-4 gap-2.5'}
-        `}
-      >
+      <div className="flex items-center justify-between px-3 h-14 border-b border-gray-100 shrink-0">
+        {/* Logo sempre visível */}
+        <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+          I
+        </div>
+        {/* Texto só quando expandido */}
         {!collapsed && (
-          <>
-            <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-              I
-            </div>
-            <span className="font-bold text-gray-900 flex-1 truncate">Isyon CRM</span>
-          </>
+          <span className="font-bold text-gray-900 flex-1 truncate mx-2.5">Isyon CRM</span>
         )}
+        {/* Toggle */}
         <button
           onClick={toggle}
           title={collapsed ? 'Expandir menu' : 'Recolher menu'}
-          className={`
-            flex items-center justify-center rounded-lg text-gray-400
-            hover:text-gray-600 hover:bg-gray-100 transition-colors
-            ${collapsed ? 'w-9 h-9' : 'w-7 h-7 shrink-0'}
-          `}
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
         >
-          {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
 
@@ -151,14 +143,14 @@ export default function Sidebar({
                       title={collapsed ? label : undefined}
                       className={`
                         flex items-center rounded-lg text-sm transition-colors
-                        ${collapsed ? 'justify-center w-9 h-9 mx-auto' : 'gap-2.5 px-2 py-2'}
+                        ${collapsed ? 'justify-center w-11 h-11 mx-auto' : 'gap-2.5 px-2 py-2'}
                         ${isActive
                           ? 'bg-blue-50 text-blue-700 font-medium'
                           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
                       `}
                     >
                       <Icon
-                        size={15}
+                        size={collapsed ? 18 : 15}
                         className={isActive ? 'text-blue-600 shrink-0' : 'text-gray-400 shrink-0'}
                       />
                       {!collapsed && <span className="truncate">{label}</span>}
