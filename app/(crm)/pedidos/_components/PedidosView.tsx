@@ -110,7 +110,7 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
 
       {/* Lista vazia */}
       {pedidos.length === 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
           <p className="text-gray-400 text-sm">Nenhum pedido encontrado.</p>
           <button
             onClick={() => { setEditingPedido(null); setFormOpen(true) }}
@@ -130,7 +130,7 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
             const nomeCliente = clienteNome(p.cliente_id)
 
             return (
-              <div key={p.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div key={p.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 {/* Linha principal */}
                 <div
                   className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors group"

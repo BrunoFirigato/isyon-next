@@ -124,7 +124,7 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
 
       {/* Lista vazia */}
       {parceiros.length === 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
           <p className="text-gray-400 text-sm">Nenhum parceiro encontrado.</p>
           <button onClick={() => { setEditingParceiro(null); setFormOpen(true) }}
             className="mt-4 text-sm text-blue-600 hover:underline">
@@ -135,7 +135,7 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
 
       {/* Tabela — desktop */}
       {parceiros.length > 0 && (
-        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="hidden md:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
@@ -215,7 +215,7 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
             const vMaq = vendedorNome(p.vendedor_maq_id)
             const vPec = vendedorNome(p.vendedor_pec_id)
             return (
-              <div key={p.id} className="bg-white rounded-xl border border-gray-200 p-4">
+              <div key={p.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <p className="font-medium text-gray-900">{p.nome}</p>
                   <span className={`shrink-0 text-xs font-medium px-2 py-1 rounded-lg ${statusStyle(p.status)}`}>

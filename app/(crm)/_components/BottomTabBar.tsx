@@ -109,22 +109,32 @@ export default function BottomTabBar({ perfil }: { perfil: Perfil }) {
             <Link
               key={href}
               href={href}
-              className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors relative ${
                 isActive ? 'text-blue-600' : 'text-gray-500'
               }`}
             >
-              <Icon size={20} strokeWidth={isActive ? 2.5 : 1.75} />
+              {isActive && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-full" />
+              )}
+              <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-blue-50' : ''}`}>
+                <Icon size={18} strokeWidth={isActive ? 2.5 : 1.75} />
+              </div>
               {label}
             </Link>
           )
         })}
         <button
           onClick={() => setOpen(true)}
-          className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
+          className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors relative ${
             isMoreActive ? 'text-blue-600' : 'text-gray-500'
           }`}
         >
-          <MoreHorizontal size={20} strokeWidth={isMoreActive ? 2.5 : 1.75} />
+          {isMoreActive && (
+            <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-blue-600 rounded-full" />
+          )}
+          <div className={`p-1.5 rounded-xl transition-colors ${isMoreActive ? 'bg-blue-50' : ''}`}>
+            <MoreHorizontal size={18} strokeWidth={isMoreActive ? 2.5 : 1.75} />
+          </div>
           Mais
         </button>
       </nav>
@@ -165,13 +175,13 @@ export default function BottomTabBar({ perfil }: { perfil: Perfil }) {
                     onClick={() => setOpen(false)}
                     className={`flex flex-col items-center gap-1.5 p-3 rounded-xl text-xs font-medium transition-colors ${
                       isActive
-                        ? 'bg-blue-50 text-blue-700'
+                        ? 'bg-blue-600 text-white'
                         : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                     }`}
                   >
                     <Icon
                       size={22}
-                      className={isActive ? 'text-blue-600' : 'text-gray-500'}
+                      className={isActive ? 'text-white' : 'text-gray-500'}
                     />
                     {label}
                   </Link>

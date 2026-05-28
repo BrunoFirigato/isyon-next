@@ -142,7 +142,7 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
 
       {/* Lista vazia */}
       {produtos.length === 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
           <Package size={32} className="mx-auto text-gray-300 mb-3" />
           <p className="text-gray-400 text-sm">Nenhum produto encontrado.</p>
           <button
@@ -156,7 +156,7 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
 
       {/* ─── Tabela desktop ──────────────────────────────────────────────────── */}
       {produtos.length > 0 && (
-        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="hidden md:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
@@ -223,7 +223,7 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
       {produtos.length > 0 && (
         <div className="md:hidden space-y-3">
           {produtos.map((p) => (
-            <div key={p.id} className="bg-white rounded-xl border border-gray-200 p-4">
+            <div key={p.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">

@@ -154,7 +154,7 @@ export default function UsuariosView({ usuarios }: Props) {
 
       {/* ─── Tabela desktop ────────────────────────────────────────────────── */}
       {filtered.length > 0 && (
-        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="hidden md:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
@@ -266,7 +266,7 @@ export default function UsuariosView({ usuarios }: Props) {
             const info = perfilInfo(u.perfil)
             const isEditing = editing?.id === u.id
             return (
-              <div key={u.id} className="bg-white rounded-xl border border-gray-200 p-4">
+              <div key={u.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
                     <p className="font-medium text-gray-900">{u.nome}</p>
@@ -342,7 +342,7 @@ export default function UsuariosView({ usuarios }: Props) {
       )}
 
       {filtered.length === 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
           <p className="text-gray-400 text-sm">
             {search ? 'Nenhum usuário encontrado.' : 'Nenhum usuário cadastrado.'}
           </p>

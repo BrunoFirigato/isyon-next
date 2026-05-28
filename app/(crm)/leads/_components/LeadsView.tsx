@@ -215,7 +215,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
 
       {/* Lista vazia */}
       {leads.length === 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
           <p className="text-gray-400 text-sm">Nenhum lead encontrado.</p>
           <button
             onClick={() => { setEditingLead(null); setFormOpen(true) }}
@@ -228,7 +228,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
 
       {/* Tabela — desktop */}
       {leads.length > 0 && (
-        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="hidden md:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
@@ -319,7 +319,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
       {leads.length > 0 && (
         <div className="md:hidden space-y-3">
           {leads.map((lead) => (
-            <div key={lead.id} className="bg-white rounded-xl border border-gray-200 p-4">
+            <div key={lead.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div>
                   <p className="font-medium text-gray-900">{lead.nome}</p>

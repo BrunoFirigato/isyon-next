@@ -82,7 +82,7 @@ export default function OpsView({ ops }: Props) {
     const seg = segmentos.find((s) => s.value === op.segmento)
 
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-3.5 group hover:border-blue-200 hover:shadow-sm transition-all">
+      <div className="bg-white border border-gray-100 rounded-xl p-3.5 shadow-sm group hover:border-blue-200 hover:shadow-md transition-all">
         <div className="flex items-start justify-between gap-2 mb-2">
           <p className="text-sm font-medium text-gray-900 leading-snug">{op.titulo}</p>
           {seg && (
@@ -132,13 +132,13 @@ export default function OpsView({ ops }: Props) {
   function ClosedList({ items }: { items: Oportunidade[] }) {
     if (items.length === 0) {
       return (
-        <div className="bg-white rounded-xl border border-gray-200 py-14 text-center">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-14 text-center">
           <p className="text-sm text-gray-400">Nenhuma oportunidade aqui.</p>
         </div>
       )
     }
     return (
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="divide-y divide-gray-50">
           {items.map((op) => (
             <div key={op.id} className="px-5 py-3.5 flex items-center justify-between group">

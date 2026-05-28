@@ -93,7 +93,7 @@ const STEP_COLORS: Record<string, { done: string; active: string; text: string }
 function JornadaStatus({ status }: { status: string }) {
   if (status === 'perdido') {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Jornada</p>
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
@@ -106,7 +106,7 @@ function JornadaStatus({ status }: { status: string }) {
   const currentIdx = JORNADA.findIndex(s => s.value === status)
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Jornada</p>
       <div className="flex items-center gap-0">
         {JORNADA.map((step, idx) => {
@@ -283,7 +283,7 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
       </div>
 
       {/* Card do lead */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-4">
         <div className="flex items-start gap-4">
           <div className={`w-12 h-12 rounded-xl ${avatarBg(lead.nome)} text-white font-bold text-lg flex items-center justify-center shrink-0`}>
             {initials(lead.nome)}
@@ -356,7 +356,7 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
 
       {/* Modal inline de e-mail */}
       {showEmail && lead.email && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-4 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-4 overflow-hidden">
           {/* Cabeçalho */}
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
             <div className="flex items-center gap-2">
@@ -430,7 +430,7 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
 
       {/* Oportunidade(s) vinculada(s) */}
       {oportunidades.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 mb-4">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-4">
           <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100">
             <TrendingUp size={15} className="text-gray-400" />
             <h2 className="text-sm font-semibold text-gray-900">
@@ -464,7 +464,7 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
       )}
 
       {/* Histórico de interações */}
-      <div className="bg-white rounded-xl border border-gray-200 mb-4">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-4">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <MessageSquare size={15} className="text-gray-400" />
@@ -557,27 +557,37 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
                 )}
               </div>
             )
-            : historico.map((h) => {
+            : historico.map((h, idx) => {
                 const { icon, label } = tipoHistoricoIcon(h.tipo)
+                const isLast = idx === historico.length - 1
                 return (
-                  <div key={h.id} className="flex gap-3 py-3 border-b border-gray-50 last:border-0">
-                    <span className="text-lg leading-none mt-0.5 shrink-0">{icon}</span>
-                    <div className="flex-1 min-w-0">
+                  <div key={h.id} className="flex gap-3 relative">
+                    {/* Timeline column */}
+                    <div className="flex flex-col items-center shrink-0 w-9 pt-3.5">
+                      <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-base leading-none shrink-0">
+                        {icon}
+                      </div>
+                      {!isLast && <div className="w-px flex-1 bg-gray-100 mt-1" />}
+                    </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 py-3 pb-4">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</span>
-                          {h.usuario_nome && (
-                            <span className="text-xs text-gray-400 ml-2">por {h.usuario_nome}</span>
-                          )}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-semibold text-gray-700">{label}</span>
+                            {h.usuario_nome && (
+                              <span className="text-xs text-gray-400">· {h.usuario_nome}</span>
+                            )}
+                          </div>
                           {h.texto && (
-                            <p className="text-sm text-gray-700 mt-0.5">{h.texto}</p>
+                            <p className="text-sm text-gray-600 mt-0.5 leading-snug">{h.texto}</p>
                           )}
                         </div>
                         {h.valor != null && (
                           <span className="text-sm font-semibold text-gray-700 shrink-0">{brl(h.valor)}</span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-400 mt-1">{fmtDatetime(h.criado_em)}</p>
+                      <p className="text-xs text-gray-400 mt-1.5">{fmtDatetime(h.criado_em)}</p>
                     </div>
                   </div>
                 )
