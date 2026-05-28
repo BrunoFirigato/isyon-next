@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { X } from 'lucide-react'
+import { X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Transportadora } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { fetchCnpj, maskCnpj } from '@/lib/cnpj'
 
 interface Props {
   transportadora?: Transportadora
@@ -29,9 +30,30 @@ export default function TransportadoraFormModal({ transportadora, onClose }: Pro
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false)
+  const [cnpjStatus, setCnpjStatus] = useState<'success' | 'notfound' | null>(null)
 
   function set(field: string, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
+  }
+
+  async function handleCnpjChange(raw: string) {
+    const masked = maskCnpj(raw)
+    set('cnpj', masked)
+    setCnpjStatus(null)
+    const digits = masked.replace(/\D/g, '')
+    if (digits.length !== 14) return
+    setBuscandoCnpj(true)
+    const data = await fetchCnpj(digits)
+    setBuscandoCnpj(false)
+    if (!data) { setCnpjStatus('notfound'); return }
+    setForm((f) => ({
+      ...f,
+      nome:     f.nome     || data.nome_fantasia || data.razao_social || f.nome,
+      telefone: data.ddd_telefone_1 ?? f.telefone,
+      email:    data.email ?? f.email,
+    }))
+    setCnpjStatus('success')
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -98,13 +120,21 @@ export default function TransportadoraFormModal({ transportadora, onClose }: Pro
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">CNPJ</label>
-              <input
-                type="text"
-                value={form.cnpj}
-                onChange={(e) => set('cnpj', e.target.value)}
-                placeholder="00.000.000/0000-00"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={form.cnpj}
+                  onChange={(e) => handleCnpjChange(e.target.value)}
+                  placeholder="00.000.000/0000-00" maxLength={18}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                />
+                {buscandoCnpj && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" />}
+                {!buscandoCnpj && cnpjStatus === 'success' && <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
+                {!buscandoCnpj && cnpjStatus === 'notfound' && <AlertCircle size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500" />}
+              </div>
+              {buscandoCnpj && <p className="text-xs text-blue-500 mt-1">Buscando na Receita Federal...</p>}
+              {!buscandoCnpj && cnpjStatus === 'success' && <p className="text-xs text-green-600 mt-1">Preenchido automaticamente ✓</p>}
+              {!buscandoCnpj && cnpjStatus === 'notfound' && <p className="text-xs text-amber-600 mt-1">CNPJ não encontrado</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Contato</label>

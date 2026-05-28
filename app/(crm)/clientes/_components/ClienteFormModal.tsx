@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Search } from 'lucide-react'
+import { X, Search, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Cliente, STATUS_CLIENTE, ESTADOS_BR, TIPOS, tipoLabel } from './types'
+import { fetchCnpj } from '@/lib/cnpj'
 
 const ORIGEM_OPTIONS = [
   'Site', 'Indicação', 'LinkedIn', 'WhatsApp',
@@ -67,10 +68,37 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [loadingCep, setLoadingCep] = useState(false)
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false)
+  const [cnpjStatus, setCnpjStatus] = useState<'success' | 'notfound' | null>(null)
   const [tab, setTab] = useState<'dados' | 'endereco'>('dados')
 
   function set(field: keyof FormData, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
+  }
+
+  async function handleCpfCnpjChange(value: string) {
+    set('cpf_cnpj', value)
+    setCnpjStatus(null)
+    const digits = value.replace(/\D/g, '')
+    if (digits.length !== 14) return
+    setBuscandoCnpj(true)
+    const data = await fetchCnpj(digits)
+    setBuscandoCnpj(false)
+    if (!data) { setCnpjStatus('notfound'); return }
+    setForm((f) => ({
+      ...f,
+      empresa:    data.nome_fantasia || data.razao_social || f.empresa,
+      email:      data.email         ?? f.email,
+      telefone:   data.ddd_telefone_1 ?? f.telefone,
+      cep:        data.cep           ?? f.cep,
+      rua:        data.logradouro    ?? f.rua,
+      numero:     data.numero        ?? f.numero,
+      complemento:data.complemento  ?? f.complemento,
+      bairro:     data.bairro        ?? f.bairro,
+      cidade:     data.municipio     ?? f.cidade,
+      estado:     data.uf            ?? f.estado,
+    }))
+    setCnpjStatus('success')
   }
 
   async function buscarCep() {
@@ -187,9 +215,18 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
 
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1.5">CPF / CNPJ</label>
-                    <input type="text" value={form.cpf_cnpj} onChange={(e) => set('cpf_cnpj', e.target.value)}
-                      placeholder="000.000.000-00"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <div className="relative">
+                      <input type="text" value={form.cpf_cnpj}
+                        onChange={(e) => handleCpfCnpjChange(e.target.value)}
+                        placeholder="000.000.000-00 ou CNPJ"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      {buscandoCnpj && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" />}
+                      {!buscandoCnpj && cnpjStatus === 'success' && <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
+                      {!buscandoCnpj && cnpjStatus === 'notfound' && <AlertCircle size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500" />}
+                    </div>
+                    {buscandoCnpj && <p className="text-xs text-blue-500 mt-1">Buscando na Receita Federal...</p>}
+                    {!buscandoCnpj && cnpjStatus === 'success' && <p className="text-xs text-green-600 mt-1">Dados preenchidos automaticamente ✓</p>}
+                    {!buscandoCnpj && cnpjStatus === 'notfound' && <p className="text-xs text-amber-600 mt-1">CNPJ não encontrado na Receita Federal</p>}
                   </div>
 
                   <div>

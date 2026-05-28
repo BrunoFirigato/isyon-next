@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X } from 'lucide-react'
+import { X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Parceiro, type Vendedor, ESTADOS_BR } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { fetchCnpj, maskCnpj } from '@/lib/cnpj'
 
 interface Props {
   parceiro?: Parceiro
@@ -29,9 +30,29 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
   const [vendedorMaqId, setVendedorMaqId] = useState(parceiro?.vendedor_maq_id ?? '')
   const [vendedorPecId, setVendedorPecId] = useState(parceiro?.vendedor_pec_id ?? '')
 
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false)
+  const [cnpjStatus, setCnpjStatus] = useState<'success' | 'notfound' | null>(null)
   const [vendedores, setVendedores] = useState<Vendedor[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  async function handleCnpjChange(raw: string) {
+    const masked = maskCnpj(raw)
+    setCnpj(masked)
+    setCnpjStatus(null)
+    const digits = masked.replace(/\D/g, '')
+    if (digits.length !== 14) return
+    setBuscandoCnpj(true)
+    const data = await fetchCnpj(digits)
+    setBuscandoCnpj(false)
+    if (!data) { setCnpjStatus('notfound'); return }
+    if (!nome.trim()) setNome(data.nome_fantasia || data.razao_social || '')
+    if (data.email) setEmail(data.email)
+    if (data.ddd_telefone_1) setTelefone(data.ddd_telefone_1)
+    if (data.municipio) setCidade(data.municipio)
+    if (data.uf) setEstado(data.uf)
+    setCnpjStatus('success')
+  }
 
   useEffect(() => {
     const supabase = createClient()
@@ -127,11 +148,19 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
               {/* CNPJ */}
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1.5">CNPJ</label>
-                <input
-                  type="text" value={cnpj} onChange={(e) => setCnpj(e.target.value)}
-                  placeholder="00.000.000/0000-00"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type="text" value={cnpj} onChange={(e) => handleCnpjChange(e.target.value)}
+                    placeholder="00.000.000/0000-00" maxLength={18}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                  />
+                  {buscandoCnpj && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" />}
+                  {!buscandoCnpj && cnpjStatus === 'success' && <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
+                  {!buscandoCnpj && cnpjStatus === 'notfound' && <AlertCircle size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500" />}
+                </div>
+                {buscandoCnpj && <p className="text-xs text-blue-500 mt-1">Buscando na Receita Federal...</p>}
+                {!buscandoCnpj && cnpjStatus === 'success' && <p className="text-xs text-green-600 mt-1">Dados preenchidos automaticamente ✓</p>}
+                {!buscandoCnpj && cnpjStatus === 'notfound' && <p className="text-xs text-amber-600 mt-1">CNPJ não encontrado na Receita Federal</p>}
               </div>
 
               {/* Status */}

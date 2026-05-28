@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X, MessageCircle, Info, Mail, BarChart2 } from 'lucide-react'
+import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X, MessageCircle, Info, Mail, BarChart2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { type Segmento } from '@/app/(crm)/_components/SegmentosContext'
+import { fetchCnpj, maskCnpj } from '@/lib/cnpj'
 
 const DEFAULT_WA_TEMPLATE = 'Olá {nome}, tudo bem? Gostaria de entrar em contato para conhecer melhor suas necessidades.'
 
@@ -97,17 +98,38 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
   })
   const [savingEmpresa, setSavingEmpresa] = useState(false)
   const [buscandoCep,   setBuscandoCep]   = useState(false)
+  const [buscandoCnpj,  setBuscandoCnpj]  = useState(false)
+  const [cnpjStatus,    setCnpjStatus]    = useState<'success' | 'notfound' | null>(null)
 
   function setE(field: keyof typeof empresa, value: string) {
     setEmpresa((prev) => ({ ...prev, [field]: value }))
   }
 
-  function maskCnpj(v: string) {
-    return v.replace(/\D/g,'').slice(0,14)
-      .replace(/^(\d{2})(\d)/,'$1.$2')
-      .replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3')
-      .replace(/\.(\d{3})(\d)/,'.$1/$2')
-      .replace(/(\d{4})(\d)/,'$1-$2')
+  async function handleCnpjChange(raw: string) {
+    const masked = maskCnpj(raw)
+    setE('cnpj', masked)
+    setCnpjStatus(null)
+    const digits = masked.replace(/\D/g, '')
+    if (digits.length !== 14) return
+    setBuscandoCnpj(true)
+    const data = await fetchCnpj(digits)
+    setBuscandoCnpj(false)
+    if (!data) { setCnpjStatus('notfound'); return }
+    setEmpresa((prev) => ({
+      ...prev,
+      razao_social:  data.razao_social  ?? prev.razao_social,
+      nome_fantasia: data.nome_fantasia ?? prev.nome_fantasia,
+      rua:           data.logradouro    ?? prev.rua,
+      numero:        data.numero        ?? prev.numero,
+      complemento:   data.complemento  ?? prev.complemento,
+      bairro:        data.bairro        ?? prev.bairro,
+      cidade:        data.municipio     ?? prev.cidade,
+      estado:        data.uf            ?? prev.estado,
+      cep:           data.cep ? maskCep(data.cep) : prev.cep,
+      telefone:      data.ddd_telefone_1 ?? prev.telefone,
+      email_empresa: data.email         ?? prev.email_empresa,
+    }))
+    setCnpjStatus('success')
   }
 
   function maskCep(v: string) {
@@ -350,9 +372,29 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1.5">CNPJ</label>
-                  <input value={maskCnpj(empresa.cnpj)} onChange={(e) => setE('cnpj', maskCnpj(e.target.value))}
-                    placeholder="00.000.000/0000-00" maxLength={18}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
+                  <div className="relative">
+                    <input value={maskCnpj(empresa.cnpj)} onChange={(e) => handleCnpjChange(e.target.value)}
+                      placeholder="00.000.000/0000-00" maxLength={18}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
+                    {buscandoCnpj && (
+                      <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" />
+                    )}
+                    {!buscandoCnpj && cnpjStatus === 'success' && (
+                      <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
+                    )}
+                    {!buscandoCnpj && cnpjStatus === 'notfound' && (
+                      <AlertCircle size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500" />
+                    )}
+                  </div>
+                  {buscandoCnpj && (
+                    <p className="text-xs text-blue-500 mt-1">Buscando na Receita Federal...</p>
+                  )}
+                  {!buscandoCnpj && cnpjStatus === 'success' && (
+                    <p className="text-xs text-green-600 mt-1">Dados preenchidos automaticamente ✓</p>
+                  )}
+                  {!buscandoCnpj && cnpjStatus === 'notfound' && (
+                    <p className="text-xs text-amber-600 mt-1">CNPJ não encontrado na Receita Federal</p>
+                  )}
                 </div>
               </div>
             </div>
