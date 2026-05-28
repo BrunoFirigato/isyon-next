@@ -9,6 +9,7 @@ export interface Oportunidade {
   lead_id: string | null
   cliente_id: string | null
   vendedor_id: string | null
+  prazo_fechamento: string | null
   motivo_perda: string | null
   criado_em: string
   atualizado_em: string
