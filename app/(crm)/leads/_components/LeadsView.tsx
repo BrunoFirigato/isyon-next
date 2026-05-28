@@ -90,6 +90,12 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
     handleContato(lead, 'whatsapp')
   }
 
+  function openEmail(lead: Lead) {
+    if (!lead.email) return
+    window.open(`mailto:${lead.email}`, '_blank')
+    handleContato(lead, 'email')
+  }
+
   async function handleDelete(id: string) {
     const supabase = createClient()
     const { error } = await supabase.from('leads').delete().eq('id', id)
@@ -227,10 +233,10 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                         </button>
                       )}
                       {lead.status !== 'convertido' && lead.email && (
-                        <Link href={`/leads/${lead.id}`} title="Enviar e-mail"
+                        <button onClick={() => openEmail(lead)} title="Enviar e-mail"
                           className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
                           <Mail size={15} />
-                        </Link>
+                        </button>
                       )}
                       {lead.status !== 'convertido' && (
                         <button
