@@ -21,6 +21,8 @@ import {
   X,
   BookOpen,
   Package,
+  Calendar,
+  Megaphone,
 } from 'lucide-react'
 
 type Perfil = 'admin' | 'gestor' | 'vendedor' | 'financeiro'
@@ -38,6 +40,13 @@ interface MoreGroup {
 }
 
 const moreGroups: MoreGroup[] = [
+  {
+    label: 'Comercial',
+    items: [
+      { href: '/agenda',    label: 'Agenda',    icon: Calendar },
+      { href: '/campanhas', label: 'Campanhas', icon: Megaphone },
+    ],
+  },
   {
     label: 'Vendas',
     items: [

@@ -18,6 +18,8 @@ import {
   ShieldAlert,
   BookOpen,
   Package,
+  Calendar,
+  Megaphone,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -39,6 +41,8 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { href: '/leads',         label: 'Leads',        icon: Target },
       { href: '/oportunidades', label: 'Oportunidades',icon: Briefcase },
       { href: '/clientes',      label: 'Clientes',     icon: Building2 },
+      { href: '/agenda',        label: 'Agenda',       icon: Calendar },
+      { href: '/campanhas',     label: 'Campanhas',    icon: Megaphone },
     ],
   },
   {

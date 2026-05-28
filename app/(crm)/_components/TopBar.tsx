@@ -18,6 +18,8 @@ const PAGE_LABELS: Record<string, string> = {
   '/produtos':      'Produtos',
   '/propostas':     'Propostas',
   '/pedidos':       'Pedidos',
+  '/agenda':        'Agenda',
+  '/campanhas':     'Campanhas',
   '/financeiro':    'Financeiro',
   '/relatorios':    'Relatórios',
   '/configuracoes': 'Configurações',
