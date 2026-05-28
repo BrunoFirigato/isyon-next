@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Sidebar from './_components/Sidebar'
+import TopBar from './_components/TopBar'
 import BottomTabBar from './_components/BottomTabBar'
 import { ToastProvider } from './_components/Toast'
 import { TenantProvider } from './_components/TenantContext'
@@ -54,6 +55,7 @@ export default async function CrmLayout({
           <div className="flex h-screen overflow-hidden bg-gray-50">
             <Sidebar userEmail={user.email ?? ''} perfil={perfil} />
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+              <TopBar userEmail={user.email ?? ''} />
               <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
                 {children}
               </main>
