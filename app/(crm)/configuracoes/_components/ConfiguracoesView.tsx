@@ -348,31 +348,11 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">CNPJ</label>
-                    <input value={maskCnpj(empresa.cnpj)} onChange={(e) => setE('cnpj', maskCnpj(e.target.value))}
-                      placeholder="00.000.000/0000-00" maxLength={18}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Nome no sistema</label>
-                    <input value={empresa.nome} onChange={(e) => setE('nome', e.target.value)}
-                      required placeholder="Nome exibido no sistema"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div>
-                <div className="flex gap-4 pt-1">
-                  <div>
-                    <p className="text-xs font-medium text-gray-500">Plano</p>
-                    <p className="text-sm text-gray-700 mt-0.5">{tenant.plano ?? '—'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-500">Status</p>
-                    <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full mt-0.5 ${
-                      tenant.status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                    }`}>{tenant.status ?? '—'}</span>
-                  </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">CNPJ</label>
+                  <input value={maskCnpj(empresa.cnpj)} onChange={(e) => setE('cnpj', maskCnpj(e.target.value))}
+                    placeholder="00.000.000/0000-00" maxLength={18}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
                 </div>
               </div>
             </div>
