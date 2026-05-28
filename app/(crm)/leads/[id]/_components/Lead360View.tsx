@@ -227,10 +227,12 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
                     <TrendingUp size={11} /> Converter
                   </button>
                 )}
-                <button onClick={() => setEditOpen(true)}
-                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 border border-gray-200 hover:border-blue-300 px-2.5 py-1 rounded-lg transition-colors">
-                  <Pencil size={11} /> Editar
-                </button>
+                {!isConvertido && (
+                  <button onClick={() => setEditOpen(true)}
+                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 border border-gray-200 hover:border-blue-300 px-2.5 py-1 rounded-lg transition-colors">
+                    <Pencil size={11} /> Editar
+                  </button>
+                )}
               </div>
             </div>
 

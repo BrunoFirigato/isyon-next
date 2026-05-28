@@ -191,13 +191,15 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                           <TrendingUp size={15} />
                         </button>
                       )}
-                      <button
-                        onClick={() => { setEditingLead(lead); setFormOpen(true) }}
-                        title="Editar"
-                        className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"
-                      >
-                        <Pencil size={15} />
-                      </button>
+                      {lead.status !== 'convertido' && (
+                        <button
+                          onClick={() => { setEditingLead(lead); setFormOpen(true) }}
+                          title="Editar"
+                          className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                      )}
                       <button
                         onClick={() => setDeletingId(lead.id)}
                         title="Excluir"
@@ -255,12 +257,14 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                   >
                     <LayoutGrid size={15} />
                   </Link>
-                  <button
-                    onClick={() => { setEditingLead(lead); setFormOpen(true) }}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
-                  >
-                    <Pencil size={15} />
-                  </button>
+                  {lead.status !== 'convertido' && (
+                    <button
+                      onClick={() => { setEditingLead(lead); setFormOpen(true) }}
+                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                  )}
                   <button
                     onClick={() => setDeletingId(lead.id)}
                     className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500"
