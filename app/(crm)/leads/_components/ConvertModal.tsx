@@ -10,7 +10,8 @@ import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 const ETAPAS = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação']
 
-interface VendedorRef { id: string; nome: string }
+interface VendedorRef  { id: string; nome: string }
+interface EmpresaRef   { id: string; nome: string; razao_social: string | null }
 
 interface Props {
   lead: Lead
@@ -23,38 +24,40 @@ export default function ConvertModal({ lead, onClose }: Props) {
   const tenantId = useTenantId()
 
   const [titulo,           setTitulo]          = useState(lead.empresa ? `${lead.empresa} — ${lead.nome}` : lead.nome)
-  const [empresa,          setEmpresa]          = useState(lead.empresa ?? '')
   const [valor,            setValor]            = useState('')
   const [etapa,            setEtapa]            = useState('Prospecção')
   const [vendedorId,       setVendedorId]       = useState('')
+  const [empresaId,        setEmpresaId]        = useState('')
   const [prazoFechamento,  setPrazoFechamento]  = useState('')
   const [saving,           setSaving]           = useState(false)
   const [error,            setError]            = useState('')
 
   const [vendedores,       setVendedores]       = useState<VendedorRef[]>([])
+  const [empresas,         setEmpresas]         = useState<EmpresaRef[]>([])
   const [autoPreenchido,   setAutoPreenchido]   = useState(false)
   const [loadingVendedor,  setLoadingVendedor]  = useState(true)
 
-  // Carrega vendedores e tenta auto-preencher pelo e-mail do usuário logado
+  // Carrega vendedores, empresas e tenta auto-preencher pelo e-mail do usuário logado
   useEffect(() => {
     const supabase = createClient()
 
     async function init() {
-      const [{ data: vends }, { data: { user } }] = await Promise.all([
+      const [{ data: vends }, { data: emps }, { data: { user } }] = await Promise.all([
         supabase.from('vendedores').select('id, nome').eq('status', 'ativo').order('nome'),
+        supabase.from('empresas').select('id, nome, razao_social').eq('status', 'ativa').order('nome'),
         supabase.auth.getUser(),
       ])
 
       if (vends) setVendedores(vends)
 
-      if (user?.email && vends) {
-        const match = vends.find(v => {
-          // Busca pelo e-mail exato do usuário logado
-          return false // placeholder — completado abaixo com query direta
-        })
-        void match // Evita warning
+      // Auto-seleciona empresa se houver apenas uma
+      if (emps) {
+        setEmpresas(emps)
+        if (emps.length === 1) setEmpresaId(emps[0].id)
+      }
 
-        // Query direta para encontrar o vendedor pelo e-mail
+      // Auto-preenche vendedor pelo e-mail do usuário logado
+      if (user?.email) {
         const { data: meu } = await supabase
           .from('vendedores')
           .select('id')
@@ -86,15 +89,16 @@ export default function ConvertModal({ lead, onClose }: Props) {
     const { data: prospect, error: prospectErr } = await supabase
       .from('clientes')
       .insert({
-        tenant_id: tenantId,
-        nome:      lead.nome,
-        empresa:   empresa.trim() || null,
-        email:     lead.email     ?? null,
-        telefone:  lead.telefone  ?? null,
-        tipo:      'direto',
-        status:    'prospect',
-        origem:    lead.origem    ?? null,
-        lead_id:   lead.id,
+        tenant_id:  tenantId,
+        nome:       lead.nome,
+        empresa:    lead.empresa   ?? null,   // empresa do cliente (texto do lead)
+        empresa_id: empresaId      || null,   // filial do tenant responsável
+        email:      lead.email     ?? null,
+        telefone:   lead.telefone  ?? null,
+        tipo:       'direto',
+        status:     'prospect',
+        origem:     lead.origem    ?? null,
+        lead_id:    lead.id,
       })
       .select('id')
       .single()
@@ -115,6 +119,7 @@ export default function ConvertModal({ lead, onClose }: Props) {
       lead_id:          lead.id,
       cliente_id:       prospect.id,
       vendedor_id:      vendedorId  || null,
+      empresa_id:       empresaId   || null,
       prazo_fechamento: prazoFechamento || null,
     })
 
@@ -170,17 +175,27 @@ export default function ConvertModal({ lead, onClose }: Props) {
               <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)} required className={inputCls} />
             </div>
 
-            {/* Empresa */}
-            <div>
-              <label className={labelCls}>Empresa</label>
-              <input
-                type="text"
-                value={empresa}
-                onChange={e => setEmpresa(e.target.value)}
-                placeholder="Razão social ou nome fantasia"
-                className={inputCls}
-              />
-            </div>
+            {/* Empresa (filial do tenant responsável) */}
+            {empresas.length > 0 && (
+              <div>
+                <label className={labelCls}>
+                  Empresa
+                  {empresas.length === 1 && (
+                    <span className="ml-1.5 text-[10px] font-normal text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded-full">
+                      auto
+                    </span>
+                  )}
+                </label>
+                <select value={empresaId} onChange={e => setEmpresaId(e.target.value)} className={selectCls}>
+                  {empresas.length > 1 && <option value="">Selecione a empresa...</option>}
+                  {empresas.map(e => (
+                    <option key={e.id} value={e.id}>
+                      {e.razao_social ?? e.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Valor + Etapa */}
             <div className="grid grid-cols-2 gap-3">
