@@ -11,7 +11,7 @@ import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 const ETAPAS = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação']
 
 interface VendedorRef  { id: string; nome: string }
-interface EmpresaRef   { id: string; nome: string; razao_social: string | null }
+interface EmpresaRef   { id: string; nome: string; sigla: string }
 
 interface Props {
   lead: Lead
@@ -44,7 +44,7 @@ export default function ConvertModal({ lead, onClose }: Props) {
     async function init() {
       const [{ data: vends }, { data: emps }, { data: { user } }] = await Promise.all([
         supabase.from('vendedores').select('id, nome').eq('status', 'ativo').order('nome'),
-        supabase.from('empresas').select('id, nome, razao_social').eq('status', 'ativa').order('nome'),
+        supabase.from('empresas').select('id, nome, sigla').order('nome'),
         supabase.auth.getUser(),
       ])
 
@@ -189,7 +189,7 @@ export default function ConvertModal({ lead, onClose }: Props) {
                   {empresas.length > 1 && <option value="">Selecione a empresa...</option>}
                   {empresas.map(e => (
                     <option key={e.id} value={e.id}>
-                      {e.razao_social ?? e.nome}
+                      {e.nome} ({e.sigla})
                     </option>
                   ))}
                 </select>
