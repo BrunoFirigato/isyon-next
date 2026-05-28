@@ -33,16 +33,22 @@ interface NavItem {
 
 const navGroups: { label: string; items: NavItem[] }[] = [
   {
-    label: 'Principal',
+    label: 'Comercial',
     items: [
       { href: '/dashboard',     label: 'Dashboard',    icon: LayoutDashboard },
       { href: '/leads',         label: 'Leads',         icon: Target },
       { href: '/oportunidades', label: 'Oportunidades', icon: Briefcase },
       { href: '/clientes',      label: 'Clientes',      icon: Building2 },
       { href: '/parceiros',     label: 'Parceiros',     icon: Users2 },
-      { href: '/produtos',      label: 'Produtos',      icon: Package },
-      { href: '/propostas',     label: 'Propostas',     icon: FileText },
-      { href: '/pedidos',       label: 'Pedidos',       icon: ShoppingCart },
+    ],
+  },
+  {
+    label: 'Operacional',
+    items: [
+      { href: '/propostas',  label: 'Propostas',  icon: FileText },
+      { href: '/pedidos',    label: 'Pedidos',    icon: ShoppingCart },
+      { href: '/produtos',   label: 'Produtos',   icon: Package },
+      { href: '/vendedores', label: 'Vendedores', icon: UserCog, perfis: ['admin', 'gestor'] },
     ],
   },
   {
@@ -56,9 +62,8 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: 'Administração',
     items: [
       { href: '/configuracoes', label: 'Configurações', icon: Settings2 },
-      { href: '/vendedores',    label: 'Vendedores',    icon: Users2,    perfis: ['admin', 'gestor'] },
-      { href: '/cadastros',     label: 'Cadastros',     icon: BookOpen,  perfis: ['admin', 'gestor'] },
-      { href: '/usuarios',      label: 'Usuários',      icon: UserCog,   perfis: ['admin'] },
+      { href: '/cadastros',     label: 'Cadastros',     icon: BookOpen,   perfis: ['admin', 'gestor'] },
+      { href: '/usuarios',      label: 'Usuários',      icon: Users2,     perfis: ['admin'] },
       { href: '/superadmin',    label: 'Superadmin',    icon: ShieldAlert, perfis: ['admin'] },
     ],
   },
