@@ -160,7 +160,7 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
     e.preventDefault()
     setSavingEmpresa(true)
     const supabase = createClient()
-    await supabase.from('tenants').update({
+    const { error, count } = await supabase.from('tenants').update({
       nome:               empresa.nome.trim()               || tenant.nome,
       razao_social:       empresa.razao_social.trim()       || null,
       nome_fantasia:      empresa.nome_fantasia.trim()      || null,
@@ -180,8 +180,16 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
       telefone:           empresa.telefone.trim()           || null,
       email_empresa:      empresa.email_empresa.trim()      || null,
       website:            empresa.website.trim()            || null,
-    }).eq('id', tenant.id)
+    }, { count: 'exact' }).eq('id', tenant.id)
     setSavingEmpresa(false)
+    if (error) {
+      toast(`Erro ao salvar: ${error.message}`, 'error')
+      return
+    }
+    if (count === 0) {
+      toast('Sem permissão para atualizar. Verifique as políticas RLS da tabela tenants.', 'error')
+      return
+    }
     toast('Dados da empresa salvos!')
     router.refresh()
   }
