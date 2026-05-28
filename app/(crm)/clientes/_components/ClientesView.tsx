@@ -148,7 +148,7 @@ export default function ClientesView({ clientes, currentStatus, currentQ }: Prop
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">CPF / CNPJ</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Contato</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Tipo</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Segmento</th>
+                {segmentos.length > 0 && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Segmento</th>}
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -180,7 +180,7 @@ export default function ClientesView({ clientes, currentStatus, currentQ }: Prop
                       <td className="px-4 py-3">
                         <span className="text-xs text-gray-600">{tipoLabel(c.tipo)}</span>
                       </td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">{segmentoLabel(c.segmento, segmentos)}</td>
+                      {segmentos.length > 0 && <td className="px-4 py-3 text-gray-500 text-xs">{segmentoLabel(c.segmento, segmentos)}</td>}
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${st.bg} ${st.text}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />

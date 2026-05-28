@@ -7,10 +7,7 @@ export interface Segmento {
   label: string
 }
 
-export const DEFAULT_SEGMENTOS: Segmento[] = [
-  { value: 'maquinas', label: 'Máquinas' },
-  { value: 'pecas', label: 'Peças' },
-]
+export const DEFAULT_SEGMENTOS: Segmento[] = []
 
 const SegmentosContext = createContext<Segmento[]>(DEFAULT_SEGMENTOS)
 
@@ -22,7 +19,7 @@ export function SegmentosProvider({
   children: React.ReactNode
 }) {
   return (
-    <SegmentosContext.Provider value={segmentos.length > 0 ? segmentos : DEFAULT_SEGMENTOS}>
+    <SegmentosContext.Provider value={segmentos}>
       {children}
     </SegmentosContext.Provider>
   )

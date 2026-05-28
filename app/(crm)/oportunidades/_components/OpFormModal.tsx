@@ -127,19 +127,21 @@ export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">Segmento</label>
-            <select
-              value={form.segmento}
-              onChange={(e) => set('segmento', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              <option value="">Selecione...</option>
-              {segmentos.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </div>
+          {segmentos.length > 0 && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Segmento</label>
+              <select
+                value={form.segmento}
+                onChange={(e) => set('segmento', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="">Selecione...</option>
+                {segmentos.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">

@@ -148,7 +148,7 @@ export default function VendedoresView({ vendedores, currentStatus, currentQ }: 
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Nome</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Contato</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Cargo</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Segmentos</th>
+                {segmentos.length > 0 && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Segmentos</th>}
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Comissão</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3" />
@@ -166,7 +166,7 @@ export default function VendedoresView({ vendedores, currentStatus, currentQ }: 
                     {v.telefone && <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"><Phone size={11} className="text-gray-400" />{v.telefone}</p>}
                   </td>
                   <td className="px-4 py-3 text-gray-500">{v.cargo ?? '—'}{v.ramal ? ` · r.${v.ramal}` : ''}</td>
-                  <td className="px-4 py-3 text-gray-500">{segmentosLabel(v.segmentos, segmentos)}</td>
+                  {segmentos.length > 0 && <td className="px-4 py-3 text-gray-500">{segmentosLabel(v.segmentos, segmentos)}</td>}
                   <td className="px-4 py-3 text-gray-500">
                     {v.perc_comissao != null ? `${v.perc_comissao}%` : '—'}
                   </td>

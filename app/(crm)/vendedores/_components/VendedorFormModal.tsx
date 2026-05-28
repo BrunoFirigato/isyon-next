@@ -190,30 +190,32 @@ export default function VendedorFormModal({ vendedor, onClose }: Props) {
             </div>
           </div>
 
-          {/* Segmentos */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Segmentos</label>
-            <div className="flex gap-3">
-              {segmentos.map(({ value, label }) => (
-                <label
-                  key={value}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition-colors ${
-                    form.segmentos.includes(value)
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={form.segmentos.includes(value)}
-                    onChange={() => toggleSegmento(value)}
-                    className="sr-only"
-                  />
-                  {label}
-                </label>
-              ))}
+          {/* Segmentos — só exibe se o tenant tiver segmentos configurados */}
+          {segmentos.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Segmentos</label>
+              <div className="flex gap-3 flex-wrap">
+                {segmentos.map(({ value, label }) => (
+                  <label
+                    key={value}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition-colors ${
+                      form.segmentos.includes(value)
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.segmentos.includes(value)}
+                      onChange={() => toggleSegmento(value)}
+                      className="sr-only"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {error && (
             <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2.5">
