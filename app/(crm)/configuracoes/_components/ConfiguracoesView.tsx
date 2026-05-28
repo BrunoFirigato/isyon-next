@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X, MessageCircle, Info, Mail } from 'lucide-react'
+import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X, MessageCircle, Info, Mail, BarChart2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { type Segmento } from '@/app/(crm)/_components/SegmentosContext'
@@ -188,256 +188,264 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
     router.refresh()
   }
 
+  const TABS = [
+    { key: 'empresa',      label: 'Empresa',      icon: Building2 },
+    { key: 'segmentos',    label: 'Segmentos',    icon: Tag },
+    { key: 'comunicacao',  label: 'Comunicação',  icon: MessageCircle },
+    { key: 'comercial',    label: 'Comercial',    icon: BarChart2 },
+  ] as const
+  type TabKey = typeof TABS[number]['key']
+  const [tab, setTab] = useState<TabKey>('empresa')
+
   return (
     <>
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Configurações</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Gerencie as configurações da empresa e preferências</p>
+      {/* Cabeçalho */}
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Configurações</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Gerencie as configurações da empresa e preferências</p>
+        </div>
       </div>
 
-      <div className="space-y-6 max-w-2xl">
+      {/* Abas */}
+      <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1">
+        {TABS.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              tab === key
+                ? 'bg-blue-600 text-white'
+                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <Icon size={14} />
+            {label}
+          </button>
+        ))}
+      </div>
 
-        {/* ─── Dados da empresa ──────────────────────────────────────────── */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
-            <Building2 size={16} className="text-gray-400" />
-            <h2 className="text-sm font-semibold text-gray-700">Dados da empresa</h2>
+      <div className="max-w-2xl">
+
+        {/* ─── Empresa ───────────────────────────────────────────────────── */}
+        {tab === 'empresa' && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
+              <Building2 size={16} className="text-gray-400" />
+              <h2 className="text-sm font-semibold text-gray-700">Dados da empresa</h2>
+            </div>
+            <form onSubmit={salvarEmpresa} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">Nome da empresa</label>
+                <input
+                  type="text" value={nomeEmpresa} onChange={(e) => setNomeEmpresa(e.target.value)}
+                  required
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Plano</label>
+                  <p className="text-sm text-gray-900 py-2">{tenant.plano ?? '—'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Status</label>
+                  <span className={`inline-block text-xs font-medium px-2 py-1 rounded-lg mt-1 ${
+                    tenant.status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {tenant.status ?? '—'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="submit" disabled={savingEmpresa}
+                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+              >
+                <Save size={14} />
+                {savingEmpresa ? 'Salvando...' : 'Salvar'}
+              </button>
+            </form>
           </div>
-          <form onSubmit={salvarEmpresa} className="p-5 space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Nome da empresa</label>
-              <input
-                type="text" value={nomeEmpresa} onChange={(e) => setNomeEmpresa(e.target.value)}
-                required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Plano</label>
-                <p className="text-sm text-gray-900 py-2">{tenant.plano ?? '—'}</p>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Status</label>
-                <span className={`inline-block text-xs font-medium px-2 py-1 rounded-lg mt-1 ${
-                  tenant.status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                }`}>
-                  {tenant.status ?? '—'}
-                </span>
-              </div>
-            </div>
-            <button
-              type="submit" disabled={savingEmpresa}
-              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              <Save size={14} />
-              {savingEmpresa ? 'Salvando...' : 'Salvar'}
-            </button>
-          </form>
-        </div>
+        )}
 
         {/* ─── Segmentos ─────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
-            <Tag size={16} className="text-gray-400" />
-            <div>
-              <h2 className="text-sm font-semibold text-gray-700">Segmentos de negócio</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Usados em oportunidades, propostas, pedidos e vendedores</p>
+        {tab === 'segmentos' && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
+              <Tag size={16} className="text-gray-400" />
+              <div>
+                <h2 className="text-sm font-semibold text-gray-700">Segmentos de negócio</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Usados em oportunidades, propostas, pedidos e vendedores</p>
+              </div>
             </div>
-          </div>
-          <div className="p-5 space-y-3">
-            {/* Lista */}
-            <div className="space-y-2">
-              {segmentos.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-4">Nenhum segmento cadastrado.</p>
-              )}
-              {segmentos.map((seg, idx) => (
-                <div
-                  key={seg.value}
-                  className="flex items-center gap-2 p-2.5 rounded-lg border border-gray-100 bg-gray-50 group"
-                >
-                  <GripVertical size={14} className="text-gray-300 shrink-0" />
-
-                  {editingIdx === idx ? (
-                    <>
-                      <input
-                        autoFocus
-                        value={editLabel}
-                        onChange={(e) => setEditLabel(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') confirmEdit(); if (e.key === 'Escape') setEditingIdx(null) }}
-                        className="flex-1 text-sm border border-blue-400 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                      <button onClick={confirmEdit} className="p-1 text-green-600 hover:bg-green-50 rounded">
-                        <Check size={14} />
-                      </button>
-                      <button onClick={() => setEditingIdx(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded">
-                        <X size={14} />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="flex-1 text-sm text-gray-800">{seg.label}</span>
-                      <span className="text-xs text-gray-400 font-mono shrink-0">{seg.value}</span>
-                      <button
-                        onClick={() => startEdit(idx)}
-                        className="p-1 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Pencil size={13} />
-                      </button>
-                      <button
-                        onClick={() => removeSegmento(idx)}
-                        className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Adicionar novo */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={novoLabel}
-                onChange={(e) => setNovoLabel(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSegmento() } }}
-                placeholder="Nome do novo segmento..."
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="button"
-                onClick={addSegmento}
-                disabled={!novoLabel.trim()}
-                className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
-              >
-                <Plus size={14} />
-                Adicionar
+            <div className="p-5 space-y-3">
+              <div className="space-y-2">
+                {segmentos.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-4">Nenhum segmento cadastrado.</p>
+                )}
+                {segmentos.map((seg, idx) => (
+                  <div
+                    key={seg.value}
+                    className="flex items-center gap-2 p-2.5 rounded-lg border border-gray-100 bg-gray-50 group"
+                  >
+                    <GripVertical size={14} className="text-gray-300 shrink-0" />
+                    {editingIdx === idx ? (
+                      <>
+                        <input
+                          autoFocus value={editLabel}
+                          onChange={(e) => setEditLabel(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') confirmEdit(); if (e.key === 'Escape') setEditingIdx(null) }}
+                          className="flex-1 text-sm border border-blue-400 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <button onClick={confirmEdit} className="p-1 text-green-600 hover:bg-green-50 rounded">
+                          <Check size={14} />
+                        </button>
+                        <button onClick={() => setEditingIdx(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded">
+                          <X size={14} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex-1 text-sm text-gray-800">{seg.label}</span>
+                        <span className="text-xs text-gray-400 font-mono shrink-0">{seg.value}</span>
+                        <button onClick={() => startEdit(idx)}
+                          className="p-1 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Pencil size={13} />
+                        </button>
+                        <button onClick={() => removeSegmento(idx)}
+                          className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Trash2 size={13} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text" value={novoLabel}
+                  onChange={(e) => setNovoLabel(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSegmento() } }}
+                  placeholder="Nome do novo segmento..."
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button type="button" onClick={addSegmento} disabled={!novoLabel.trim()}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+                  <Plus size={14} /> Adicionar
+                </button>
+              </div>
+              <button onClick={salvarSegmentos} disabled={savingSegs}
+                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                <Save size={14} />
+                {savingSegs ? 'Salvando...' : 'Salvar segmentos'}
               </button>
             </div>
+          </div>
+        )}
 
-            <button
-              onClick={salvarSegmentos}
-              disabled={savingSegs}
-              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              <Save size={14} />
-              {savingSegs ? 'Salvando...' : 'Salvar segmentos'}
-            </button>
-          </div>
-        </div>
+        {/* ─── Comunicação ───────────────────────────────────────────────── */}
+        {tab === 'comunicacao' && (
+          <div className="space-y-5">
+            {/* WhatsApp */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
+                <MessageCircle size={16} className="text-gray-400" />
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-700">Template de WhatsApp</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Mensagem enviada ao iniciar contato com um lead</p>
+                </div>
+              </div>
+              <div className="p-5 space-y-3">
+                <textarea
+                  value={waTemplate} onChange={(e) => setWaTemplate(e.target.value)}
+                  rows={4}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                />
+                <div className="flex items-start gap-1.5 text-xs text-gray-400">
+                  <Info size={13} className="mt-0.5 shrink-0" />
+                  <span>
+                    Use <code className="bg-gray-100 px-1 rounded">{'{nome}'}</code> e{' '}
+                    <code className="bg-gray-100 px-1 rounded">{'{empresa}'}</code> como variáveis — substituídas automaticamente pelos dados do lead.
+                  </span>
+                </div>
+                <button onClick={salvarWaTemplate} disabled={savingWa}
+                  className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                  <Save size={14} />
+                  {savingWa ? 'Salvando...' : 'Salvar template'}
+                </button>
+              </div>
+            </div>
 
-        {/* ─── Template WhatsApp ─────────────────────────────────────────── */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
-            <MessageCircle size={16} className="text-gray-400" />
-            <div>
-              <h2 className="text-sm font-semibold text-gray-700">Template de WhatsApp</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Mensagem enviada ao iniciar contato com um lead</p>
-            </div>
-          </div>
-          <div className="p-5 space-y-3">
-            <textarea
-              value={waTemplate}
-              onChange={(e) => setWaTemplate(e.target.value)}
-              rows={4}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            />
-            <div className="flex items-start gap-1.5 text-xs text-gray-400">
-              <Info size={13} className="mt-0.5 shrink-0" />
-              <span>
-                Use <code className="bg-gray-100 px-1 rounded">{'{nome}'}</code> e{' '}
-                <code className="bg-gray-100 px-1 rounded">{'{empresa}'}</code> como variáveis — elas serão substituídas
-                automaticamente pelos dados do lead.
-              </span>
-            </div>
-            <button
-              onClick={salvarWaTemplate}
-              disabled={savingWa}
-              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              <Save size={14} />
-              {savingWa ? 'Salvando...' : 'Salvar template'}
-            </button>
-          </div>
-        </div>
-
-        {/* ─── Template E-mail ───────────────────────────────────────────── */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
-            <Mail size={16} className="text-gray-400" />
-            <div>
-              <h2 className="text-sm font-semibold text-gray-700">Template de E-mail</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Mensagem pré-preenchida ao iniciar contato por e-mail com um lead</p>
-            </div>
-          </div>
-          <div className="p-5 space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Assunto</label>
-              <input
-                type="text"
-                value={emailAssunto}
-                onChange={(e) => setEmailAssunto(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Corpo</label>
-              <textarea
-                value={emailCorpo}
-                onChange={(e) => setEmailCorpo(e.target.value)}
-                rows={6}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              />
-            </div>
-            <div className="flex items-start gap-1.5 text-xs text-gray-400">
-              <Info size={13} className="mt-0.5 shrink-0" />
-              <span>
-                Use <code className="bg-gray-100 px-1 rounded">{'{nome}'}</code> e{' '}
-                <code className="bg-gray-100 px-1 rounded">{'{empresa}'}</code> como variáveis — elas serão substituídas
-                automaticamente pelos dados do lead.
-              </span>
-            </div>
-            <button
-              onClick={salvarEmailTemplate}
-              disabled={savingEmail}
-              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              <Save size={14} />
-              {savingEmail ? 'Salvando...' : 'Salvar template'}
-            </button>
-          </div>
-        </div>
-
-        {/* ─── Preferências comerciais ────────────────────────────────────── */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="text-sm font-semibold text-gray-700">Preferências comerciais</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Parâmetros usados nos alertas e no dashboard</p>
-          </div>
-          <form onSubmit={salvarConfigs} className="p-5 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {Object.entries(CONFIG_LABELS).map(([chave, label]) => (
-                <div key={chave}>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">{label}</label>
-                  <input
-                    type="number" min="0" value={valores[chave]}
-                    onChange={(e) => setValores((v) => ({ ...v, [chave]: e.target.value }))}
+            {/* E-mail */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
+                <Mail size={16} className="text-gray-400" />
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-700">Template de E-mail</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Mensagem pré-preenchida ao iniciar contato por e-mail com um lead</p>
+                </div>
+              </div>
+              <div className="p-5 space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Assunto</label>
+                  <input type="text" value={emailAssunto} onChange={(e) => setEmailAssunto(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-              ))}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Corpo</label>
+                  <textarea value={emailCorpo} onChange={(e) => setEmailCorpo(e.target.value)} rows={6}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                </div>
+                <div className="flex items-start gap-1.5 text-xs text-gray-400">
+                  <Info size={13} className="mt-0.5 shrink-0" />
+                  <span>
+                    Use <code className="bg-gray-100 px-1 rounded">{'{nome}'}</code> e{' '}
+                    <code className="bg-gray-100 px-1 rounded">{'{empresa}'}</code> como variáveis — substituídas automaticamente pelos dados do lead.
+                  </span>
+                </div>
+                <button onClick={salvarEmailTemplate} disabled={savingEmail}
+                  className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                  <Save size={14} />
+                  {savingEmail ? 'Salvando...' : 'Salvar template'}
+                </button>
+              </div>
             </div>
-            <button
-              type="submit" disabled={savingConfig}
-              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              <Save size={14} />
-              {savingConfig ? 'Salvando...' : 'Salvar preferências'}
-            </button>
-          </form>
-        </div>
+          </div>
+        )}
+
+        {/* ─── Comercial ─────────────────────────────────────────────────── */}
+        {tab === 'comercial' && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
+              <BarChart2 size={16} className="text-gray-400" />
+              <div>
+                <h2 className="text-sm font-semibold text-gray-700">Preferências comerciais</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Parâmetros usados nos alertas e no dashboard</p>
+              </div>
+            </div>
+            <form onSubmit={salvarConfigs} className="p-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {Object.entries(CONFIG_LABELS).map(([chave, label]) => (
+                  <div key={chave}>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">{label}</label>
+                    <input
+                      type="number" min="0" value={valores[chave]}
+                      onChange={(e) => setValores((v) => ({ ...v, [chave]: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                ))}
+              </div>
+              <button type="submit" disabled={savingConfig}
+                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                <Save size={14} />
+                {savingConfig ? 'Salvando...' : 'Salvar preferências'}
+              </button>
+            </form>
+          </div>
+        )}
 
       </div>
     </>
