@@ -30,10 +30,30 @@ export default function LostModal({ op, onClose }: Props) {
   async function handleConfirm() {
     setSaving(true)
     const supabase = createClient()
-    await supabase
+
+    // Tenta atualizar status + motivo_perda
+    const payload: Record<string, unknown> = { status: 'perdida' }
+    if (motivo) payload.motivo_perda = motivo
+
+    const { error } = await supabase
       .from('oportunidades')
-      .update({ status: 'perdida', motivo_perda: motivo || null })
+      .update(payload)
       .eq('id', op.id)
+
+    if (error) {
+      // Se motivo_perda não existir na tabela, tenta só o status
+      if (error.message?.includes('motivo_perda')) {
+        await supabase
+          .from('oportunidades')
+          .update({ status: 'perdida' })
+          .eq('id', op.id)
+      } else {
+        console.error('Erro ao marcar perdida:', error)
+        setSaving(false)
+        return
+      }
+    }
+
     toast('Oportunidade marcada como perdida', 'info')
     router.refresh()
     onClose()
