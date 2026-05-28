@@ -2,25 +2,37 @@
 
 import { createContext, useContext } from 'react'
 
-const TenantContext = createContext<string | null>(null)
+interface TenantCtx {
+  tenantId: string
+  whatsappTemplate: string | null
+}
+
+const TenantContext = createContext<TenantCtx | null>(null)
 
 export function TenantProvider({
   tenantId,
+  whatsappTemplate,
   children,
 }: {
   tenantId: string
+  whatsappTemplate: string | null
   children: React.ReactNode
 }) {
   return (
-    <TenantContext.Provider value={tenantId}>
+    <TenantContext.Provider value={{ tenantId, whatsappTemplate }}>
       {children}
     </TenantContext.Provider>
   )
 }
 
-/** Retorna o tenant_id do usuário logado. Deve ser usado dentro do layout CRM. */
 export function useTenantId(): string {
   const ctx = useContext(TenantContext)
   if (!ctx) throw new Error('useTenantId deve ser usado dentro do layout CRM')
+  return ctx.tenantId
+}
+
+export function useTenantConfig(): TenantCtx {
+  const ctx = useContext(TenantContext)
+  if (!ctx) throw new Error('useTenantConfig deve ser usado dentro do layout CRM')
   return ctx
 }

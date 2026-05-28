@@ -2,13 +2,14 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid } from 'lucide-react'
+import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid, Mail, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LeadFormModal from './LeadFormModal'
 import ConvertModal from './ConvertModal'
 import { type Lead, STATUS_LEADS, statusStyle, statusLabel, formatDate } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 
 interface Props {
   leads: Lead[]
@@ -16,11 +17,22 @@ interface Props {
   currentQ: string
 }
 
+const DEFAULT_WA_TEMPLATE = 'Olá {nome}, tudo bem? Gostaria de entrar em contato para conhecer melhor suas necessidades.'
+
+function applyTemplate(tpl: string, lead: Lead) {
+  return tpl.replace(/\{nome\}/g, lead.nome).replace(/\{empresa\}/g, lead.empresa ?? '')
+}
+function formatPhone(tel: string) {
+  const d = tel.replace(/\D/g, '')
+  return d.startsWith('55') && d.length >= 12 ? d : `55${d}`
+}
+
 export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [, startTransition] = useTransition()
   const toast = useToast()
+  const { tenantId, whatsappTemplate } = useTenantConfig()
 
   const [search, setSearch] = useState(currentQ)
   const [formOpen, setFormOpen] = useState(false)
@@ -50,6 +62,32 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
   function clearSearch() {
     setSearch('')
     updateParams({ status: currentStatus, q: '' })
+  }
+
+  async function handleContato(lead: Lead, canal: 'whatsapp' | 'email') {
+    const supabase = createClient()
+    const ops = [
+      Promise.resolve(supabase.from('historico').insert({
+        tenant_id: tenantId,
+        lead_id:   lead.id,
+        tipo:      canal,
+        texto:     canal === 'whatsapp' ? 'WhatsApp iniciado' : 'E-mail iniciado',
+        criado_em: new Date().toISOString(),
+      })),
+    ]
+    if (lead.status === 'novo') {
+      ops.push(Promise.resolve(supabase.from('leads').update({ status: 'contato' }).eq('id', lead.id)))
+    }
+    await Promise.all(ops)
+    router.refresh()
+  }
+
+  function openWhatsApp(lead: Lead) {
+    if (!lead.telefone) return
+    const tpl = whatsappTemplate ?? DEFAULT_WA_TEMPLATE
+    const msg = encodeURIComponent(applyTemplate(tpl, lead))
+    window.open(`https://wa.me/${formatPhone(lead.telefone)}?text=${msg}`, '_blank')
+    handleContato(lead, 'whatsapp')
   }
 
   async function handleDelete(id: string) {
@@ -182,6 +220,18 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                       >
                         <LayoutGrid size={15} />
                       </Link>
+                      {lead.status !== 'convertido' && lead.telefone && (
+                        <button onClick={() => openWhatsApp(lead)} title="WhatsApp"
+                          className="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 transition-colors">
+                          <MessageCircle size={15} />
+                        </button>
+                      )}
+                      {lead.status !== 'convertido' && lead.email && (
+                        <Link href={`/leads/${lead.id}`} title="Enviar e-mail"
+                          className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
+                          <Mail size={15} />
+                        </Link>
+                      )}
                       {lead.status !== 'convertido' && (
                         <button
                           onClick={() => setConvertingLead(lead)}

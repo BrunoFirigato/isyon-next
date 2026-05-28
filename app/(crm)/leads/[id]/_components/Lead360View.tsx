@@ -6,13 +6,13 @@ import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, ChevronRight, Mail, Phone,
   TrendingUp, Calendar, Pencil,
-  MessageSquare, Plus, X, Save, Lock,
+  MessageSquare, Plus, X, Save, Lock, Send,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import LeadFormModal from '../../_components/LeadFormModal'
 import ConvertModal from '../../_components/ConvertModal'
 import { type Lead, statusStyle, statusLabel } from '../../_components/types'
-import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 
 /* ─────────────── Types ── */
 
@@ -154,20 +154,90 @@ const TIPOS_HISTORICO = [
 
 /* ─────────────── Main ── */
 
+const DEFAULT_WA_TEMPLATE = 'Olá {nome}, tudo bem? Gostaria de entrar em contato para conhecer melhor suas necessidades.'
+
+function applyTemplate(template: string, lead: Lead) {
+  return template
+    .replace(/\{nome\}/g, lead.nome)
+    .replace(/\{empresa\}/g, lead.empresa ?? '')
+}
+
+function formatPhone(tel: string) {
+  const d = tel.replace(/\D/g, '')
+  if (d.startsWith('55') && d.length >= 12) return d
+  return `55${d}`
+}
+
 export default function Lead360View({ lead, oportunidades, historico }: Props) {
-  const router   = useRouter()
-  const tenantId = useTenantId()
+  const router = useRouter()
+  const { tenantId, whatsappTemplate } = useTenantConfig()
 
   const [editOpen,    setEditOpen]    = useState(false)
   const [convertOpen, setConvertOpen] = useState(false)
 
   // Form de interação
-  const [showForm,    setShowForm]    = useState(false)
-  const [tipo,        setTipo]        = useState('ligacao')
-  const [descricao,   setDescricao]   = useState('')
-  const [valor,       setValor]       = useState('')
-  const [saving,      setSaving]      = useState(false)
-  const [erro,        setErro]        = useState('')
+  const [showForm,  setShowForm]  = useState(false)
+  const [tipo,      setTipo]      = useState('ligacao')
+  const [descricao, setDescricao] = useState('')
+  const [valor,     setValor]     = useState('')
+  const [saving,    setSaving]    = useState(false)
+  const [erro,      setErro]      = useState('')
+
+  // Form de e-mail
+  const [showEmail,    setShowEmail]    = useState(false)
+  const [emailAssunto, setEmailAssunto] = useState(`Olá ${lead.nome}`)
+  const [emailCorpo,   setEmailCorpo]   = useState('')
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailErro,    setEmailErro]    = useState('')
+
+  /** Marca o lead como 'contato' se ainda for 'novo', e loga no histórico */
+  async function registrarPrimeiroContato(tipoContato: 'whatsapp' | 'email') {
+    const supabase = createClient()
+    const ops = [
+      Promise.resolve(supabase.from('historico').insert({
+        tenant_id: tenantId,
+        lead_id:   lead.id,
+        tipo:      tipoContato,
+        texto:     tipoContato === 'whatsapp' ? 'WhatsApp iniciado pelo sistema' : 'E-mail enviado pelo sistema',
+        criado_em: new Date().toISOString(),
+      })),
+    ]
+    if (lead.status === 'novo') {
+      ops.push(Promise.resolve(
+        supabase.from('leads').update({ status: 'contato' }).eq('id', lead.id)
+      ))
+    }
+    await Promise.all(ops)
+    router.refresh()
+  }
+
+  function handleWhatsApp() {
+    if (!lead.telefone) return
+    const template = whatsappTemplate ?? DEFAULT_WA_TEMPLATE
+    const msg = encodeURIComponent(applyTemplate(template, lead))
+    const tel = formatPhone(lead.telefone)
+    window.open(`https://wa.me/${tel}?text=${msg}`, '_blank')
+    registrarPrimeiroContato('whatsapp')
+  }
+
+  async function handleSendEmail(e: React.FormEvent) {
+    e.preventDefault()
+    if (!emailCorpo.trim()) { setEmailErro('Escreva o conteúdo do e-mail.'); return }
+    setSendingEmail(true); setEmailErro('')
+    const res = await fetch('/api/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: lead.email, subject: emailAssunto, html: emailCorpo.replace(/\n/g, '<br>') }),
+    })
+    setSendingEmail(false)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setEmailErro(data.error ?? 'Erro ao enviar e-mail.')
+      return
+    }
+    setShowEmail(false); setEmailCorpo(''); setEmailAssunto(`Olá ${lead.nome}`)
+    await registrarPrimeiroContato('email')
+  }
 
   async function handleSaveInteracao(e: React.FormEvent) {
     e.preventDefault()
@@ -222,16 +292,28 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
                   {statusLabel(lead.status)}
                 </span>
                 {!isConvertido && !isPerdido && (
-                  <button onClick={() => setConvertOpen(true)}
-                    className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 border border-green-200 hover:border-green-300 px-2.5 py-1 rounded-lg font-medium transition-colors">
-                    <TrendingUp size={11} /> Converter
-                  </button>
-                )}
-                {!isConvertido && (
-                  <button onClick={() => setEditOpen(true)}
-                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 border border-gray-200 hover:border-blue-300 px-2.5 py-1 rounded-lg transition-colors">
-                    <Pencil size={11} /> Editar
-                  </button>
+                  <>
+                    {lead.telefone && (
+                      <button onClick={handleWhatsApp}
+                        className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 border border-emerald-200 hover:border-emerald-300 px-2.5 py-1 rounded-lg font-medium transition-colors">
+                        💬 WhatsApp
+                      </button>
+                    )}
+                    {lead.email && (
+                      <button onClick={() => setShowEmail(s => !s)}
+                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 px-2.5 py-1 rounded-lg font-medium transition-colors">
+                        <Mail size={11} /> E-mail
+                      </button>
+                    )}
+                    <button onClick={() => setConvertOpen(true)}
+                      className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 border border-green-200 hover:border-green-300 px-2.5 py-1 rounded-lg font-medium transition-colors">
+                      <TrendingUp size={11} /> Converter
+                    </button>
+                    <button onClick={() => setEditOpen(true)}
+                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 border border-gray-200 hover:border-blue-300 px-2.5 py-1 rounded-lg transition-colors">
+                      <Pencil size={11} /> Editar
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -262,6 +344,50 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
           )}
         </div>
       </div>
+
+      {/* Modal inline de e-mail */}
+      {showEmail && lead.email && (
+        <div className="bg-white rounded-xl border border-blue-200 p-5 mb-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Mail size={15} className="text-blue-500" />
+              <h3 className="text-sm font-semibold text-gray-900">Enviar e-mail</h3>
+              <span className="text-xs text-gray-400">→ {lead.email}</span>
+            </div>
+            <button onClick={() => setShowEmail(false)} className="text-gray-400 hover:text-gray-600">
+              <X size={16} />
+            </button>
+          </div>
+          <form onSubmit={handleSendEmail} className="space-y-3">
+            <input
+              type="text" value={emailAssunto} onChange={e => setEmailAssunto(e.target.value)}
+              placeholder="Assunto"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <textarea
+              value={emailCorpo} onChange={e => setEmailCorpo(e.target.value)} rows={5}
+              placeholder={`Olá ${lead.nome},\n\n`}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+            {emailErro && <p className="text-xs text-red-600">{emailErro}</p>}
+            {lead.status === 'novo' && (
+              <p className="text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">
+                ✓ Status do lead será atualizado para <strong>Em contato</strong> ao enviar.
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setShowEmail(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors">
+                Cancelar
+              </button>
+              <button type="submit" disabled={sendingEmail}
+                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors">
+                <Send size={13} /> {sendingEmail ? 'Enviando...' : 'Enviar e-mail'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Jornada de status */}
       <JornadaStatus status={lead.status} />

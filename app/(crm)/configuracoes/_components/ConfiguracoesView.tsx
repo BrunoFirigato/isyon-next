@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X } from 'lucide-react'
+import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X, MessageCircle, Info } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { type Segmento } from '@/app/(crm)/_components/SegmentosContext'
+
+const DEFAULT_WA_TEMPLATE = 'Olá {nome}, tudo bem? Gostaria de entrar em contato para conhecer melhor suas necessidades.'
 
 interface Tenant {
   id: string
@@ -13,6 +15,7 @@ interface Tenant {
   plano: string | null
   status: string | null
   criado_em: string
+  whatsapp_template: string | null
 }
 
 interface ConfigUsuario {
@@ -87,6 +90,19 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
     }
     setSavingConfig(false)
     toast('Preferências salvas!')
+    router.refresh()
+  }
+
+  // ─── WhatsApp Template ──────────────────────────────────────────────────
+  const [waTemplate, setWaTemplate] = useState(tenant.whatsapp_template ?? DEFAULT_WA_TEMPLATE)
+  const [savingWa, setSavingWa] = useState(false)
+
+  async function salvarWaTemplate() {
+    setSavingWa(true)
+    const supabase = createClient()
+    await supabase.from('tenants').update({ whatsapp_template: waTemplate.trim() || DEFAULT_WA_TEMPLATE }).eq('id', tenant.id)
+    setSavingWa(false)
+    toast('Template WhatsApp salvo!')
     router.refresh()
   }
 
@@ -286,6 +302,41 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
             >
               <Save size={14} />
               {savingSegs ? 'Salvando...' : 'Salvar segmentos'}
+            </button>
+          </div>
+        </div>
+
+        {/* ─── Template WhatsApp ─────────────────────────────────────────── */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
+            <MessageCircle size={16} className="text-gray-400" />
+            <div>
+              <h2 className="text-sm font-semibold text-gray-700">Template de WhatsApp</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Mensagem enviada ao iniciar contato com um lead</p>
+            </div>
+          </div>
+          <div className="p-5 space-y-3">
+            <textarea
+              value={waTemplate}
+              onChange={(e) => setWaTemplate(e.target.value)}
+              rows={4}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+            <div className="flex items-start gap-1.5 text-xs text-gray-400">
+              <Info size={13} className="mt-0.5 shrink-0" />
+              <span>
+                Use <code className="bg-gray-100 px-1 rounded">{'{nome}'}</code> e{' '}
+                <code className="bg-gray-100 px-1 rounded">{'{empresa}'}</code> como variáveis — elas serão substituídas
+                automaticamente pelos dados do lead.
+              </span>
+            </div>
+            <button
+              onClick={salvarWaTemplate}
+              disabled={savingWa}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              <Save size={14} />
+              {savingWa ? 'Salvando...' : 'Salvar template'}
             </button>
           </div>
         </div>

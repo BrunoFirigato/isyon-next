@@ -33,14 +33,15 @@ export default async function CrmLayout({
   // Busca segmentos configurados pelo tenant
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('segmentos')
+    .select('segmentos, whatsapp_template')
     .eq('id', tenantId)
     .maybeSingle()
 
   const segmentos = (tenant?.segmentos as typeof DEFAULT_SEGMENTOS | null) ?? DEFAULT_SEGMENTOS
+  const whatsappTemplate = (tenant?.whatsapp_template as string | null) ?? null
 
   return (
-    <TenantProvider tenantId={tenantId}>
+    <TenantProvider tenantId={tenantId} whatsappTemplate={whatsappTemplate}>
       <SegmentosProvider segmentos={segmentos}>
         <ToastProvider>
           <div className="flex h-screen overflow-hidden bg-gray-50">
