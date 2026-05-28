@@ -1,19 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Search, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { type Cliente, STATUS_CLIENTE, ESTADOS_BR, TIPOS, tipoLabel } from './types'
+import { type Cliente, type VendedorRef, type ParceiroRef, STATUS_CLIENTE, ESTADOS_BR, TIPOS, tipoLabel } from './types'
 import { fetchCnpj } from '@/lib/cnpj'
+import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
+import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 const ORIGEM_OPTIONS = [
   'Site', 'Indicação', 'LinkedIn', 'WhatsApp',
   'Evento', 'Prospecção', 'Parceiro', 'Outro',
 ]
-import { useToast } from '@/app/(crm)/_components/Toast'
-import { useTenantId } from '@/app/(crm)/_components/TenantContext'
-import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 
 type FormData = {
   nome: string
@@ -32,6 +32,9 @@ type FormData = {
   bairro: string
   cidade: string
   estado: string
+  vendedor0: string
+  vendedor1: string
+  parceiro_id: string
 }
 
 interface Props {
@@ -47,30 +50,43 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
   const isEditing = !!cliente
 
   const [form, setForm] = useState<FormData>({
-    nome: cliente?.nome ?? '',
-    empresa: cliente?.empresa ?? '',
-    email: cliente?.email ?? '',
-    telefone: cliente?.telefone ?? '',
-    cpf_cnpj: cliente?.cpf_cnpj ?? '',
-    tipo: cliente?.tipo ?? 'direto',
-    segmento: cliente?.segmento ?? '',
-    status: cliente?.status ?? 'prospect',
-    origem: cliente?.origem ?? '',
-    cep: cliente?.cep ?? '',
-    rua: cliente?.rua ?? '',
-    numero: cliente?.numero ?? '',
+    nome:        cliente?.nome        ?? '',
+    empresa:     cliente?.empresa     ?? '',
+    email:       cliente?.email       ?? '',
+    telefone:    cliente?.telefone    ?? '',
+    cpf_cnpj:    cliente?.cpf_cnpj    ?? '',
+    tipo:        cliente?.tipo        ?? 'direto',
+    segmento:    cliente?.segmento    ?? '',
+    status:      cliente?.status      ?? 'prospect',
+    origem:      cliente?.origem      ?? '',
+    cep:         cliente?.cep         ?? '',
+    rua:         cliente?.rua         ?? '',
+    numero:      cliente?.numero      ?? '',
     complemento: cliente?.complemento ?? '',
-    bairro: cliente?.bairro ?? '',
-    cidade: cliente?.cidade ?? '',
-    estado: cliente?.estado ?? '',
+    bairro:      cliente?.bairro      ?? '',
+    cidade:      cliente?.cidade      ?? '',
+    estado:      cliente?.estado      ?? '',
+    vendedor0:   cliente?.vendedor_maq_id ?? '',
+    vendedor1:   cliente?.vendedor_pec_id ?? '',
+    parceiro_id: cliente?.parceiro_id     ?? '',
   })
 
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [loadingCep, setLoadingCep] = useState(false)
+  const [vendedores,  setVendedores]  = useState<VendedorRef[]>([])
+  const [parceiros,   setParceiros]   = useState<ParceiroRef[]>([])
+  const [saving,      setSaving]      = useState(false)
+  const [error,       setError]       = useState('')
+  const [loadingCep,  setLoadingCep]  = useState(false)
   const [buscandoCnpj, setBuscandoCnpj] = useState(false)
-  const [cnpjStatus, setCnpjStatus] = useState<'success' | 'notfound' | null>(null)
-  const [tab, setTab] = useState<'dados' | 'endereco'>('dados')
+  const [cnpjStatus,  setCnpjStatus]  = useState<'success' | 'notfound' | null>(null)
+  const [tab,         setTab]         = useState<'dados' | 'endereco'>('dados')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('vendedores').select('id, nome').eq('status', 'ativo').order('nome')
+      .then(({ data }) => { if (data) setVendedores(data) })
+    supabase.from('parceiros').select('id, nome').eq('status', 'ativo').order('nome')
+      .then(({ data }) => { if (data) setParceiros(data) })
+  }, [])
 
   function set(field: keyof FormData, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -131,22 +147,25 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
 
     const supabase = createClient()
     const payload = {
-      nome: form.nome.trim(),
-      empresa: form.empresa.trim() || null,
-      email: form.email.trim() || null,
-      telefone: form.telefone.trim() || null,
-      cpf_cnpj: form.cpf_cnpj.trim() || null,
-      tipo: form.tipo,
-      segmento: form.segmento || null,
-      status: form.status,
-      origem: form.origem || null,
-      cep: form.cep.replace(/\D/g, '') || null,
-      rua: form.rua.trim() || null,
-      numero: form.numero.trim() || null,
-      complemento: form.complemento.trim() || null,
-      bairro: form.bairro.trim() || null,
-      cidade: form.cidade.trim() || null,
-      estado: form.estado || null,
+      nome:            form.nome.trim(),
+      empresa:         form.empresa.trim()        || null,
+      email:           form.email.trim()          || null,
+      telefone:        form.telefone.trim()        || null,
+      cpf_cnpj:        form.cpf_cnpj.trim()        || null,
+      tipo:            form.tipo,
+      segmento:        form.segmento               || null,
+      status:          form.status,
+      origem:          form.origem                 || null,
+      cep:             form.cep.replace(/\D/g, '') || null,
+      rua:             form.rua.trim()             || null,
+      numero:          form.numero.trim()          || null,
+      complemento:     form.complemento.trim()     || null,
+      bairro:          form.bairro.trim()          || null,
+      cidade:          form.cidade.trim()          || null,
+      estado:          form.estado                 || null,
+      vendedor_maq_id: form.vendedor0              || null,
+      vendedor_pec_id: form.vendedor1              || null,
+      parceiro_id:     form.parceiro_id            || null,
     }
 
     const { error: err } = isEditing
@@ -286,6 +305,52 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                       ))}
                     </select>
                   </div>
+
+                  {/* Vendedor(es) — dinâmico por segmento */}
+                  {segmentos.length === 0 ? (
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-gray-600 mb-1.5">Vendedor responsável</label>
+                      <select value={form.vendedor0} onChange={(e) => set('vendedor0', e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="">Nenhum</option>
+                        {vendedores.map((v) => (
+                          <option key={v.id} value={v.id}>{v.nome}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    segmentos.slice(0, 2).map((seg, idx) => (
+                      <div key={seg.value}>
+                        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                          Vendedor — {seg.label}
+                        </label>
+                        <select
+                          value={idx === 0 ? form.vendedor0 : form.vendedor1}
+                          onChange={(e) => set(idx === 0 ? 'vendedor0' : 'vendedor1', e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        >
+                          <option value="">Nenhum</option>
+                          {vendedores.map((v) => (
+                            <option key={v.id} value={v.id}>{v.nome}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))
+                  )}
+
+                  {/* Parceiro comercial — só para tipo Revenda */}
+                  {form.tipo === 'revenda' && (
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-gray-600 mb-1.5">Parceiro comercial</label>
+                      <select value={form.parceiro_id} onChange={(e) => set('parceiro_id', e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="">Selecione...</option>
+                        {parceiros.map((p) => (
+                          <option key={p.id} value={p.id}>{p.nome}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               </>
             )}

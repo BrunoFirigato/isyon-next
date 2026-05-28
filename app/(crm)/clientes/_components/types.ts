@@ -18,8 +18,21 @@ export interface Cliente {
   valor_total: number | null
   origem: string | null
   lead_id: string | null
+  vendedor_maq_id: string | null
+  vendedor_pec_id: string | null
+  parceiro_id: string | null
   criado_em: string
   atualizado_em: string
+}
+
+export interface VendedorRef {
+  id: string
+  nome: string
+}
+
+export interface ParceiroRef {
+  id: string
+  nome: string
 }
 
 // tipo = canal comercial (não muda no tempo)
