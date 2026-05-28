@@ -22,6 +22,7 @@ import {
   Megaphone,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
 } from 'lucide-react'
 
 type Perfil = 'admin' | 'gestor' | 'vendedor' | 'financeiro'
@@ -86,17 +87,31 @@ export default function Sidebar({
   perfil: Perfil
 }) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed,       setCollapsed]       = useState(false)
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     const stored = localStorage.getItem('sidebar_collapsed')
     if (stored === 'true') setCollapsed(true)
+
+    const storedGroups = localStorage.getItem('sidebar_groups')
+    if (storedGroups) {
+      try { setCollapsedGroups(JSON.parse(storedGroups)) } catch { /* ignore */ }
+    }
   }, [])
 
   function toggle() {
     setCollapsed((c) => {
       localStorage.setItem('sidebar_collapsed', String(!c))
       return !c
+    })
+  }
+
+  function toggleGroup(label: string) {
+    setCollapsedGroups((prev) => {
+      const next = { ...prev, [label]: !prev[label] }
+      localStorage.setItem('sidebar_groups', JSON.stringify(next))
+      return next
     })
   }
 
@@ -138,40 +153,69 @@ export default function Sidebar({
       {/* ── Navegação ──────────────────────────────────────────────────── */}
       <nav className="sidebar-nav flex-1 overflow-y-auto py-3 space-y-4 px-2">
         {navGroups.map((group) => {
-          const visibleItems = group.items.filter(canSee)
+          const visibleItems  = group.items.filter(canSee)
           if (visibleItems.length === 0) return null
+
+          const groupCollapsed = !collapsed && !!collapsedGroups[group.label]
+          // Auto-expand group if it contains the active route
+          const hasActive = visibleItems.some(
+            ({ href }) => pathname === href || pathname.startsWith(href + '/')
+          )
+
           return (
             <div key={group.label}>
+              {/* Cabeçalho do grupo — clicável quando sidebar expandida */}
               {!collapsed && (
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-2 mb-1">
-                  {group.label}
-                </p>
+                <button
+                  onClick={() => !hasActive && toggleGroup(group.label)}
+                  title={groupCollapsed ? `Expandir ${group.label}` : `Recolher ${group.label}`}
+                  className={`
+                    w-full flex items-center justify-between px-2 mb-1 group/gh
+                    ${hasActive ? 'cursor-default' : 'cursor-pointer'}
+                  `}
+                >
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                    {group.label}
+                  </span>
+                  {!hasActive && (
+                    <ChevronDown
+                      size={11}
+                      className={`text-gray-300 group-hover/gh:text-gray-500 transition-all duration-200 ${
+                        groupCollapsed ? '-rotate-90' : ''
+                      }`}
+                    />
+                  )}
+                </button>
               )}
-              <div className="space-y-0.5">
-                {visibleItems.map(({ href, label, icon: Icon }) => {
-                  const isActive = pathname === href || pathname.startsWith(href + '/')
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      title={collapsed ? label : undefined}
-                      className={`
-                        flex items-center rounded-lg text-sm transition-colors
-                        ${collapsed ? 'justify-center w-11 h-11 mx-auto' : 'gap-2.5 px-2 py-2'}
-                        ${isActive
-                          ? 'bg-blue-600 text-white font-medium'
-                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
-                      `}
-                    >
-                      <Icon
-                        size={collapsed ? 18 : 15}
-                        className={isActive ? 'text-white shrink-0' : 'text-gray-400 shrink-0'}
-                      />
-                      {!collapsed && <span className="truncate">{label}</span>}
-                    </Link>
-                  )
-                })}
-              </div>
+
+              {/* Itens — ocultos quando grupo recolhido */}
+              {!groupCollapsed && (
+                <div className="space-y-0.5">
+                  {visibleItems.map(({ href, label, icon: Icon }) => {
+                    const isActive = pathname === href || pathname.startsWith(href + '/')
+                    return (
+                      <Link
+                        key={href}
+                        href={href}
+                        title={collapsed ? label : undefined}
+                        className={`
+                          flex items-center rounded-lg text-sm transition-colors
+                          ${collapsed ? 'justify-center w-11 h-11 mx-auto' : 'gap-2.5 px-2 py-2'}
+                          ${isActive
+                            ? 'bg-blue-600 text-white font-medium'
+                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
+                        `}
+                      >
+                        <Icon
+                          size={collapsed ? 18 : 15}
+                          className={isActive ? 'text-white shrink-0' : 'text-gray-400 shrink-0'}
+                        />
+                        {!collapsed && <span className="truncate">{label}</span>}
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )
         })}
