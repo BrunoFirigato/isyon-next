@@ -53,7 +53,7 @@ export default function CompromissoFormModal({ compromisso, onClose }: Props) {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.from('clientes').select('id, nome, empresa').eq('status', 'ativo').order('nome')
+    supabase.from('clientes').select('id, nome, empresa').in('status', ['ativo', 'prospect']).order('nome')
       .then(({ data }) => { if (data) setClientes(data) })
     supabase.from('leads').select('id, nome').order('nome')
       .then(({ data }) => { if (data) setLeads(data) })
