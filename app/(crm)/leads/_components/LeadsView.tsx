@@ -231,18 +231,18 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
         <div className="hidden md:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nome</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Contato</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Origem</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
-                <th className="px-4 py-3" />
+              <tr className="border-b border-gray-100 bg-gray-50/80">
+                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Nome</th>
+                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Contato</th>
+                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Origem</th>
+                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Data</th>
+                <th className="px-4 py-3.5" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-100">
               {leads.map((lead) => (
-                <tr key={lead.id} className="hover:bg-gray-50 transition-colors group">
+                <tr key={lead.id} className="hover:bg-blue-50/30 transition-colors group">
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-900">{lead.nome}</p>
                     {lead.empresa && <p className="text-xs text-gray-500 mt-0.5">{lead.empresa}</p>}

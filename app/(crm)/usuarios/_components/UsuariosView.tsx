@@ -159,16 +159,16 @@ export default function UsuariosView({ usuarios }: Props) {
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
                 {['Nome', 'E-mail', 'Perfil', 'Status', 'Cadastro', ''].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                  <th key={h} className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-100">
               {filtered.map((u) => {
                 const info = perfilInfo(u.perfil)
                 const isEditing = editing?.id === u.id
                 return (
-                  <tr key={u.id} className="hover:bg-gray-50 transition-colors group">
+                  <tr key={u.id} className="hover:bg-blue-50/40 transition-colors group">
                     <td className="px-4 py-3 font-medium text-gray-900">{u.nome}</td>
                     <td className="px-4 py-3 text-gray-500 text-xs">{u.email}</td>
 

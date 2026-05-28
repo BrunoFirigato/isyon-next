@@ -139,7 +139,7 @@ export default function OpsView({ ops }: Props) {
     }
     return (
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-gray-100">
           {items.map((op) => (
             <div key={op.id} className="px-5 py-3.5 flex items-center justify-between group">
               <div>

@@ -274,17 +274,17 @@ export default function FinanceiroView({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Descrição</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Categoria</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Valor</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Data</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Descrição</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Categoria</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Tipo</th>
+                    <th className="text-right px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Valor</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-100">
                   {lancamentosFiltrados.map((l) => (
-                    <tr key={l.id} className="hover:bg-gray-50 transition-colors group">
+                    <tr key={l.id} className="hover:bg-blue-50/40 transition-colors group">
                       <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">{formatDate(l.data)}</td>
                       <td className="px-4 py-3 text-gray-900 font-medium">{l.descricao}</td>
                       <td className="px-4 py-3 text-gray-500 text-xs">{l.categoria ?? '—'}</td>
@@ -408,16 +408,16 @@ export default function FinanceiroView({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Número</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Valor</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Número</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Cliente</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="text-right px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Valor</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-100">
                   {faturasFiltradas.map((f) => (
-                    <tr key={f.id} className="hover:bg-gray-50 transition-colors group">
+                    <tr key={f.id} className="hover:bg-blue-50/40 transition-colors group">
                       <td className="px-4 py-3">
                         <p className="font-mono text-xs text-gray-500">{f.numero ?? '—'}</p>
                         {f.obs && (
@@ -523,16 +523,16 @@ export default function FinanceiroView({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendedor</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Vlr pedido</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Comissão</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Vendedor</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Vlr pedido</th>
+                    <th className="text-right px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Comissão</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-100">
                   {comissoesFiltradas.map((c) => (
-                    <tr key={c.id} className="hover:bg-gray-50 transition-colors group">
+                    <tr key={c.id} className="hover:bg-blue-50/40 transition-colors group">
                       <td className="px-4 py-3 text-gray-900 font-medium">{vendedorNome(c.vendedor_id) ?? '—'}</td>
                       <td className="px-4 py-3 text-gray-500 tabular-nums">{brl(c.valor_pedido)}</td>
                       <td className="px-4 py-3 text-right font-semibold text-gray-900 tabular-nums">{brl(c.valor_comissao)}</td>
