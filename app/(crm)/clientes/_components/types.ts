@@ -23,10 +23,12 @@ export interface Cliente {
 }
 
 export const TIPOS = [
-  { value: 'todos', label: 'Todos' },
-  { value: 'prospect', label: 'Prospect', bg: 'bg-yellow-100', text: 'text-yellow-700' },
-  { value: 'cliente', label: 'Cliente', bg: 'bg-green-100', text: 'text-green-700' },
-  { value: 'ex-cliente', label: 'Ex-cliente', bg: 'bg-gray-100', text: 'text-gray-600' },
+  { value: 'todos',      label: 'Todos' },
+  { value: 'prospect',   label: 'Prospect',   bg: 'bg-yellow-100', text: 'text-yellow-700' },
+  { value: 'cliente',    label: 'Cliente',    bg: 'bg-green-100',  text: 'text-green-700'  },
+  { value: 'ex-cliente', label: 'Ex-cliente', bg: 'bg-gray-100',   text: 'text-gray-600'   },
+  { value: 'direto',     label: 'Direto',     bg: 'bg-blue-100',   text: 'text-blue-700'   },
+  { value: 'revenda',    label: 'Revenda',    bg: 'bg-indigo-100', text: 'text-indigo-700' },
 ] as const
 
 export const STATUS_CLIENTE = [
