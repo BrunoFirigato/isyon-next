@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Building2, Target, Briefcase, FileText, X, ArrowRight } from 'lucide-react'
+import {
+  Search, Building2, Target, Briefcase, FileText,
+  ShoppingCart, Users2, Package, Calendar, X, ArrowRight,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface Result {
@@ -10,31 +13,37 @@ interface Result {
   label: string
   sublabel?: string
   href: string
-  type: 'cliente' | 'lead' | 'oportunidade' | 'proposta'
+  type: 'cliente' | 'lead' | 'oportunidade' | 'proposta' | 'pedido' | 'parceiro' | 'produto' | 'compromisso'
 }
 
 const TYPE_META = {
-  cliente:     { label: 'Clientes',     icon: Building2, color: 'text-blue-600',   bg: 'bg-blue-50'   },
-  lead:        { label: 'Leads',        icon: Target,    color: 'text-violet-600', bg: 'bg-violet-50' },
-  oportunidade:{ label: 'Oportunidades',icon: Briefcase, color: 'text-orange-600', bg: 'bg-orange-50' },
-  proposta:    { label: 'Propostas',    icon: FileText,  color: 'text-green-600',  bg: 'bg-green-50'  },
+  cliente:      { label: 'Clientes',           icon: Building2,   color: 'text-blue-600',   bg: 'bg-blue-50'   },
+  lead:         { label: 'Leads',              icon: Target,      color: 'text-violet-600', bg: 'bg-violet-50' },
+  oportunidade: { label: 'Oportunidades',      icon: Briefcase,   color: 'text-orange-600', bg: 'bg-orange-50' },
+  proposta:     { label: 'Propostas',          icon: FileText,    color: 'text-green-600',  bg: 'bg-green-50'  },
+  pedido:       { label: 'Pedidos',            icon: ShoppingCart,color: 'text-cyan-600',   bg: 'bg-cyan-50'   },
+  parceiro:     { label: 'Parceiros',          icon: Users2,      color: 'text-pink-600',   bg: 'bg-pink-50'   },
+  produto:      { label: 'Produtos',           icon: Package,     color: 'text-amber-600',  bg: 'bg-amber-50'  },
+  compromisso:  { label: 'Agenda',             icon: Calendar,    color: 'text-teal-600',   bg: 'bg-teal-50'   },
 }
+
+const TYPE_ORDER: Result['type'][] = [
+  'cliente', 'lead', 'oportunidade', 'proposta', 'pedido', 'parceiro', 'produto', 'compromisso',
+]
 
 interface Props {
   onClose: () => void
 }
 
 export default function GlobalSearch({ onClose }: Props) {
-  const router  = useRouter()
+  const router   = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [query,   setQuery]   = useState('')
   const [results, setResults] = useState<Result[]>([])
   const [loading, setLoading] = useState(false)
   const [active,  setActive]  = useState(0)
 
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+  useEffect(() => { inputRef.current?.focus() }, [])
 
   const search = useCallback(async (q: string) => {
     if (q.trim().length < 2) { setResults([]); return }
@@ -42,18 +51,30 @@ export default function GlobalSearch({ onClose }: Props) {
     const supabase = createClient()
     const like = `%${q}%`
 
-    const [{ data: clientes }, { data: leads }, { data: ops }, { data: props }] =
-      await Promise.all([
-        supabase.from('clientes').select('id, nome, empresa').or(`nome.ilike.${like},empresa.ilike.${like}`).limit(5),
-        supabase.from('leads').select('id, nome, email').or(`nome.ilike.${like},email.ilike.${like}`).limit(5),
-        supabase.from('oportunidades').select('id, titulo, numero').or(`titulo.ilike.${like},numero.ilike.${like}`).limit(5),
-        supabase.from('propostas').select('id, titulo, numero').or(`titulo.ilike.${like},numero.ilike.${like}`).limit(5),
-      ])
+    const [
+      { data: clientes },
+      { data: leads },
+      { data: ops },
+      { data: props },
+      { data: pedidos },
+      { data: parceiros },
+      { data: produtos },
+      { data: compromissos },
+    ] = await Promise.all([
+      supabase.from('clientes').select('id, nome, empresa').or(`nome.ilike.${like},empresa.ilike.${like}`).limit(4),
+      supabase.from('leads').select('id, nome, email').or(`nome.ilike.${like},email.ilike.${like}`).limit(4),
+      supabase.from('oportunidades').select('id, titulo, numero').or(`titulo.ilike.${like},numero.ilike.${like}`).limit(4),
+      supabase.from('propostas').select('id, titulo, numero').or(`titulo.ilike.${like},numero.ilike.${like}`).limit(4),
+      supabase.from('pedidos').select('id, numero, status').ilike('numero', like).limit(4),
+      supabase.from('parceiros').select('id, nome, empresa').or(`nome.ilike.${like},empresa.ilike.${like}`).limit(4),
+      supabase.from('produtos').select('id, nome, codigo').or(`nome.ilike.${like},codigo.ilike.${like}`).limit(4),
+      supabase.from('compromissos').select('id, titulo, tipo').ilike('titulo', like).limit(4),
+    ])
 
     const all: Result[] = [
       ...(clientes ?? []).map(c => ({
         id: c.id, type: 'cliente' as const,
-        label: c.empresa ? `${c.empresa}` : c.nome,
+        label: c.empresa ?? c.nome,
         sublabel: c.empresa ? c.nome : undefined,
         href: `/clientes/${c.id}`,
       })),
@@ -74,6 +95,30 @@ export default function GlobalSearch({ onClose }: Props) {
         label: p.titulo,
         sublabel: p.numero ?? undefined,
         href: `/propostas`,
+      })),
+      ...(pedidos ?? []).map(p => ({
+        id: p.id, type: 'pedido' as const,
+        label: p.numero ?? p.id,
+        sublabel: p.status ?? undefined,
+        href: `/pedidos`,
+      })),
+      ...(parceiros ?? []).map(p => ({
+        id: p.id, type: 'parceiro' as const,
+        label: p.empresa ?? p.nome,
+        sublabel: p.empresa ? p.nome : undefined,
+        href: `/parceiros`,
+      })),
+      ...(produtos ?? []).map(p => ({
+        id: p.id, type: 'produto' as const,
+        label: p.nome,
+        sublabel: p.codigo ?? undefined,
+        href: `/produtos`,
+      })),
+      ...(compromissos ?? []).map(c => ({
+        id: c.id, type: 'compromisso' as const,
+        label: c.titulo,
+        sublabel: c.tipo ?? undefined,
+        href: `/agenda`,
       })),
     ]
 
@@ -99,12 +144,10 @@ export default function GlobalSearch({ onClose }: Props) {
     if (e.key === 'Enter' && results[active]) navigate(results[active].href)
   }
 
-  // Group results by type preserving order
-  const grouped = (['cliente', 'lead', 'oportunidade', 'proposta'] as const)
+  const grouped = TYPE_ORDER
     .map(type => ({ type, items: results.filter(r => r.type === type) }))
     .filter(g => g.items.length > 0)
 
-  // Flat index for keyboard nav
   let flatIdx = 0
 
   return (
@@ -120,7 +163,7 @@ export default function GlobalSearch({ onClose }: Props) {
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="Buscar clientes, leads, oportunidades..."
+            placeholder="Buscar em todo o sistema..."
             className="flex-1 text-sm text-gray-900 placeholder-gray-400 bg-transparent outline-none"
           />
           {query && (
@@ -188,7 +231,7 @@ export default function GlobalSearch({ onClose }: Props) {
           {!query && (
             <div className="px-4 py-6 text-center">
               <p className="text-sm text-gray-400">
-                Digite para buscar em clientes, leads, oportunidades e propostas
+                Busca em clientes, leads, oportunidades, propostas, pedidos, parceiros, produtos e agenda
               </p>
               <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-gray-300">
                 <kbd className="border border-gray-200 rounded px-1.5 py-0.5">↑↓</kbd>
