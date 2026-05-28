@@ -27,31 +27,22 @@ export default function LostModal({ op, onClose }: Props) {
   const [motivo, setMotivo] = useState('')
   const [saving, setSaving] = useState(false)
 
+  const [erro, setErro] = useState('')
+
   async function handleConfirm() {
     setSaving(true)
+    setErro('')
     const supabase = createClient()
-
-    // Tenta atualizar status + motivo_perda
-    const payload: Record<string, unknown> = { status: 'perdida' }
-    if (motivo) payload.motivo_perda = motivo
 
     const { error } = await supabase
       .from('oportunidades')
-      .update(payload)
+      .update({ status: 'perdido' })
       .eq('id', op.id)
 
     if (error) {
-      // Se motivo_perda não existir na tabela, tenta só o status
-      if (error.message?.includes('motivo_perda')) {
-        await supabase
-          .from('oportunidades')
-          .update({ status: 'perdida' })
-          .eq('id', op.id)
-      } else {
-        console.error('Erro ao marcar perdida:', error)
-        setSaving(false)
-        return
-      }
+      setErro(error.message ?? JSON.stringify(error))
+      setSaving(false)
+      return
     }
 
     toast('Oportunidade marcada como perdida', 'info')
@@ -90,6 +81,10 @@ export default function LostModal({ op, onClose }: Props) {
               ))}
             </select>
           </div>
+
+          {erro && (
+            <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{erro}</p>
+          )}
 
           <div className="flex gap-3">
             <button
