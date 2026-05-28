@@ -140,7 +140,7 @@ export default async function DashboardPage() {
   const recentes = opList.slice(0, 6)
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6">
       {/* Cabeçalho */}
       <div>
         <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
