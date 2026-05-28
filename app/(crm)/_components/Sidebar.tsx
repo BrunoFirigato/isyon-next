@@ -156,35 +156,30 @@ export default function Sidebar({
           const visibleItems  = group.items.filter(canSee)
           if (visibleItems.length === 0) return null
 
-          const groupCollapsed = !collapsed && !!collapsedGroups[group.label]
-          // Auto-expand group if it contains the active route
+          // Se a rota ativa está neste grupo, forçamos expansão
           const hasActive = visibleItems.some(
             ({ href }) => pathname === href || pathname.startsWith(href + '/')
           )
+          const groupCollapsed = !collapsed && !!collapsedGroups[group.label] && !hasActive
 
           return (
             <div key={group.label}>
               {/* Cabeçalho do grupo — clicável quando sidebar expandida */}
               {!collapsed && (
                 <button
-                  onClick={() => !hasActive && toggleGroup(group.label)}
+                  onClick={() => toggleGroup(group.label)}
                   title={groupCollapsed ? `Expandir ${group.label}` : `Recolher ${group.label}`}
-                  className={`
-                    w-full flex items-center justify-between px-2 mb-1 group/gh
-                    ${hasActive ? 'cursor-default' : 'cursor-pointer'}
-                  `}
+                  className="w-full flex items-center justify-between px-2 mb-1 group/gh cursor-pointer"
                 >
                   <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
                     {group.label}
                   </span>
-                  {!hasActive && (
-                    <ChevronDown
-                      size={11}
-                      className={`text-gray-300 group-hover/gh:text-gray-500 transition-all duration-200 ${
-                        groupCollapsed ? '-rotate-90' : ''
-                      }`}
-                    />
-                  )}
+                  <ChevronDown
+                    size={11}
+                    className={`text-gray-300 group-hover/gh:text-gray-500 transition-all duration-200 ${
+                      groupCollapsed ? '-rotate-90' : ''
+                    }`}
+                  />
                 </button>
               )}
 
