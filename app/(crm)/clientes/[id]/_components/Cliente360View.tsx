@@ -7,7 +7,7 @@ import {
   ArrowLeft, Mail, Phone, MapPin, Building2,
   FileText, ShoppingCart, TrendingUp, DollarSign,
   Calendar, Pencil, ChevronRight, Receipt, MessageSquare,
-  Plus, X, Save, Landmark,
+  Plus, X, Save, Landmark, Radar,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ClienteFormModal from '../../_components/ClienteFormModal'
@@ -192,8 +192,23 @@ export default function Cliente360View({ cliente, oportunidades, propostas, pedi
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-4 pt-4 border-t border-gray-100">
-          <Calendar size={11} /> Cliente desde {fmt(cliente.criado_em)}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-4 pt-4 border-t border-gray-100">
+          <span className="flex items-center gap-1.5 text-xs text-gray-400">
+            <Calendar size={11} /> Cliente desde {fmt(cliente.criado_em)}
+          </span>
+          {cliente.origem && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">
+              <Radar size={10} /> {cliente.origem}
+            </span>
+          )}
+          {cliente.lead_id && (
+            <Link
+              href={`/leads/${cliente.lead_id}`}
+              className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-100 px-2 py-0.5 rounded-full font-medium transition-colors"
+            >
+              <TrendingUp size={10} /> Originado de lead
+            </Link>
+          )}
         </div>
       </div>
 

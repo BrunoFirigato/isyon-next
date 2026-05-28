@@ -37,14 +37,38 @@ export default function ConvertModal({ lead, onClose }: Props) {
 
     const supabase = createClient()
 
-    // Cria a oportunidade vinculada ao lead
+    // 1. Cria o prospect a partir dos dados do lead
+    const { data: prospect, error: prospectErr } = await supabase
+      .from('clientes')
+      .insert({
+        tenant_id: tenantId,
+        nome:      lead.nome,
+        empresa:   lead.empresa   ?? null,
+        email:     lead.email     ?? null,
+        telefone:  lead.telefone  ?? null,
+        tipo:      'prospect',
+        status:    'ativo',
+        origem:    lead.origem    ?? null,
+        lead_id:   lead.id,
+      })
+      .select('id')
+      .single()
+
+    if (prospectErr) {
+      setError(prospectErr.message)
+      setSaving(false)
+      return
+    }
+
+    // 2. Cria a oportunidade vinculada ao lead e ao prospect
     const { error: opErr } = await supabase.from('oportunidades').insert({
-      titulo: titulo.trim(),
-      valor: valor ? parseFloat(valor.replace(',', '.')) : null,
+      titulo:     titulo.trim(),
+      valor:      valor ? parseFloat(valor.replace(',', '.')) : null,
       etapa,
-      status: 'aberta',
-      tenant_id: tenantId,
-      lead_id: lead.id,
+      status:     'aberta',
+      tenant_id:  tenantId,
+      lead_id:    lead.id,
+      cliente_id: prospect.id,
     })
 
     if (opErr) {
@@ -53,10 +77,10 @@ export default function ConvertModal({ lead, onClose }: Props) {
       return
     }
 
-    // Marca o lead como convertido
+    // 3. Marca o lead como convertido
     await supabase.from('leads').update({ status: 'convertido' }).eq('id', lead.id)
 
-    toast('Lead convertido em oportunidade!')
+    toast('Lead convertido! Prospect criado em Clientes.')
     router.refresh()
     onClose()
   }

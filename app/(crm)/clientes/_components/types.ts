@@ -16,6 +16,8 @@ export interface Cliente {
   segmento: string | null
   status: string | null
   valor_total: number | null
+  origem: string | null
+  lead_id: string | null
   criado_em: string
   atualizado_em: string
 }

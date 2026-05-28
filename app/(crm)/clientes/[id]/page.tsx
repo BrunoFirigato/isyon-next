@@ -21,7 +21,7 @@ export default async function Cliente360Page({ params }: Props) {
   ] = await Promise.all([
     supabase
       .from('clientes')
-      .select('id, nome, empresa, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado, tipo, segmento, status, valor_total, criado_em, atualizado_em')
+      .select('id, nome, empresa, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado, tipo, segmento, status, valor_total, origem, lead_id, criado_em, atualizado_em')
       .eq('id', id)
       .maybeSingle(),
     supabase

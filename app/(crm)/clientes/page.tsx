@@ -12,7 +12,7 @@ export default async function ClientesPage({ searchParams }: Props) {
   let query = supabase
     .from('clientes')
     .select(
-      'id, nome, empresa, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado, tipo, segmento, status, valor_total, criado_em, atualizado_em'
+      'id, nome, empresa, email, telefone, cpf_cnpj, cep, rua, numero, complemento, bairro, cidade, estado, tipo, segmento, status, valor_total, origem, lead_id, criado_em, atualizado_em'
     )
     .order('nome', { ascending: true })
 

@@ -5,6 +5,11 @@ import { useRouter } from 'next/navigation'
 import { X, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Cliente, STATUS_CLIENTE, ESTADOS_BR, TIPOS } from './types'
+
+const ORIGEM_OPTIONS = [
+  'Site', 'Indicação', 'LinkedIn', 'WhatsApp',
+  'Evento', 'Prospecção', 'Parceiro', 'Outro',
+]
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
@@ -18,6 +23,7 @@ type FormData = {
   tipo: string
   segmento: string
   status: string
+  origem: string
   cep: string
   rua: string
   numero: string
@@ -48,6 +54,7 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
     tipo: cliente?.tipo ?? 'prospect',
     segmento: cliente?.segmento ?? '',
     status: cliente?.status ?? 'ativo',
+    origem: cliente?.origem ?? '',
     cep: cliente?.cep ?? '',
     rua: cliente?.rua ?? '',
     numero: cliente?.numero ?? '',
@@ -104,6 +111,7 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
       tipo: form.tipo,
       segmento: form.segmento || null,
       status: form.status,
+      origem: form.origem || null,
       cep: form.cep.replace(/\D/g, '') || null,
       rua: form.rua.trim() || null,
       numero: form.numero.trim() || null,
@@ -225,6 +233,17 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                       {STATUS_CLIENTE.map((s) => (
                         <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Origem</label>
+                    <select value={form.origem} onChange={(e) => set('origem', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                      <option value="">Selecione...</option>
+                      {ORIGEM_OPTIONS.map((o) => (
+                        <option key={o} value={o}>{o}</option>
                       ))}
                     </select>
                   </div>
