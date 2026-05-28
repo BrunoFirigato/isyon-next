@@ -39,18 +39,19 @@ interface MoreGroup {
 
 const moreGroups: MoreGroup[] = [
   {
-    label: 'Comercial',
+    label: 'Vendas',
     items: [
-      { href: '/parceiros', label: 'Parceiros', icon: Users2 },
+      { href: '/propostas', label: 'Propostas', icon: FileText },
+      { href: '/pedidos',   label: 'Pedidos',   icon: ShoppingCart },
     ],
   },
   {
-    label: 'Operacional',
+    label: 'Cadastros',
     items: [
-      { href: '/propostas',  label: 'Propostas',  icon: FileText },
-      { href: '/pedidos',    label: 'Pedidos',    icon: ShoppingCart },
       { href: '/produtos',   label: 'Produtos',   icon: Package },
-      { href: '/vendedores', label: 'Vendedores', icon: UserCog, perfis: ['admin', 'gestor'] },
+      { href: '/vendedores', label: 'Vendedores', icon: UserCog,  perfis: ['admin', 'gestor'] },
+      { href: '/parceiros',  label: 'Parceiros',  icon: Users2 },
+      { href: '/cadastros',  label: 'Outros',     icon: BookOpen, perfis: ['admin', 'gestor'] },
     ],
   },
   {
@@ -64,7 +65,6 @@ const moreGroups: MoreGroup[] = [
     label: 'Administração',
     items: [
       { href: '/configuracoes', label: 'Configurações', icon: Settings2 },
-      { href: '/cadastros',     label: 'Cadastros',     icon: BookOpen, perfis: ['admin', 'gestor'] },
       { href: '/usuarios',      label: 'Usuários',      icon: Users2,   perfis: ['admin'] },
     ],
   },

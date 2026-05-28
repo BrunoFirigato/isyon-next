@@ -36,19 +36,25 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: 'Comercial',
     items: [
       { href: '/dashboard',     label: 'Dashboard',    icon: LayoutDashboard },
-      { href: '/leads',         label: 'Leads',         icon: Target },
-      { href: '/oportunidades', label: 'Oportunidades', icon: Briefcase },
-      { href: '/clientes',      label: 'Clientes',      icon: Building2 },
-      { href: '/parceiros',     label: 'Parceiros',     icon: Users2 },
+      { href: '/leads',         label: 'Leads',        icon: Target },
+      { href: '/oportunidades', label: 'Oportunidades',icon: Briefcase },
+      { href: '/clientes',      label: 'Clientes',     icon: Building2 },
     ],
   },
   {
-    label: 'Operacional',
+    label: 'Vendas',
     items: [
-      { href: '/propostas',  label: 'Propostas',  icon: FileText },
-      { href: '/pedidos',    label: 'Pedidos',    icon: ShoppingCart },
+      { href: '/propostas', label: 'Propostas', icon: FileText },
+      { href: '/pedidos',   label: 'Pedidos',   icon: ShoppingCart },
+    ],
+  },
+  {
+    label: 'Cadastros',
+    items: [
       { href: '/produtos',   label: 'Produtos',   icon: Package },
-      { href: '/vendedores', label: 'Vendedores', icon: UserCog, perfis: ['admin', 'gestor'] },
+      { href: '/vendedores', label: 'Vendedores', icon: UserCog,  perfis: ['admin', 'gestor'] },
+      { href: '/parceiros',  label: 'Parceiros',  icon: Users2 },
+      { href: '/cadastros',  label: 'Outros',     icon: BookOpen, perfis: ['admin', 'gestor'] },
     ],
   },
   {
@@ -62,7 +68,6 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: 'Administração',
     items: [
       { href: '/configuracoes', label: 'Configurações', icon: Settings2 },
-      { href: '/cadastros',     label: 'Cadastros',     icon: BookOpen,   perfis: ['admin', 'gestor'] },
       { href: '/usuarios',      label: 'Usuários',      icon: Users2,     perfis: ['admin'] },
       { href: '/superadmin',    label: 'Superadmin',    icon: ShieldAlert, perfis: ['admin'] },
     ],
