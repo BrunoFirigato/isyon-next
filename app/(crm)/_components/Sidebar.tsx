@@ -125,26 +125,26 @@ export default function Sidebar({
   return (
     <aside
       className={`
-        hidden md:flex flex-col bg-white border-r border-gray-200 h-full shrink-0
+        hidden md:flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 h-full shrink-0
         transition-all duration-200 ease-in-out
         ${collapsed ? 'w-[68px]' : 'w-56'}
       `}
     >
       {/* ── Brand + Toggle ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-3 h-14 border-b border-gray-100 shrink-0">
+      <div className="flex items-center justify-between px-3 h-14 border-b border-gray-100 dark:border-gray-800 shrink-0">
         {/* Logo sempre visível */}
         <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
           I
         </div>
         {/* Texto só quando expandido */}
         {!collapsed && (
-          <span className="font-bold text-gray-900 flex-1 truncate mx-2.5">Isyon CRM</span>
+          <span className="font-bold text-gray-900 dark:text-gray-100 flex-1 truncate mx-2.5">Isyon CRM</span>
         )}
         {/* Toggle */}
         <button
           onClick={toggle}
           title={collapsed ? 'Expandir menu' : 'Recolher menu'}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
@@ -171,12 +171,12 @@ export default function Sidebar({
                   title={groupCollapsed ? `Expandir ${group.label}` : `Recolher ${group.label}`}
                   className="w-full flex items-center justify-between px-2 mb-1 group/gh cursor-pointer"
                 >
-                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                  <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                     {group.label}
                   </span>
                   <ChevronDown
                     size={11}
-                    className={`text-gray-300 group-hover/gh:text-gray-500 transition-all duration-200 ${
+                    className={`text-gray-300 dark:text-gray-600 group-hover/gh:text-gray-500 dark:group-hover/gh:text-gray-400 transition-all duration-200 ${
                       groupCollapsed ? '-rotate-90' : ''
                     }`}
                   />
@@ -198,12 +198,12 @@ export default function Sidebar({
                           ${collapsed ? 'justify-center w-11 h-11 mx-auto' : 'gap-2.5 px-2 py-2'}
                           ${isActive
                             ? 'bg-blue-600 text-white font-medium'
-                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'}
                         `}
                       >
                         <Icon
                           size={collapsed ? 18 : 15}
-                          className={isActive ? 'text-white shrink-0' : 'text-gray-400 shrink-0'}
+                          className={isActive ? 'text-white shrink-0' : 'text-gray-400 dark:text-gray-500 shrink-0'}
                         />
                         {!collapsed && <span className="truncate">{label}</span>}
                       </Link>

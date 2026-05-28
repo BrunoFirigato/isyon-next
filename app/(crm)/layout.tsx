@@ -54,7 +54,7 @@ export default async function CrmLayout({
       <SegmentosProvider segmentos={segmentos}>
         <BreadcrumbProvider>
         <ToastProvider>
-          <div className="flex h-screen overflow-hidden bg-gray-50">
+          <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
             <Sidebar userEmail={user.email ?? ''} perfil={perfil} />
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
               <TopBar

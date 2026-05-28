@@ -9,6 +9,7 @@ import { useBreadcrumb } from './BreadcrumbContext'
 import NotificationBell from './NotificationBell'
 import PerfilModal from './PerfilModal'
 import GlobalSearch from './GlobalSearch'
+import { ThemeToggle } from './ThemeToggle'
 
 function avatarInitials(name: string) {
   const parts = name.trim().split(/\s+/)
@@ -87,7 +88,7 @@ export default function TopBar({ userEmail, userName: userNameProp }: { userEmai
 
   return (
     <>
-      <header className="hidden md:flex items-center justify-between h-14 px-6 bg-white border-b border-gray-200 shrink-0">
+      <header className="hidden md:flex items-center justify-between h-14 px-6 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shrink-0">
 
         {/* Breadcrumb / Page title */}
         <div className="flex items-center gap-1.5 text-sm min-w-0">
@@ -95,15 +96,15 @@ export default function TopBar({ userEmail, userName: userNameProp }: { userEmai
             <>
               <Link
                 href={breadcrumb.parentHref}
-                className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors shrink-0"
               >
                 {breadcrumb.parentLabel}
               </Link>
-              <ChevronRight size={13} className="text-gray-300 shrink-0" />
-              <span className="font-semibold text-gray-800 truncate">{breadcrumb.currentLabel}</span>
+              <ChevronRight size={13} className="text-gray-300 dark:text-gray-600 shrink-0" />
+              <span className="font-semibold text-gray-800 dark:text-gray-100 truncate">{breadcrumb.currentLabel}</span>
             </>
           ) : (
-            <span className="font-semibold text-gray-800">{pageLabel}</span>
+            <span className="font-semibold text-gray-800 dark:text-gray-100">{pageLabel}</span>
           )}
         </div>
 
@@ -113,7 +114,7 @@ export default function TopBar({ userEmail, userName: userNameProp }: { userEmai
           {/* Search trigger */}
           <button
             onClick={() => setSearchOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 transition-colors text-sm"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm"
           >
             <Search size={13} />
             <span className="text-xs hidden lg:inline">Buscar</span>
@@ -135,21 +136,22 @@ export default function TopBar({ userEmail, userName: userNameProp }: { userEmai
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 top-11 w-56 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden z-50">
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-semibold text-gray-800">{userName}</p>
-                  <p className="text-xs text-gray-400 truncate">{userEmail}</p>
+              <div className="absolute right-0 top-11 w-56 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden z-50">
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{userName}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{userEmail}</p>
                 </div>
                 <button
                   onClick={() => { setPerfilOpen(true); setMenuOpen(false) }}
-                  className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   <User size={14} className="text-gray-400" />
                   Meu perfil
                 </button>
+                <ThemeToggle />
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                  className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-t border-gray-100 dark:border-gray-800"
                 >
                   <LogOut size={14} className="text-gray-400" />
                   Sair
