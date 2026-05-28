@@ -65,12 +65,12 @@ export default function LancamentoFormModal({ lancamento, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-md max-h-[94vh] flex flex-col shadow-xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
-          <h2 className="text-base font-semibold text-gray-900">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-md max-h-[94vh] flex flex-col shadow-xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Editar lançamento' : 'Novo lançamento'}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500">
             <X size={18} />
           </button>
         </div>
@@ -87,7 +87,7 @@ export default function LancamentoFormModal({ lancamento, onClose }: Props) {
                       ? t === 'receita'
                         ? 'bg-green-600 border-green-600 text-white'
                         : 'bg-red-600 border-red-600 text-white'
-                      : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                      : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   {t === 'receita' ? 'Receita' : 'Despesa'}
@@ -97,46 +97,46 @@ export default function LancamentoFormModal({ lancamento, onClose }: Props) {
 
             {/* Descrição */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                 Descrição <span className="text-red-500">*</span>
               </label>
               <input
                 type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)}
                 required placeholder="Ex: Pagamento de fatura #123"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               {/* Valor */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                   Valor (R$) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number" min="0.01" step="0.01" value={valor}
                   onChange={(e) => setValor(e.target.value)}
                   placeholder="0,00"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                 />
               </div>
 
               {/* Data */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Data</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Data</label>
                 <input
                   type="date" value={data} onChange={(e) => setData(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
                 />
               </div>
             </div>
 
             {/* Categoria */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Categoria</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Categoria</label>
               <select
                 value={categoria} onChange={(e) => setCategoria(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100"
               >
                 <option value="">Selecione...</option>
                 {categorias.map((c) => (
@@ -154,7 +154,7 @@ export default function LancamentoFormModal({ lancamento, onClose }: Props) {
 
           <div className="px-5 pb-5 flex gap-3 shrink-0">
             <button type="button" onClick={onClose}
-              className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+              className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               Cancelar
             </button>
             <button type="submit" disabled={saving}

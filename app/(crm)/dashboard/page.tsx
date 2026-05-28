@@ -51,13 +51,13 @@ function KpiCard({
     green:  'bg-emerald-500',
   }
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
       <div className={`h-1 ${accent[color]}`} />
       <div className="p-5">
         <div className={`inline-flex p-2 rounded-lg mb-4 ${iconBg[color]}`}>{icon}</div>
-        <p className="text-3xl font-bold text-gray-900 leading-none mb-1">{value}</p>
-        <p className="text-xs font-medium text-gray-500 mt-1.5">{title}</p>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+        <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none mb-1">{value}</p>
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1.5">{title}</p>
+        {subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{subtitle}</p>}
       </div>
     </div>
   )
@@ -143,8 +143,8 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       {/* Cabeçalho */}
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-400 mt-0.5">{nomeMesAno()}</p>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Dashboard</h1>
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">{nomeMesAno()}</p>
       </div>
 
       {/* KPIs */}
@@ -179,25 +179,25 @@ export default async function DashboardPage() {
       {/* Conversão + Pipeline */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Taxa de conversão */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">
             Conversão do mês
           </p>
           <p className={`text-5xl font-bold leading-none ${
-            taxaConversao === 0 ? 'text-gray-200'
+            taxaConversao === 0 ? 'text-gray-200 dark:text-gray-700'
             : taxaConversao < 30 ? 'text-orange-500'
             : 'text-emerald-500'
           }`}>
             {taxaConversao}%
           </p>
-          <p className="text-xs text-gray-400 mt-3">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">
             {opGanhasDoMes.length} ganha{opGanhasDoMes.length !== 1 ? 's' : ''} de{' '}
             {opDoMes.length} no mês
           </p>
-          <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="mt-4 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
-                taxaConversao === 0 ? 'bg-gray-200'
+                taxaConversao === 0 ? 'bg-gray-200 dark:bg-gray-700'
                 : taxaConversao < 30 ? 'bg-orange-400'
                 : 'bg-emerald-500'
               }`}
@@ -207,23 +207,23 @@ export default async function DashboardPage() {
         </div>
 
         {/* Pipeline por etapa */}
-        <div className="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
+        <div className="md:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">
             Pipeline por etapa
           </p>
           {pipeline.length === 0 ? (
-            <p className="text-sm text-gray-400">Nenhuma oportunidade aberta.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma oportunidade aberta.</p>
           ) : (
             <div className="space-y-4">
               {pipeline.map(({ etapa, count, valor }) => (
                 <div key={etapa}>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-gray-700 capitalize">{etapa}</span>
-                    <span className="text-xs text-gray-500 font-medium">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">{etapa}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                       {count} · {brl(valor)}
                     </span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-blue-500 rounded-full transition-all"
                       style={{ width: `${(valor / maxValor) * 100}%` }}
@@ -237,26 +237,26 @@ export default async function DashboardPage() {
       </div>
 
       {/* Oportunidades recentes */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h2 className="text-sm font-semibold text-gray-900">Oportunidades recentes</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Oportunidades recentes</h2>
         </div>
         {recentes.length === 0 ? (
-          <div className="px-5 py-10 text-center text-sm text-gray-400">
+          <div className="px-5 py-10 text-center text-sm text-gray-400 dark:text-gray-500">
             Nenhuma oportunidade cadastrada ainda.
           </div>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 dark:divide-gray-700">
             {recentes.map((op) => (
               <div key={op.id} className="px-5 py-3.5 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{op.titulo ?? '—'}</p>
-                  <p className="text-xs text-gray-400 capitalize mt-0.5">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{op.titulo ?? '—'}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 capitalize mt-0.5">
                     {op.etapa ?? '—'}
                   </p>
                 </div>
                 <div className="text-right shrink-0 ml-4">
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {op.valor != null ? brl(op.valor) : '—'}
                   </p>
                   <StatusBadge status={op.status ?? ''} />

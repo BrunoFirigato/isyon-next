@@ -81,17 +81,24 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
 
   const isServico = form.tipo === 'servico'
 
+  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const selectCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'
+  const smallInputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const smallSelectCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const smallLabelCls = 'block text-xs text-gray-600 dark:text-gray-400 mb-1'
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-2xl shadow-xl max-h-[92vh] flex flex-col">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-2xl shadow-xl max-h-[92vh] flex flex-col">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Editar produto' : 'Novo produto'}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500">
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
             <X size={18} />
           </button>
         </div>
@@ -106,7 +113,7 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 form.tipo === t
                   ? t === 'servico' ? 'bg-indigo-600 text-white' : 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               {t === 'produto' ? 'Produto' : 'Serviço'}
@@ -120,17 +127,17 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
           {/* Código + Nome */}
           <div className="grid grid-cols-4 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Código</label>
+              <label className={labelCls}>Código</label>
               <input
                 type="text"
                 value={form.codigo}
                 onChange={(e) => set('codigo', e.target.value)}
                 placeholder="001"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
             <div className="col-span-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className={labelCls}>
                 Nome <span className="text-red-500">*</span>
               </label>
               <input
@@ -139,7 +146,7 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
                 onChange={(e) => set('nome', e.target.value)}
                 placeholder="Nome do produto ou serviço"
                 autoFocus
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
           </div>
@@ -147,31 +154,31 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
           {/* Preço + Custo + Unidade + Status */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Preço (R$)</label>
+              <label className={labelCls}>Preço (R$)</label>
               <input
                 type="text"
                 value={form.preco}
                 onChange={(e) => set('preco', e.target.value)}
                 placeholder="0,00"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Custo (R$)</label>
+              <label className={labelCls}>Custo (R$)</label>
               <input
                 type="text"
                 value={form.custo}
                 onChange={(e) => set('custo', e.target.value)}
                 placeholder="0,00"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Unidade</label>
+              <label className={labelCls}>Unidade</label>
               <select
                 value={form.unidade}
                 onChange={(e) => set('unidade', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className={selectCls}
               >
                 {UNIDADES.map((u) => (
                   <option key={u} value={u}>{u}</option>
@@ -179,11 +186,11 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+              <label className={labelCls}>Status</label>
               <select
                 value={form.ativo ? 'true' : 'false'}
                 onChange={(e) => set('ativo', e.target.value === 'true')}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className={selectCls}
               >
                 <option value="true">Ativo</option>
                 <option value="false">Inativo</option>
@@ -193,60 +200,60 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
 
           {/* Descrição */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Descrição</label>
+            <label className={labelCls}>Descrição</label>
             <textarea
               value={form.descricao}
               onChange={(e) => set('descricao', e.target.value)}
               placeholder="Descrição complementar..."
               rows={2}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
 
           {/* Campos fiscais */}
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Dados fiscais</p>
+            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Dados fiscais</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs text-gray-600 mb-1">NCM</label>
+                <label className={smallLabelCls}>NCM</label>
                 <input
                   type="text"
                   value={form.ncm}
                   onChange={(e) => set('ncm', e.target.value)}
                   placeholder="Ex: 84729021"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={smallInputCls}
                 />
               </div>
               {!isServico && (
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">CEST</label>
+                  <label className={smallLabelCls}>CEST</label>
                   <input
                     type="text"
                     value={form.cest}
                     onChange={(e) => set('cest', e.target.value)}
                     placeholder="Ex: 2800300"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={smallInputCls}
                   />
                 </div>
               )}
               {isServico && (
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">Cód. Serviço (LC116)</label>
+                  <label className={smallLabelCls}>Cód. Serviço (LC116)</label>
                   <input
                     type="text"
                     value={form.cod_servico}
                     onChange={(e) => set('cod_servico', e.target.value)}
                     placeholder="Ex: 01.01"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={smallInputCls}
                   />
                 </div>
               )}
               <div className={isServico ? 'col-span-1' : 'col-span-2 sm:col-span-1'}>
-                <label className="block text-xs text-gray-600 mb-1">Origem</label>
+                <label className={smallLabelCls}>Origem</label>
                 <select
                   value={form.origem}
                   onChange={(e) => set('origem', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className={smallSelectCls}
                 >
                   {ORIGENS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
@@ -264,9 +271,9 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
         </form>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+        <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
           <button type="button" onClick={onClose}
-            className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+            className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             Cancelar
           </button>
           <button onClick={handleSubmit} disabled={saving}

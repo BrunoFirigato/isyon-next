@@ -109,7 +109,7 @@ export default function NotificationBell() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="relative w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 transition-colors"
+        className="relative w-9 h-9 flex items-center justify-center rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         title="Notificações"
       >
         <Bell size={18} strokeWidth={1.75} />
@@ -123,11 +123,11 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 w-80 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden z-50">
+        <div className="absolute right-0 top-11 w-80 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden z-50">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <span className="text-sm font-semibold text-gray-900">Notificações</span>
-            <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notificações</span>
+            <button onClick={() => setOpen(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
               <X size={14} />
             </button>
           </div>
@@ -135,13 +135,13 @@ export default function NotificationBell() {
           {/* Lista */}
           <div className="max-h-80 overflow-y-auto">
             {!loaded && (
-              <p className="text-sm text-gray-400 text-center py-6">Carregando...</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">Carregando...</p>
             )}
             {loaded && items.length === 0 && (
               <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-                <Bell size={24} className="text-gray-200 mb-2" />
-                <p className="text-sm text-gray-400">Nenhuma notificação</p>
-                <p className="text-xs text-gray-300 mt-0.5">Tudo em dia! 🎉</p>
+                <Bell size={24} className="text-gray-200 dark:text-gray-600 mb-2" />
+                <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma notificação</p>
+                <p className="text-xs text-gray-300 dark:text-gray-600 mt-0.5">Tudo em dia! 🎉</p>
               </div>
             )}
             {loaded && items.map(item => {
@@ -150,7 +150,7 @@ export default function NotificationBell() {
                 <button
                   key={item.id}
                   onClick={() => navegar(item.href)}
-                  className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 last:border-0"
+                  className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left border-b border-gray-50 dark:border-gray-700 last:border-0"
                 >
                   <span className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
                     item.urgente ? 'bg-red-50' : 'bg-blue-50'
@@ -158,8 +158,8 @@ export default function NotificationBell() {
                     <Icon size={13} className={item.urgente ? 'text-red-500' : 'text-blue-500'} />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{item.titulo}</p>
-                    <p className={`text-xs mt-0.5 ${item.urgente ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{item.titulo}</p>
+                    <p className={`text-xs mt-0.5 ${item.urgente ? 'text-red-500 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
                       <Clock size={10} className="inline mr-1" />
                       {item.subtitulo}
                     </p>
@@ -170,7 +170,7 @@ export default function NotificationBell() {
           </div>
 
           {loaded && items.length > 0 && (
-            <div className="px-4 py-2.5 border-t border-gray-100">
+            <div className="px-4 py-2.5 border-t border-gray-100 dark:border-gray-700">
               <button
                 onClick={() => navegar('/agenda')}
                 className="text-xs text-blue-600 hover:text-blue-700 font-medium"

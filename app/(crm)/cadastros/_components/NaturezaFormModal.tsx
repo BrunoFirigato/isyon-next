@@ -63,17 +63,21 @@ export default function NaturezaFormModal({ natureza, onClose }: Props) {
     onClose()
   }
 
+  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const selectCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-lg shadow-xl max-h-[90vh] flex flex-col">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-lg shadow-xl max-h-[90vh] flex flex-col">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Editar Natureza de Operação' : 'Nova Natureza de Operação'}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500">
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
             <X size={18} />
           </button>
         </div>
@@ -83,7 +87,7 @@ export default function NaturezaFormModal({ natureza, onClose }: Props) {
           {/* Código + Tipo */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className={labelCls}>
                 Código <span className="text-red-500">*</span>
               </label>
               <input
@@ -92,15 +96,15 @@ export default function NaturezaFormModal({ natureza, onClose }: Props) {
                 onChange={(e) => set('codigo', e.target.value)}
                 placeholder="Ex: 001"
                 autoFocus
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo</label>
+              <label className={labelCls}>Tipo</label>
               <select
                 value={form.tipo}
                 onChange={(e) => set('tipo', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className={selectCls}
               >
                 <option value="saida">Saída</option>
                 <option value="entrada">Entrada</option>
@@ -110,7 +114,7 @@ export default function NaturezaFormModal({ natureza, onClose }: Props) {
 
           {/* Descrição */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className={labelCls}>
               Descrição <span className="text-red-500">*</span>
             </label>
             <input
@@ -118,43 +122,43 @@ export default function NaturezaFormModal({ natureza, onClose }: Props) {
               value={form.descricao}
               onChange={(e) => set('descricao', e.target.value)}
               placeholder="Ex: Venda de mercadoria"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputCls}
             />
           </div>
 
           {/* CFOP + Chave */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">CFOP</label>
+              <label className={labelCls}>CFOP</label>
               <input
                 type="text"
                 value={form.cfop}
                 onChange={(e) => set('cfop', e.target.value)}
                 placeholder="Ex: 5102"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Chave</label>
+              <label className={labelCls}>Chave</label>
               <input
                 type="text"
                 value={form.chave}
                 onChange={(e) => set('chave', e.target.value)}
                 placeholder="Ex: venda_produto"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
           </div>
 
           {/* Observações */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Observações</label>
+            <label className={labelCls}>Observações</label>
             <textarea
               value={form.obs}
               onChange={(e) => set('obs', e.target.value)}
               placeholder="Observações fiscais..."
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
 
@@ -166,11 +170,11 @@ export default function NaturezaFormModal({ natureza, onClose }: Props) {
         </form>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+        <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+            className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             Cancelar
           </button>

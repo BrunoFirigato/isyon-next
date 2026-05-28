@@ -320,8 +320,8 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
       {/* Cabeçalho */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Configurações</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Gerencie as configurações da empresa e preferências</p>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Configurações</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Gerencie as configurações da empresa e preferências</p>
         </div>
       </div>
 
@@ -334,7 +334,7 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
             className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               tab === key
                 ? 'bg-blue-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             <Icon size={14} />
@@ -350,32 +350,32 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
           <form onSubmit={salvarEmpresa} className="space-y-5">
 
             {/* Identificação */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100">
-                <Building2 size={15} className="text-gray-400" />
-                <h3 className="text-sm font-semibold text-gray-700">Identificação</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
+                <Building2 size={15} className="text-gray-400 dark:text-gray-500" />
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Identificação</h3>
               </div>
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Razão Social</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Razão Social</label>
                     <input value={empresa.razao_social} onChange={(e) => setE('razao_social', e.target.value)}
                       placeholder="Ex: ACME Produtos Industriais Ltda"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Nome Fantasia</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Nome Fantasia</label>
                     <input value={empresa.nome_fantasia} onChange={(e) => setE('nome_fantasia', e.target.value)}
                       placeholder="Ex: ACME"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">CNPJ</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">CNPJ</label>
                   <div className="relative">
                     <input value={maskCnpj(empresa.cnpj)} onChange={(e) => handleCnpjChange(e.target.value)}
                       placeholder="00.000.000/0000-00" maxLength={18}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
                     {buscandoCnpj && (
                       <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" />
                     )}
@@ -400,31 +400,31 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
             </div>
 
             {/* Dados tributários */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100">
-                <Tag size={15} className="text-gray-400" />
-                <h3 className="text-sm font-semibold text-gray-700">Dados tributários</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
+                <Tag size={15} className="text-gray-400 dark:text-gray-500" />
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dados tributários</h3>
               </div>
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Inscrição Estadual (IE)</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Inscrição Estadual (IE)</label>
                     <input value={empresa.inscricao_estadual} onChange={(e) => setE('inscricao_estadual', e.target.value)}
                       placeholder="000.000.000.000"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Inscrição Municipal (IM)</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Inscrição Municipal (IM)</label>
                     <input value={empresa.inscricao_municipal} onChange={(e) => setE('inscricao_municipal', e.target.value)}
                       placeholder="000000"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Regime Tributário</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Regime Tributário</label>
                     <select value={empresa.regime_tributario} onChange={(e) => setE('regime_tributario', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100">
                       <option value="">Selecione...</option>
                       <option value="mei">MEI</option>
                       <option value="simples_nacional">Simples Nacional</option>
@@ -433,9 +433,9 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">CRT <span className="text-gray-400 font-normal">(NF-e)</span></label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">CRT <span className="text-gray-400 dark:text-gray-500 font-normal">(NF-e)</span></label>
                     <select value={empresa.crt} onChange={(e) => setE('crt', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100">
                       <option value="">—</option>
                       <option value="1">1 — Simples Nacional</option>
                       <option value="2">2 — Simples Nacional (excesso)</option>
@@ -444,24 +444,24 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">CNAE principal</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">CNAE principal</label>
                   <input value={empresa.cnae} onChange={(e) => setE('cnae', e.target.value)}
                     placeholder="Ex: 4679-6/99"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
                 </div>
               </div>
             </div>
 
             {/* Endereço */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100">
-                <Mail size={15} className="text-gray-400" />
-                <h3 className="text-sm font-semibold text-gray-700">Endereço</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
+                <Mail size={15} className="text-gray-400 dark:text-gray-500" />
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Endereço</h3>
               </div>
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">CEP</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">CEP</label>
                     <div className="relative">
                       <input
                         value={maskCep(empresa.cep)}
@@ -471,7 +471,7 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                           if (v.replace(/\D/g,'').length === 8) buscarCep(v)
                         }}
                         placeholder="00000-000" maxLength={9}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                       />
                       {buscandoCep && (
                         <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-blue-500">buscando...</span>
@@ -479,41 +479,41 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                     </div>
                   </div>
                   <div className="col-span-2 sm:col-span-3">
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Logradouro / Rua</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Logradouro / Rua</label>
                     <input value={empresa.rua} onChange={(e) => setE('rua', e.target.value)}
                       placeholder="Rua, Avenida, Travessa..."
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Número</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Número</label>
                     <input value={empresa.numero} onChange={(e) => setE('numero', e.target.value)}
                       placeholder="000"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
                   </div>
                   <div className="col-span-1 sm:col-span-3">
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Complemento</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Complemento</label>
                     <input value={empresa.complemento} onChange={(e) => setE('complemento', e.target.value)}
                       placeholder="Sala, Andar, Galpão..."
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Bairro</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Bairro</label>
                     <input value={empresa.bairro} onChange={(e) => setE('bairro', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Cidade</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Cidade</label>
                     <input value={empresa.cidade} onChange={(e) => setE('cidade', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">UF</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">UF</label>
                     <select value={empresa.estado} onChange={(e) => setE('estado', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100">
                       <option value="">—</option>
                       {['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(uf => (
                         <option key={uf} value={uf}>{uf}</option>
@@ -525,30 +525,30 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
             </div>
 
             {/* Contato */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100">
-                <MessageCircle size={15} className="text-gray-400" />
-                <h3 className="text-sm font-semibold text-gray-700">Contato</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
+                <MessageCircle size={15} className="text-gray-400 dark:text-gray-500" />
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Contato</h3>
               </div>
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Telefone</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Telefone</label>
                     <input value={empresa.telefone} onChange={(e) => setE('telefone', e.target.value)}
                       placeholder="(00) 00000-0000"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">E-mail</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">E-mail</label>
                     <input type="email" value={empresa.email_empresa} onChange={(e) => setE('email_empresa', e.target.value)}
                       placeholder="contato@empresa.com.br"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Website</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Website</label>
                     <input value={empresa.website} onChange={(e) => setE('website', e.target.value)}
                       placeholder="https://empresa.com.br"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
                   </div>
                 </div>
               </div>
@@ -564,50 +564,50 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
 
         {/* ─── Segmentos ─────────────────────────────────────────────────── */}
         {tab === 'segmentos' && (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
-              <Tag size={16} className="text-gray-400" />
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+              <Tag size={16} className="text-gray-400 dark:text-gray-500" />
               <div>
-                <h2 className="text-sm font-semibold text-gray-700">Segmentos de negócio</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Usados em oportunidades, propostas, pedidos e vendedores</p>
+                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Segmentos de negócio</h2>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Usados em oportunidades, propostas, pedidos e vendedores</p>
               </div>
             </div>
             <div className="p-5 space-y-3">
               <div className="space-y-2">
                 {segmentos.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-4">Nenhum segmento cadastrado.</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Nenhum segmento cadastrado.</p>
                 )}
                 {segmentos.map((seg, idx) => (
                   <div
                     key={seg.value}
-                    className="flex items-center gap-2 p-2.5 rounded-lg border border-gray-100 bg-gray-50 group"
+                    className="flex items-center gap-2 p-2.5 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30 group"
                   >
-                    <GripVertical size={14} className="text-gray-300 shrink-0" />
+                    <GripVertical size={14} className="text-gray-300 dark:text-gray-600 shrink-0" />
                     {editingIdx === idx ? (
                       <>
                         <input
                           autoFocus value={editLabel}
                           onChange={(e) => setEditLabel(e.target.value)}
                           onKeyDown={(e) => { if (e.key === 'Enter') confirmEdit(); if (e.key === 'Escape') setEditingIdx(null) }}
-                          className="flex-1 text-sm border border-blue-400 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="flex-1 text-sm border border-blue-400 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
                         />
                         <button onClick={confirmEdit} className="p-1 text-green-600 hover:bg-green-50 rounded">
                           <Check size={14} />
                         </button>
-                        <button onClick={() => setEditingIdx(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded">
+                        <button onClick={() => setEditingIdx(null)} className="p-1 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
                           <X size={14} />
                         </button>
                       </>
                     ) : (
                       <>
-                        <span className="flex-1 text-sm text-gray-800">{seg.label}</span>
-                        <span className="text-xs text-gray-400 font-mono shrink-0">{seg.value}</span>
+                        <span className="flex-1 text-sm text-gray-800 dark:text-gray-100">{seg.label}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500 font-mono shrink-0">{seg.value}</span>
                         <button onClick={() => startEdit(idx)}
-                          className="p-1 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                          className="p-1 text-gray-300 dark:text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                           <Pencil size={13} />
                         </button>
                         <button onClick={() => removeSegmento(idx)}
-                          className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                          className="p-1 text-gray-300 dark:text-gray-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 size={13} />
                         </button>
                       </>
@@ -621,10 +621,10 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                   onChange={(e) => setNovoLabel(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSegmento() } }}
                   placeholder="Nome do novo segmento..."
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                 />
                 <button type="button" onClick={addSegmento} disabled={!novoLabel.trim()}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+                  className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors">
                   <Plus size={14} /> Adicionar
                 </button>
               </div>
@@ -641,25 +641,25 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
         {tab === 'comunicacao' && (
           <div className="space-y-5">
             {/* WhatsApp */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
-                <MessageCircle size={16} className="text-gray-400" />
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                <MessageCircle size={16} className="text-gray-400 dark:text-gray-500" />
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-700">Template de WhatsApp</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Mensagem enviada ao iniciar contato com um lead</p>
+                  <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Template de WhatsApp</h2>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Mensagem enviada ao iniciar contato com um lead</p>
                 </div>
               </div>
               <div className="p-5 space-y-3">
                 <textarea
                   value={waTemplate} onChange={(e) => setWaTemplate(e.target.value)}
                   rows={4}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                 />
-                <div className="flex items-start gap-1.5 text-xs text-gray-400">
+                <div className="flex items-start gap-1.5 text-xs text-gray-400 dark:text-gray-500">
                   <Info size={13} className="mt-0.5 shrink-0" />
                   <span>
-                    Use <code className="bg-gray-100 px-1 rounded">{'{nome}'}</code> e{' '}
-                    <code className="bg-gray-100 px-1 rounded">{'{empresa}'}</code> como variáveis — substituídas automaticamente pelos dados do lead.
+                    Use <code className="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-1 rounded">{'{nome}'}</code> e{' '}
+                    <code className="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-1 rounded">{'{empresa}'}</code> como variáveis — substituídas automaticamente pelos dados do lead.
                   </span>
                 </div>
                 <button onClick={salvarWaTemplate} disabled={savingWa}
@@ -671,32 +671,32 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
             </div>
 
             {/* E-mail */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
-                <Mail size={16} className="text-gray-400" />
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                <Mail size={16} className="text-gray-400 dark:text-gray-500" />
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-700">Template de E-mail</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Mensagem pré-preenchida ao iniciar contato por e-mail com um lead</p>
+                  <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Template de E-mail</h2>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Mensagem pré-preenchida ao iniciar contato por e-mail com um lead</p>
                 </div>
               </div>
               <div className="p-5 space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Assunto</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Assunto</label>
                   <input type="text" value={emailAssunto} onChange={(e) => setEmailAssunto(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Corpo</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Corpo</label>
                   <textarea value={emailCorpo} onChange={(e) => setEmailCorpo(e.target.value)} rows={6}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-700 dark:text-gray-100"
                   />
                 </div>
-                <div className="flex items-start gap-1.5 text-xs text-gray-400">
+                <div className="flex items-start gap-1.5 text-xs text-gray-400 dark:text-gray-500">
                   <Info size={13} className="mt-0.5 shrink-0" />
                   <span>
-                    Use <code className="bg-gray-100 px-1 rounded">{'{nome}'}</code> e{' '}
-                    <code className="bg-gray-100 px-1 rounded">{'{empresa}'}</code> como variáveis — substituídas automaticamente pelos dados do lead.
+                    Use <code className="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-1 rounded">{'{nome}'}</code> e{' '}
+                    <code className="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-1 rounded">{'{empresa}'}</code> como variáveis — substituídas automaticamente pelos dados do lead.
                   </span>
                 </div>
                 <button onClick={salvarEmailTemplate} disabled={savingEmail}
@@ -711,23 +711,23 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
 
         {/* ─── Comercial ─────────────────────────────────────────────────── */}
         {tab === 'comercial' && (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
-              <BarChart2 size={16} className="text-gray-400" />
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+              <BarChart2 size={16} className="text-gray-400 dark:text-gray-500" />
               <div>
-                <h2 className="text-sm font-semibold text-gray-700">Preferências comerciais</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Parâmetros usados nos alertas e no dashboard</p>
+                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Preferências comerciais</h2>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Parâmetros usados nos alertas e no dashboard</p>
               </div>
             </div>
             <form onSubmit={salvarConfigs} className="p-5 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {Object.entries(CONFIG_LABELS).map(([chave, label]) => (
                   <div key={chave}>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">{label}</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">{label}</label>
                     <input
                       type="number" min="0" value={valores[chave]}
                       onChange={(e) => setValores((v) => ({ ...v, [chave]: e.target.value }))}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
                     />
                   </div>
                 ))}

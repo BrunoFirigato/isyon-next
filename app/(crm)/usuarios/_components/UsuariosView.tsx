@@ -125,8 +125,8 @@ export default function UsuariosView({ usuarios }: Props) {
       {/* Header */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Usuários</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Usuários</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             {filtered.length} de {usuarios.length} usuário{usuarios.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -142,35 +142,35 @@ export default function UsuariosView({ usuarios }: Props) {
 
       {/* Busca */}
       <div className="relative mb-5">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por nome ou e-mail..."
-          className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400"
         />
       </div>
 
       {/* ─── Tabela desktop ────────────────────────────────────────────────── */}
       {filtered.length > 0 && (
-        <div className="hidden md:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
+              <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                 {['Nome', 'E-mail', 'Perfil', 'Status', 'Cadastro', ''].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{h}</th>
+                  <th key={h} className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {filtered.map((u) => {
                 const info = perfilInfo(u.perfil)
                 const isEditing = editing?.id === u.id
                 return (
                   <tr key={u.id} className="hover:bg-blue-50/40 transition-colors group">
-                    <td className="px-4 py-3 font-medium text-gray-900">{u.nome}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{u.email}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{u.nome}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{u.email}</td>
 
                     {/* Perfil */}
                     <td className="px-4 py-3">
@@ -178,7 +178,7 @@ export default function UsuariosView({ usuarios }: Props) {
                         <select
                           value={editing.perfil}
                           onChange={(e) => setEditing({ ...editing, perfil: e.target.value })}
-                          className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                          className="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100"
                         >
                           <option value="">Sem perfil</option>
                           {PERFIS.map((p) => (
@@ -200,9 +200,9 @@ export default function UsuariosView({ usuarios }: Props) {
                             type="checkbox"
                             checked={editing.ativo}
                             onChange={(e) => setEditing({ ...editing, ativo: e.target.checked })}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600"
+                            className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600"
                           />
-                          <span className="text-xs text-gray-600">Ativo</span>
+                          <span className="text-xs text-gray-600 dark:text-gray-400">Ativo</span>
                         </label>
                       ) : (
                         <span className={`inline-block text-xs font-medium px-2 py-1 rounded-lg ${
@@ -213,7 +213,7 @@ export default function UsuariosView({ usuarios }: Props) {
                       )}
                     </td>
 
-                    <td className="px-4 py-3 text-xs text-gray-400">{formatDate(u.criado_em)}</td>
+                    <td className="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">{formatDate(u.criado_em)}</td>
 
                     {/* Ações */}
                     <td className="px-4 py-3">
@@ -225,7 +225,7 @@ export default function UsuariosView({ usuarios }: Props) {
                             <Save size={14} />
                           </button>
                           <button onClick={() => setEditing(null)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors"
                             title="Cancelar">
                             <X size={14} />
                           </button>
@@ -237,7 +237,7 @@ export default function UsuariosView({ usuarios }: Props) {
                             <KeyRound size={14} />
                           </button>
                           <button onClick={() => toggleAtivo(u)} title={u.ativo !== false ? 'Desativar' : 'Ativar'}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 transition-colors">
                             {u.ativo !== false ? <UserX size={14} /> : <UserCheck size={14} />}
                           </button>
                           <button onClick={() => startEdit(u)} title="Editar perfil"
@@ -266,11 +266,11 @@ export default function UsuariosView({ usuarios }: Props) {
             const info = perfilInfo(u.perfil)
             const isEditing = editing?.id === u.id
             return (
-              <div key={u.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+              <div key={u.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
-                    <p className="font-medium text-gray-900">{u.nome}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{u.email}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{u.nome}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{u.email}</p>
                   </div>
                   <span className={`shrink-0 text-xs font-medium px-2 py-1 rounded-lg ${info.style}`}>
                     {info.label}
@@ -278,13 +278,13 @@ export default function UsuariosView({ usuarios }: Props) {
                 </div>
 
                 {isEditing ? (
-                  <div className="space-y-3 mt-3 pt-3 border-t border-gray-100">
+                  <div className="space-y-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Perfil</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Perfil</label>
                       <select
                         value={editing.perfil}
                         onChange={(e) => setEditing({ ...editing, perfil: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100"
                       >
                         <option value="">Sem perfil</option>
                         {PERFIS.map((p) => (
@@ -297,9 +297,9 @@ export default function UsuariosView({ usuarios }: Props) {
                         type="checkbox"
                         checked={editing.ativo}
                         onChange={(e) => setEditing({ ...editing, ativo: e.target.checked })}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600"
+                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600"
                       />
-                      <span className="text-sm text-gray-600">Ativo</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Ativo</span>
                     </label>
                     <div className="flex gap-2">
                       <button onClick={handleSave} disabled={saving}
@@ -307,7 +307,7 @@ export default function UsuariosView({ usuarios }: Props) {
                         {saving ? 'Salvando...' : 'Salvar'}
                       </button>
                       <button onClick={() => setEditing(null)}
-                        className="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2 rounded-lg">
+                        className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium py-2 rounded-lg">
                         Cancelar
                       </button>
                     </div>
@@ -323,10 +323,10 @@ export default function UsuariosView({ usuarios }: Props) {
                       <button onClick={() => handleReset(u)} className="p-1.5 rounded-lg hover:bg-amber-50 text-gray-400 hover:text-amber-600">
                         <KeyRound size={14} />
                       </button>
-                      <button onClick={() => toggleAtivo(u)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+                      <button onClick={() => toggleAtivo(u)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400">
                         {u.ativo !== false ? <UserX size={14} /> : <UserCheck size={14} />}
                       </button>
-                      <button onClick={() => startEdit(u)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+                      <button onClick={() => startEdit(u)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400">
                         <Pencil size={14} />
                       </button>
                       <button onClick={() => setDeletingId(u.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500">
@@ -342,8 +342,8 @@ export default function UsuariosView({ usuarios }: Props) {
       )}
 
       {filtered.length === 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
-          <p className="text-gray-400 text-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm py-16 text-center">
+          <p className="text-gray-400 dark:text-gray-500 text-sm">
             {search ? 'Nenhum usuário encontrado.' : 'Nenhum usuário cadastrado.'}
           </p>
         </div>
@@ -353,14 +353,14 @@ export default function UsuariosView({ usuarios }: Props) {
       {deletingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeletingId(null)} />
-          <div className="relative bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-base font-semibold text-gray-900 mb-2">Excluir usuário?</h3>
-            <p className="text-sm text-gray-500 mb-5">
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Excluir usuário?</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
               O usuário perderá acesso ao sistema imediatamente. Esta ação não pode ser desfeita.
             </p>
             <div className="flex gap-3">
               <button onClick={() => setDeletingId(null)}
-                className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50">
+                className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
                 Cancelar
               </button>
               <button onClick={handleDelete}
@@ -376,26 +376,26 @@ export default function UsuariosView({ usuarios }: Props) {
       {resetLink && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setResetLink(null)} />
-          <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900">Link de reset — {resetLink.nome}</h3>
-              <button onClick={() => setResetLink(null)} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Link de reset — {resetLink.nome}</h3>
+              <button onClick={() => setResetLink(null)} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
                 <X size={16} />
               </button>
             </div>
-            <p className="text-sm text-gray-500 mb-3">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
               Envie este link ao usuário. Ele expira em 24h.
             </p>
             <div className="flex gap-2">
               <input
                 readOnly
                 value={resetLink.link}
-                className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 text-gray-600 truncate focus:outline-none"
+                className="flex-1 text-xs border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 truncate focus:outline-none"
               />
               <button
                 onClick={() => copyLink(resetLink.link)}
                 className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
                 }`}
               >
                 {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -474,41 +474,41 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-md shadow-xl flex flex-col">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-md shadow-xl flex flex-col">
 
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">Novo usuário</h2>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Novo usuário</h2>
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
             <X size={18} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="px-5 py-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Nome</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nome</label>
             <input
               type="text" value={form.nome} onChange={(e) => set('nome', e.target.value)}
               placeholder="Nome completo" autoFocus
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               E-mail <span className="text-red-500">*</span>
             </label>
             <input
               type="email" value={form.email} onChange={(e) => set('email', e.target.value)}
               placeholder="usuario@empresa.com" required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Perfil</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Perfil</label>
             <select
               value={form.perfil} onChange={(e) => set('perfil', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100"
             >
               {PERFIS.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
@@ -518,21 +518,21 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Senha <span className="text-red-500">*</span>
               </label>
               <input
                 type="password" value={form.senha} onChange={(e) => set('senha', e.target.value)}
                 placeholder="Mín. 6 caracteres" required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirmar</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Confirmar</label>
               <input
                 type="password" value={form.confirmar} onChange={(e) => set('confirmar', e.target.value)}
                 placeholder="Repetir senha"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400"
               />
             </div>
           </div>
@@ -544,9 +544,9 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
           )}
         </form>
 
-        <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+        <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
           <button type="button" onClick={onClose}
-            className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50">
+            className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
             Cancelar
           </button>
           <button onClick={handleSubmit} disabled={saving}

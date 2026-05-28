@@ -81,17 +81,21 @@ export default function CondPagamentoFormModal({ cond, onClose }: Props) {
     onClose()
   }
 
+  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const selectCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-lg shadow-xl max-h-[90vh] flex flex-col">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-lg shadow-xl max-h-[90vh] flex flex-col">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Editar condição de pagamento' : 'Nova condição de pagamento'}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500">
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
             <X size={18} />
           </button>
         </div>
@@ -101,7 +105,7 @@ export default function CondPagamentoFormModal({ cond, onClose }: Props) {
 
           {/* Nome */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className={labelCls}>
               Nome <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-2">
@@ -111,7 +115,7 @@ export default function CondPagamentoFormModal({ cond, onClose }: Props) {
                 onChange={(e) => set('nome', e.target.value)}
                 placeholder="Ex: 30/60/90 Dias"
                 autoFocus
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 type="button"
@@ -127,11 +131,11 @@ export default function CondPagamentoFormModal({ cond, onClose }: Props) {
           {/* Forma + Status */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Forma de pagamento</label>
+              <label className={labelCls}>Forma de pagamento</label>
               <select
                 value={form.forma}
                 onChange={(e) => set('forma', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className={selectCls}
               >
                 {FORMAS_PAGAMENTO.map((f) => (
                   <option key={f.value} value={f.value}>{f.label}</option>
@@ -139,11 +143,11 @@ export default function CondPagamentoFormModal({ cond, onClose }: Props) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+              <label className={labelCls}>Status</label>
               <select
                 value={form.ativo ? 'true' : 'false'}
                 onChange={(e) => set('ativo', e.target.value === 'true')}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className={selectCls}
               >
                 <option value="true">Ativa</option>
                 <option value="false">Inativa</option>
@@ -154,24 +158,24 @@ export default function CondPagamentoFormModal({ cond, onClose }: Props) {
           {/* Parcelas + Intervalo */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nº de parcelas</label>
+              <label className={labelCls}>Nº de parcelas</label>
               <input
                 type="number"
                 min="1"
                 value={form.parcelas}
                 onChange={(e) => set('parcelas', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Intervalo (dias)</label>
+              <label className={labelCls}>Intervalo (dias)</label>
               <input
                 type="number"
                 min="0"
                 value={form.intervalo}
                 onChange={(e) => set('intervalo', e.target.value)}
                 placeholder="Ex: 30"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
           </div>
@@ -179,40 +183,40 @@ export default function CondPagamentoFormModal({ cond, onClose }: Props) {
           {/* Entrada + Desconto */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Entrada (R$)</label>
+              <label className={labelCls}>Entrada (R$)</label>
               <input
                 type="text"
                 value={form.entrada}
                 onChange={(e) => set('entrada', e.target.value)}
                 placeholder="0,00"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Desconto (%)</label>
+              <label className={labelCls}>Desconto (%)</label>
               <input
                 type="text"
                 value={form.desconto}
                 onChange={(e) => set('desconto', e.target.value)}
                 placeholder="0"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
           </div>
 
           {/* Observações */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Observações</label>
+            <label className={labelCls}>Observações</label>
             <textarea
               value={form.obs}
               onChange={(e) => set('obs', e.target.value)}
               placeholder="Ex: 5% de desconto sobre o valor do pedido"
               rows={2}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
 
-          {/* Preview */}
+          {/* Preview — keep blue as-is */}
           {(parseInt(form.parcelas) > 1 || parseInt(form.intervalo) > 0) && (
             <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5 text-xs text-blue-700">
               <span className="font-medium">Preview: </span>
@@ -230,9 +234,9 @@ export default function CondPagamentoFormModal({ cond, onClose }: Props) {
         </form>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+        <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
           <button type="button" onClick={onClose}
-            className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+            className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             Cancelar
           </button>
           <button onClick={handleSubmit} disabled={saving}

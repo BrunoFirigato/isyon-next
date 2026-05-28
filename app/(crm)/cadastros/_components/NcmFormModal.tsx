@@ -59,17 +59,20 @@ export default function NcmFormModal({ ncm, onClose }: Props) {
     onClose()
   }
 
+  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-md shadow-xl flex flex-col">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-md shadow-xl flex flex-col">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Editar NCM' : 'Novo NCM'}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500">
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
             <X size={18} />
           </button>
         </div>
@@ -78,7 +81,7 @@ export default function NcmFormModal({ ncm, onClose }: Props) {
         <form onSubmit={handleSubmit} className="px-5 py-4 space-y-4">
           {/* Código */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className={labelCls}>
               Código <span className="text-red-500">*</span>
             </label>
             <input
@@ -87,13 +90,13 @@ export default function NcmFormModal({ ncm, onClose }: Props) {
               onChange={(e) => set('codigo', e.target.value)}
               placeholder="Ex: 8443.99.90"
               autoFocus
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputCls}
             />
           </div>
 
           {/* Descrição */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className={labelCls}>
               Descrição <span className="text-red-500">*</span>
             </label>
             <input
@@ -101,30 +104,30 @@ export default function NcmFormModal({ ncm, onClose }: Props) {
               value={form.descricao}
               onChange={(e) => set('descricao', e.target.value)}
               placeholder="Descrição do NCM"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputCls}
             />
           </div>
 
           {/* Aliq IPI + Unid Tributável */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Alíq. IPI (%)</label>
+              <label className={labelCls}>Alíq. IPI (%)</label>
               <input
                 type="text"
                 value={form.aliq_ipi}
                 onChange={(e) => set('aliq_ipi', e.target.value)}
                 placeholder="Ex: 5"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Unid. Tributável</label>
+              <label className={labelCls}>Unid. Tributável</label>
               <input
                 type="text"
                 value={form.unid_trib}
                 onChange={(e) => set('unid_trib', e.target.value)}
                 placeholder="Ex: UN"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
           </div>
@@ -137,11 +140,11 @@ export default function NcmFormModal({ ncm, onClose }: Props) {
         </form>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+        <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+            className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             Cancelar
           </button>

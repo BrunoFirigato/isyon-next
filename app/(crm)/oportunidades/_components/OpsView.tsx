@@ -82,9 +82,9 @@ export default function OpsView({ ops }: Props) {
     const seg = segmentos.find((s) => s.value === op.segmento)
 
     return (
-      <div className="bg-white border border-gray-100 rounded-xl p-3.5 shadow-sm group hover:border-blue-200 hover:shadow-md transition-all">
+      <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3.5 shadow-sm group hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md transition-all">
         <div className="flex items-start justify-between gap-2 mb-2">
-          <p className="text-sm font-medium text-gray-900 leading-snug">{op.titulo}</p>
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-snug">{op.titulo}</p>
           {seg && (
             <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600">
               {seg.label}
@@ -92,7 +92,7 @@ export default function OpsView({ ops }: Props) {
           )}
         </div>
 
-        <p className="text-base font-bold text-gray-900 mb-3">{brl(op.valor)}</p>
+        <p className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">{brl(op.valor)}</p>
 
         {/* Actions */}
         <div className={`flex items-center gap-1 ${compact ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}`}>
@@ -115,7 +115,7 @@ export default function OpsView({ ops }: Props) {
               <XCircle size={14} />
             </button>
             <button onClick={() => openEdit(op)} title="Editar"
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
               <Pencil size={14} />
             </button>
             <button onClick={() => setDeletingId(op.id)} title="Excluir"
@@ -132,25 +132,25 @@ export default function OpsView({ ops }: Props) {
   function ClosedList({ items }: { items: Oportunidade[] }) {
     if (items.length === 0) {
       return (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-14 text-center">
-          <p className="text-sm text-gray-400">Nenhuma oportunidade aqui.</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm py-14 text-center">
+          <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma oportunidade aqui.</p>
         </div>
       )
     }
     return (
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="divide-y divide-gray-100">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
           {items.map((op) => (
             <div key={op.id} className="px-5 py-3.5 flex items-center justify-between group">
               <div>
-                <p className="text-sm font-medium text-gray-900">{op.titulo}</p>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{op.titulo}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                   {etapaCanonica(op.etapa)} · {formatDate(op.criado_em)}
                   {op.motivo_perda && ` · ${op.motivo_perda}`}
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <p className="text-sm font-semibold text-gray-900">{brl(op.valor)}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{brl(op.valor)}</p>
                 <button onClick={() => setDeletingId(op.id)}
                   className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all">
                   <Trash2 size={14} />
@@ -168,8 +168,8 @@ export default function OpsView({ ops }: Props) {
       {/* Cabeçalho */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Oportunidades</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Oportunidades</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             {abertas.length} abertas · pipeline {brl(totalPipeline)}
           </p>
         </div>
@@ -198,7 +198,7 @@ export default function OpsView({ ops }: Props) {
                 ? key === 'ganhas' ? 'bg-green-600 text-white'
                   : key === 'perdidas' ? 'bg-red-600 text-white'
                   : 'bg-blue-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             {label}
@@ -222,14 +222,14 @@ export default function OpsView({ ops }: Props) {
                   {/* Column header */}
                   <div className="flex items-center justify-between mb-3 px-1">
                     <div>
-                      <span className="text-sm font-semibold text-gray-700">{etapa}</span>
-                      <span className="ml-2 text-xs text-gray-400">{cards.length}</span>
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{etapa}</span>
+                      <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">{cards.length}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-500">{brl(total)}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{brl(total)}</span>
                       <button
                         onClick={() => openCreate(etapa)}
-                        className="ml-1 p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="ml-1 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                       >
                         <Plus size={14} />
                       </button>
@@ -237,10 +237,10 @@ export default function OpsView({ ops }: Props) {
                   </div>
 
                   {/* Cards */}
-                  <div className="flex flex-col gap-2 flex-1 min-h-[120px] bg-gray-100/60 rounded-xl p-2">
+                  <div className="flex flex-col gap-2 flex-1 min-h-[120px] bg-gray-100/60 dark:bg-gray-700/50 rounded-xl p-2">
                     {cards.length === 0 && (
                       <div className="flex-1 flex items-center justify-center">
-                        <p className="text-xs text-gray-400">Vazio</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Vazio</p>
                       </div>
                     )}
                     {cards.map((op) => (
@@ -264,7 +264,7 @@ export default function OpsView({ ops }: Props) {
                     className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       mobileEtapa === et
                         ? 'bg-blue-600 text-white'
-                        : 'bg-white border border-gray-200 text-gray-600'
+                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'
                     }`}
                   >
                     {et} {count > 0 && <span className="opacity-70">({count})</span>}
@@ -276,8 +276,8 @@ export default function OpsView({ ops }: Props) {
             {(() => {
               const cards = abertas.filter((o) => etapaCanonica(o.etapa) === mobileEtapa)
               return cards.length === 0 ? (
-                <div className="bg-white rounded-xl border border-gray-200 py-12 text-center">
-                  <p className="text-sm text-gray-400 mb-3">Nenhuma oportunidade nesta etapa.</p>
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 py-12 text-center">
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mb-3">Nenhuma oportunidade nesta etapa.</p>
                   <button
                     onClick={() => openCreate(mobileEtapa)}
                     className="text-sm text-blue-600 hover:underline"
@@ -299,12 +299,12 @@ export default function OpsView({ ops }: Props) {
       {deletingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeletingId(null)} />
-          <div className="relative bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-base font-semibold text-gray-900 mb-2">Excluir oportunidade?</h3>
-            <p className="text-sm text-gray-500 mb-5">Esta ação não pode ser desfeita.</p>
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Excluir oportunidade?</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Esta ação não pode ser desfeita.</p>
             <div className="flex gap-3">
               <button onClick={() => setDeletingId(null)}
-                className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+                className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 Cancelar
               </button>
               <button onClick={() => handleDelete(deletingId)}

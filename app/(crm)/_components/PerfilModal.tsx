@@ -76,18 +76,18 @@ export default function PerfilModal({ userEmail, userName: initialName, onClose 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl w-full max-w-sm shadow-xl overflow-hidden">
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm shadow-xl overflow-hidden">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">Meu perfil</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Meu perfil</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500">
             <X size={18} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-100">
+        <div className="flex border-b border-gray-100 dark:border-gray-700">
           {(['perfil', 'senha'] as Tab[]).map(t => (
             <button
               key={t}
@@ -95,7 +95,7 @@ export default function PerfilModal({ userEmail, userName: initialName, onClose 
               className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 tab === t
                   ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               {t === 'perfil' ? <User size={14} /> : <Lock size={14} />}
@@ -108,19 +108,19 @@ export default function PerfilModal({ userEmail, userName: initialName, onClose 
           {tab === 'perfil' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">E-mail</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">E-mail</label>
                 <input
                   type="text" value={userEmail} disabled
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
+                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                 />
-                <p className="text-xs text-gray-400 mt-1">O e-mail não pode ser alterado.</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">O e-mail não pode ser alterado.</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Nome de exibição</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Nome de exibição</label>
                 <input
                   type="text" value={nome} onChange={e => setNome(e.target.value)}
                   placeholder="Seu nome"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <button
@@ -136,46 +136,46 @@ export default function PerfilModal({ userEmail, userName: initialName, onClose 
           {tab === 'senha' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Senha atual</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Senha atual</label>
                 <div className="relative">
                   <input
                     type={showAtual ? 'text' : 'password'}
                     value={senhaAtual} onChange={e => setSenhaAtual(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 pr-9 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button
                     type="button" onClick={() => setShowAtual(v => !v)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                   >
                     {showAtual ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Nova senha</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Nova senha</label>
                 <div className="relative">
                   <input
                     type={showNova ? 'text' : 'password'}
                     value={novaSenha} onChange={e => setNovaSenha(e.target.value)}
                     placeholder="Mínimo 6 caracteres"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 pr-9 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button
                     type="button" onClick={() => setShowNova(v => !v)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                   >
                     {showNova ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Confirmar nova senha</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Confirmar nova senha</label>
                 <input
                   type="password"
                   value={confirmar} onChange={e => setConfirmar(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               {errorSenha && (

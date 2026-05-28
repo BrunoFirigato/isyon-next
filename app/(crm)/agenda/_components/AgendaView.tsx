@@ -103,8 +103,8 @@ export default function AgendaView({ compromissos }: Props) {
       {/* Cabeçalho */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Agenda</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{compromissos.length} atividade{compromissos.length !== 1 ? 's' : ''}</p>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Agenda</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{compromissos.length} atividade{compromissos.length !== 1 ? 's' : ''}</p>
         </div>
         <button
           onClick={() => { setEditing(null); setFormOpen(true) }}
@@ -122,7 +122,7 @@ export default function AgendaView({ compromissos }: Props) {
             className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               filtro === f.key
                 ? 'bg-blue-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}>
             {f.label}
           </button>
@@ -133,14 +133,14 @@ export default function AgendaView({ compromissos }: Props) {
       <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1">
         <button onClick={() => setTipoFiltro('')}
           className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-            tipoFiltro === '' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            tipoFiltro === '' ? 'bg-gray-800 dark:bg-gray-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
           }`}>
           Todos os tipos
         </button>
         {TIPOS_COMPROMISSO.map(t => (
           <button key={t.value} onClick={() => setTipoFiltro(tipoFiltro === t.value ? '' : t.value)}
             className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-              tipoFiltro === t.value ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              tipoFiltro === t.value ? 'bg-gray-800 dark:bg-gray-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}>
             <span className={`w-1.5 h-1.5 rounded-full ${t.dot}`} />
             {t.label}
@@ -150,9 +150,9 @@ export default function AgendaView({ compromissos }: Props) {
 
       {/* Conteúdo */}
       {filtered.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center py-14 text-center">
-          <Calendar size={32} className="text-gray-200 mb-3" />
-          <p className="text-sm font-medium text-gray-500">Nenhuma atividade encontrada</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col items-center justify-center py-14 text-center">
+          <Calendar size={32} className="text-gray-200 dark:text-gray-600 mb-3" />
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Nenhuma atividade encontrada</p>
           <button
             onClick={() => { setEditing(null); setFormOpen(true) }}
             className="mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium"
@@ -169,16 +169,16 @@ export default function AgendaView({ compromissos }: Props) {
                 <span className={`text-xs font-semibold uppercase tracking-wider ${
                   group.key === '__atrasadas' ? 'text-red-500' :
                   group.key === '__hoje'      ? 'text-blue-600' :
-                  'text-gray-400'
+                  'text-gray-400 dark:text-gray-500'
                 }`}>
                   {group.label}
                 </span>
-                <div className="flex-1 h-px bg-gray-100" />
-                <span className="text-xs text-gray-400">{group.items.length}</span>
+                <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700" />
+                <span className="text-xs text-gray-400 dark:text-gray-500">{group.items.length}</span>
               </div>
 
               {/* Itens do grupo */}
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm divide-y divide-gray-50 dark:divide-gray-700">
                 {group.items.map(c => {
                   const tipo   = tipoInfo(c.tipo)
                   const isDone = c.status === 'realizado'
@@ -193,23 +193,23 @@ export default function AgendaView({ compromissos }: Props) {
                       <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${tipo.dot}`} />
 
                       {/* Hora */}
-                      <span className="text-xs font-mono text-gray-400 shrink-0 w-10">
+                      <span className="text-xs font-mono text-gray-400 dark:text-gray-500 shrink-0 w-10">
                         {formatTime(c.data_hora)}
                       </span>
 
                       {/* Conteúdo */}
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium truncate ${isDone ? 'line-through text-gray-400' : isLate ? 'text-red-700' : 'text-gray-900'}`}>
+                        <p className={`text-sm font-medium truncate ${isDone ? 'line-through text-gray-400 dark:text-gray-500' : isLate ? 'text-red-700' : 'text-gray-900 dark:text-gray-100'}`}>
                           {c.titulo}
                         </p>
                         {c.descricao && (
-                          <p className="text-xs text-gray-400 truncate mt-0.5">{c.descricao}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{c.descricao}</p>
                         )}
                       </div>
 
                       {/* Vínculo */}
                       {vinculo && (
-                        <span className="hidden sm:block text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full shrink-0 max-w-[120px] truncate">
+                        <span className="hidden sm:block text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full shrink-0 max-w-[120px] truncate">
                           {vinculo}
                         </span>
                       )}
@@ -228,20 +228,20 @@ export default function AgendaView({ compromissos }: Props) {
                           className={`p-1.5 rounded-lg transition-colors ${
                             isDone
                               ? 'text-green-600 hover:bg-green-50'
-                              : 'text-gray-300 hover:text-green-600 hover:bg-green-50'
+                              : 'text-gray-300 dark:text-gray-600 hover:text-green-600 hover:bg-green-50'
                           }`}
                         >
                           <CheckCircle2 size={15} />
                         </button>
                         <button
                           onClick={() => { setEditing(c); setFormOpen(true) }}
-                          className="p-1.5 rounded-lg text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                          className="p-1.5 rounded-lg text-gray-300 dark:text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                         >
                           <Pencil size={14} />
                         </button>
                         <button
                           onClick={() => setDeletingId(c.id)}
-                          className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          className="p-1.5 rounded-lg text-gray-300 dark:text-gray-600 hover:text-red-500 hover:bg-red-50 transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -259,12 +259,12 @@ export default function AgendaView({ compromissos }: Props) {
       {deletingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeletingId(null)} />
-          <div className="relative bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-base font-semibold text-gray-900 mb-2">Excluir atividade?</h3>
-            <p className="text-sm text-gray-500 mb-5">Esta ação não pode ser desfeita.</p>
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Excluir atividade?</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Esta ação não pode ser desfeita.</p>
             <div className="flex gap-3">
               <button onClick={() => setDeletingId(null)}
-                className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50">
+                className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">
                 Cancelar
               </button>
               <button onClick={() => excluir(deletingId)}

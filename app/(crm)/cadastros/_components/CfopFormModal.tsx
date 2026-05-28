@@ -75,17 +75,23 @@ export default function CfopFormModal({ cfop, onClose }: Props) {
     onClose()
   }
 
+  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const selectCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'
+  const smallInputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const smallLabelCls = 'block text-xs text-gray-600 dark:text-gray-400 mb-1'
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-lg shadow-xl max-h-[90vh] flex flex-col">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-lg shadow-xl max-h-[90vh] flex flex-col">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Editar CFOP' : 'Novo CFOP'}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500">
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
             <X size={18} />
           </button>
         </div>
@@ -95,7 +101,7 @@ export default function CfopFormModal({ cfop, onClose }: Props) {
           {/* Código + Tipo + Ativo */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className={labelCls}>
                 Código <span className="text-red-500">*</span>
               </label>
               <input
@@ -104,26 +110,26 @@ export default function CfopFormModal({ cfop, onClose }: Props) {
                 onChange={(e) => set('codigo', e.target.value)}
                 placeholder="Ex: 5102"
                 autoFocus
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo</label>
+              <label className={labelCls}>Tipo</label>
               <select
                 value={form.tipo}
                 onChange={(e) => set('tipo', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className={selectCls}
               >
                 <option value="saida">Saída</option>
                 <option value="entrada">Entrada</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+              <label className={labelCls}>Status</label>
               <select
                 value={form.ativo ? 'true' : 'false'}
                 onChange={(e) => set('ativo', e.target.value === 'true')}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className={selectCls}
               >
                 <option value="true">Ativo</option>
                 <option value="false">Inativo</option>
@@ -133,7 +139,7 @@ export default function CfopFormModal({ cfop, onClose }: Props) {
 
           {/* Descrição */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className={labelCls}>
               Descrição <span className="text-red-500">*</span>
             </label>
             <input
@@ -141,60 +147,60 @@ export default function CfopFormModal({ cfop, onClose }: Props) {
               value={form.descricao}
               onChange={(e) => set('descricao', e.target.value)}
               placeholder="Descrição do CFOP"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputCls}
             />
           </div>
 
           {/* Observação fiscal */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Obs. Fiscal</label>
+            <label className={labelCls}>Obs. Fiscal</label>
             <textarea
               value={form.obs_fiscal}
               onChange={(e) => set('obs_fiscal', e.target.value)}
               placeholder="Observações fiscais..."
               rows={2}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
 
           {/* CSTs — seção colapsável / simplificada */}
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">CSTs / CSOSN</p>
+            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">CSTs / CSOSN</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-600 mb-1">CSOSN</label>
+                <label className={smallLabelCls}>CSOSN</label>
                 <input type="text" value={form.csosn} onChange={(e) => set('csosn', e.target.value)}
-                  placeholder="Ex: 102" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  placeholder="Ex: 102" className={smallInputCls} />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 mb-1">CST ICMS</label>
+                <label className={smallLabelCls}>CST ICMS</label>
                 <input type="text" value={form.cst_icms} onChange={(e) => set('cst_icms', e.target.value)}
-                  placeholder="Ex: 00" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  placeholder="Ex: 00" className={smallInputCls} />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 mb-1">CST IPI</label>
+                <label className={smallLabelCls}>CST IPI</label>
                 <input type="text" value={form.cst_ipi} onChange={(e) => set('cst_ipi', e.target.value)}
-                  placeholder="Ex: 50" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  placeholder="Ex: 50" className={smallInputCls} />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 mb-1">CST PIS</label>
+                <label className={smallLabelCls}>CST PIS</label>
                 <input type="text" value={form.cst_pis} onChange={(e) => set('cst_pis', e.target.value)}
-                  placeholder="Ex: 01" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  placeholder="Ex: 01" className={smallInputCls} />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 mb-1">CST PIS (SN)</label>
+                <label className={smallLabelCls}>CST PIS (SN)</label>
                 <input type="text" value={form.cst_pis_sn} onChange={(e) => set('cst_pis_sn', e.target.value)}
-                  placeholder="Ex: 07" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  placeholder="Ex: 07" className={smallInputCls} />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 mb-1">CST COFINS</label>
+                <label className={smallLabelCls}>CST COFINS</label>
                 <input type="text" value={form.cst_cofins} onChange={(e) => set('cst_cofins', e.target.value)}
-                  placeholder="Ex: 01" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  placeholder="Ex: 01" className={smallInputCls} />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 mb-1">CST COFINS (SN)</label>
+                <label className={smallLabelCls}>CST COFINS (SN)</label>
                 <input type="text" value={form.cst_cofins_sn} onChange={(e) => set('cst_cofins_sn', e.target.value)}
-                  placeholder="Ex: 07" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  placeholder="Ex: 07" className={smallInputCls} />
               </div>
             </div>
           </div>
@@ -207,9 +213,9 @@ export default function CfopFormModal({ cfop, onClose }: Props) {
         </form>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+        <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
           <button type="button" onClick={onClose}
-            className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+            className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             Cancelar
           </button>
           <button onClick={handleSubmit} disabled={saving}

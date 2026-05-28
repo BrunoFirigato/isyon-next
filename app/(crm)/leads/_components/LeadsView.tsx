@@ -151,8 +151,8 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
       {/* Cabeçalho */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Leads</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Leads</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             {leads.length} lead{leads.length !== 1 ? 's' : ''}
             {currentStatus !== 'todos' && ` · ${statusLabel(currentStatus)}`}
           </p>
@@ -176,7 +176,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
             className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               currentStatus === value
                 ? 'bg-blue-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             {label}
@@ -187,19 +187,19 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
       {/* Busca */}
       <form onSubmit={handleSearch} className="flex gap-2 mb-5">
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nome, empresa, e-mail..."
-            className="w-full pl-9 pr-8 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {search && (
             <button
               type="button"
               onClick={clearSearch}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <X size={14} />
             </button>
@@ -207,7 +207,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
         </div>
         <button
           type="submit"
-          className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
           Buscar
         </button>
@@ -215,8 +215,8 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
 
       {/* Lista vazia */}
       {leads.length === 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 text-center">
-          <p className="text-gray-400 text-sm">Nenhum lead encontrado.</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm py-16 text-center">
+          <p className="text-gray-400 dark:text-gray-500 text-sm">Nenhum lead encontrado.</p>
           <button
             onClick={() => { setEditingLead(null); setFormOpen(true) }}
             className="mt-4 text-sm text-blue-600 hover:underline"
@@ -228,36 +228,36 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
 
       {/* Tabela — desktop */}
       {leads.length > 0 && (
-        <div className="hidden md:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/80">
-                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Nome</th>
-                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Contato</th>
-                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Origem</th>
-                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Data</th>
+              <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-700/50">
+                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Nome</th>
+                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Contato</th>
+                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Origem</th>
+                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Data</th>
                 <th className="px-4 py-3.5" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {leads.map((lead) => (
-                <tr key={lead.id} className="hover:bg-blue-50/30 transition-colors group">
+                <tr key={lead.id} className="hover:bg-blue-50/30 dark:hover:bg-gray-700/50 transition-colors group">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">{lead.nome}</p>
-                    {lead.empresa && <p className="text-xs text-gray-500 mt-0.5">{lead.empresa}</p>}
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{lead.nome}</p>
+                    {lead.empresa && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{lead.empresa}</p>}
                   </td>
                   <td className="px-4 py-3">
-                    {lead.email && <p className="text-gray-600">{lead.email}</p>}
-                    {lead.telefone && <p className="text-xs text-gray-500 mt-0.5">{lead.telefone}</p>}
+                    {lead.email && <p className="text-gray-600 dark:text-gray-400">{lead.email}</p>}
+                    {lead.telefone && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{lead.telefone}</p>}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{lead.origem ?? '—'}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{lead.origem ?? '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-block text-xs font-medium px-2 py-1 rounded-lg capitalize ${statusStyle(lead.status)}`}>
                       {statusLabel(lead.status)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(lead.criado_em)}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(lead.criado_em)}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                       <Link
@@ -319,11 +319,11 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
       {leads.length > 0 && (
         <div className="md:hidden space-y-3">
           {leads.map((lead) => (
-            <div key={lead.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <div key={lead.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div>
-                  <p className="font-medium text-gray-900">{lead.nome}</p>
-                  {lead.empresa && <p className="text-xs text-gray-500 mt-0.5">{lead.empresa}</p>}
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{lead.nome}</p>
+                  {lead.empresa && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{lead.empresa}</p>}
                 </div>
                 <span className={`shrink-0 text-xs font-medium px-2 py-1 rounded-lg capitalize ${statusStyle(lead.status)}`}>
                   {statusLabel(lead.status)}
@@ -331,14 +331,14 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
               </div>
 
               {(lead.email || lead.telefone) && (
-                <div className="text-sm text-gray-600 space-y-0.5 mb-3">
+                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-0.5 mb-3">
                   {lead.email && <p>{lead.email}</p>}
                   {lead.telefone && <p>{lead.telefone}</p>}
                 </div>
               )}
 
               <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-400">{formatDate(lead.criado_em)}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(lead.criado_em)}</p>
                 <div className="flex gap-1">
                   {lead.status !== 'convertido' && (
                     <button
@@ -359,7 +359,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                   {lead.status !== 'convertido' && (
                     <button
                       onClick={() => { setEditingLead(lead); setFormOpen(true) }}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
+                      className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400"
                     >
                       <Pencil size={15} />
                     </button>
@@ -383,13 +383,13 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
       {deletingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeletingId(null)} />
-          <div className="relative bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-base font-semibold text-gray-900 mb-2">Excluir lead?</h3>
-            <p className="text-sm text-gray-500 mb-5">Esta ação não pode ser desfeita.</p>
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Excluir lead?</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Esta ação não pode ser desfeita.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeletingId(null)}
-                className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Cancelar
               </button>
@@ -424,29 +424,29 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
       {composingLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={closeEmailModal} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg">
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg">
             {/* Cabeçalho */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
               <div className="flex items-center gap-2">
                 <Mail size={16} className="text-blue-500 shrink-0" />
-                <h3 className="text-base font-semibold text-gray-900">Novo e-mail</h3>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Novo e-mail</h3>
               </div>
-              <button onClick={closeEmailModal} className="p-1 rounded-full hover:bg-gray-100 text-gray-400 transition-colors">
+              <button onClick={closeEmailModal} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 transition-colors">
                 <X size={16} />
               </button>
             </div>
 
             {/* Destinatário */}
-            <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-100 bg-gray-50">
-              <span className="text-xs font-medium text-gray-500 shrink-0">Para</span>
-              <span className="text-sm font-medium text-gray-800">{composingLead.nome}</span>
-              <span className="text-xs text-gray-400 truncate">&lt;{composingLead.email}&gt;</span>
+            <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">Para</span>
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-100">{composingLead.nome}</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 truncate">&lt;{composingLead.email}&gt;</span>
             </div>
 
             <form onSubmit={handleSendEmail} className="p-6 space-y-4">
               {/* Assunto */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                   Assunto <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -455,13 +455,13 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                   onChange={e => setEmailAssunto(e.target.value)}
                   placeholder="Ex: Proposta comercial para {empresa}"
                   required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               {/* Mensagem */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                   Mensagem <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -470,9 +470,9 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                   rows={7}
                   placeholder={`Olá ${composingLead.nome},\n\nEscreva sua mensagem aqui...`}
                   required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
-                <p className="mt-1 text-xs text-gray-400">Cada quebra de linha será preservada no e-mail enviado.</p>
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Cada quebra de linha será preservada no e-mail enviado.</p>
               </div>
 
               {/* Avisos */}
@@ -492,7 +492,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
                 <button
                   type="button"
                   onClick={closeEmailModal}
-                  className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                  className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   Cancelar
                 </button>

@@ -72,17 +72,20 @@ export default function CampanhaFormModal({ campanha, onClose }: Props) {
     onClose()
   }
 
+  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const labelCls = 'block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5'
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-2xl max-h-[92vh] flex flex-col shadow-xl">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-2xl max-h-[92vh] flex flex-col shadow-xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Editar campanha' : 'Nova campanha'}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500">
             <X size={18} />
           </button>
         </div>
@@ -92,19 +95,19 @@ export default function CampanhaFormModal({ campanha, onClose }: Props) {
 
             {/* Título */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              <label className={labelCls}>
                 Título <span className="text-red-500">*</span>
               </label>
               <input
                 type="text" value={form.titulo} onChange={e => set('titulo', e.target.value)}
                 autoFocus required placeholder="Ex: Black Friday 2026"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
 
             {/* Canal */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Canal</label>
+              <label className={labelCls}>Canal</label>
               <div className="flex gap-2">
                 {TIPOS_CAMPANHA.map(t => (
                   <button
@@ -112,7 +115,7 @@ export default function CampanhaFormModal({ campanha, onClose }: Props) {
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                       form.tipo === t.value
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     <span>{t.icon}</span>
@@ -124,7 +127,7 @@ export default function CampanhaFormModal({ campanha, onClose }: Props) {
 
             {/* Público */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Público-alvo</label>
+              <label className={labelCls}>Público-alvo</label>
               <div className="grid grid-cols-3 gap-2">
                 {PUBLICO_TIPOS.map(p => (
                   <button
@@ -132,7 +135,7 @@ export default function CampanhaFormModal({ campanha, onClose }: Props) {
                     className={`px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
                       form.publico_tipo === p.value
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     {p.label}
@@ -144,24 +147,24 @@ export default function CampanhaFormModal({ campanha, onClose }: Props) {
             {/* Filtros de público */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                <label className={labelCls}>
                   Filtrar por segmento
-                  <span className="text-gray-400 font-normal ml-1">(opcional)</span>
+                  <span className="text-gray-400 dark:text-gray-500 font-normal ml-1">(opcional)</span>
                 </label>
                 <input
                   type="text" value={form.publico_segmento} onChange={e => set('publico_segmento', e.target.value)}
                   placeholder="Ex: Máquinas, Peças..."
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={inputCls}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                <label className={labelCls}>
                   Filtrar por status
-                  <span className="text-gray-400 font-normal ml-1">(opcional)</span>
+                  <span className="text-gray-400 dark:text-gray-500 font-normal ml-1">(opcional)</span>
                 </label>
                 <select
                   value={form.publico_status} onChange={e => set('publico_status', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Todos os status</option>
                   <option value="ativo">Ativo</option>
@@ -174,20 +177,20 @@ export default function CampanhaFormModal({ campanha, onClose }: Props) {
             {/* Assunto (apenas email) */}
             {form.tipo === 'email' && (
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                <label className={labelCls}>
                   Assunto do e-mail <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text" value={form.assunto} onChange={e => set('assunto', e.target.value)}
                   placeholder="Ex: Promoção especial para você!"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={inputCls}
                 />
               </div>
             )}
 
             {/* Mensagem */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              <label className={labelCls}>
                 Mensagem <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -196,11 +199,11 @@ export default function CampanhaFormModal({ campanha, onClose }: Props) {
                 placeholder={form.tipo === 'email'
                   ? 'Conteúdo do e-mail...'
                   : 'Mensagem do WhatsApp. Use {nome} para personalizar.'}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               />
-              <p className="text-xs text-gray-400 mt-1">
-                Variáveis disponíveis: <code className="bg-gray-100 px-1 rounded">{'{nome}'}</code>{' '}
-                <code className="bg-gray-100 px-1 rounded">{'{empresa}'}</code>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Variáveis disponíveis: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{'{nome}'}</code>{' '}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{'{empresa}'}</code>
               </p>
             </div>
 
@@ -212,7 +215,7 @@ export default function CampanhaFormModal({ campanha, onClose }: Props) {
           {/* Footer */}
           <div className="px-5 pb-5 flex gap-3 shrink-0">
             <button type="button" onClick={onClose}
-              className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+              className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               Cancelar
             </button>
             <button type="submit" disabled={saving}

@@ -185,26 +185,30 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
 
   const tabCls = (t: 'dados' | 'endereco') =>
     `flex-1 py-2 text-sm font-medium transition-colors rounded-lg ${
-      tab === t ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+      tab === t ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
     }`
+
+  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const selectCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const labelCls = 'block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5'
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-lg max-h-[92vh] flex flex-col shadow-xl">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-lg max-h-[92vh] flex flex-col shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Editar cliente' : 'Novo cliente'}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500">
             <X size={18} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="px-5 py-2 shrink-0 bg-gray-50 border-b border-gray-100">
-          <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+        <div className="px-5 py-2 shrink-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1 gap-1">
             <button className={tabCls('dados')} onClick={() => setTab('dados')}>Dados</button>
             <button className={tabCls('endereco')} onClick={() => setTab('endereco')}>Endereço</button>
           </div>
@@ -217,28 +221,27 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    <label className={labelCls}>
                       Nome <span className="text-red-500">*</span>
                     </label>
                     <input type="text" value={form.nome} onChange={(e) => set('nome', e.target.value)}
                       required placeholder="Nome completo ou razão social"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className={inputCls} />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Empresa</label>
+                    <label className={labelCls}>Empresa</label>
                     <input type="text" value={form.empresa} onChange={(e) => set('empresa', e.target.value)}
-                      placeholder="Nome da empresa"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      placeholder="Nome da empresa" className={inputCls} />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">CPF / CNPJ</label>
+                    <label className={labelCls}>CPF / CNPJ</label>
                     <div className="relative">
                       <input type="text" value={form.cpf_cnpj}
                         onChange={(e) => handleCpfCnpjChange(e.target.value)}
                         placeholder="000.000.000-00 ou CNPJ"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        className={`${inputCls} pr-9`} />
                       {buscandoCnpj && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" />}
                       {!buscandoCnpj && cnpjStatus === 'success' && <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
                       {!buscandoCnpj && cnpjStatus === 'notfound' && <AlertCircle size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500" />}
@@ -249,23 +252,20 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">E-mail</label>
+                    <label className={labelCls}>E-mail</label>
                     <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)}
-                      placeholder="email@empresa.com"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      placeholder="email@empresa.com" className={inputCls} />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Telefone</label>
+                    <label className={labelCls}>Telefone</label>
                     <input type="tel" value={form.telefone} onChange={(e) => set('telefone', e.target.value)}
-                      placeholder="(11) 99999-9999"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      placeholder="(11) 99999-9999" className={inputCls} />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Tipo</label>
-                    <select value={form.tipo} onChange={(e) => set('tipo', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <label className={labelCls}>Tipo</label>
+                    <select value={form.tipo} onChange={(e) => set('tipo', e.target.value)} className={selectCls}>
                       {TIPOS.filter(t => t.value !== 'todos').map((t) => (
                         <option key={t.value} value={t.value}>{tipoLabel(t.value)}</option>
                       ))}
@@ -274,9 +274,8 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
 
                   {segmentos.length > 0 && (
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1.5">Segmento</label>
-                      <select value={form.segmento} onChange={(e) => set('segmento', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                      <label className={labelCls}>Segmento</label>
+                      <select value={form.segmento} onChange={(e) => set('segmento', e.target.value)} className={selectCls}>
                         <option value="">Selecione...</option>
                         {segmentos.map((s) => (
                           <option key={s.value} value={s.value}>{s.label}</option>
@@ -286,9 +285,8 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                   )}
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Status</label>
-                    <select value={form.status} onChange={(e) => set('status', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <label className={labelCls}>Status</label>
+                    <select value={form.status} onChange={(e) => set('status', e.target.value)} className={selectCls}>
                       {STATUS_CLIENTE.filter(s => s.value !== 'todos').map((s) => (
                         <option key={s.value} value={s.value}>{s.label}</option>
                       ))}
@@ -296,9 +294,8 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Origem</label>
-                    <select value={form.origem} onChange={(e) => set('origem', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <label className={labelCls}>Origem</label>
+                    <select value={form.origem} onChange={(e) => set('origem', e.target.value)} className={selectCls}>
                       <option value="">Selecione...</option>
                       {ORIGEM_OPTIONS.map((o) => (
                         <option key={o} value={o}>{o}</option>
@@ -309,9 +306,8 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                   {/* Vendedor(es) — dinâmico por segmento */}
                   {segmentos.length === 0 ? (
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-medium text-gray-600 mb-1.5">Vendedor responsável</label>
-                      <select value={form.vendedor0} onChange={(e) => set('vendedor0', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                      <label className={labelCls}>Vendedor responsável</label>
+                      <select value={form.vendedor0} onChange={(e) => set('vendedor0', e.target.value)} className={selectCls}>
                         <option value="">Nenhum</option>
                         {vendedores.map((v) => (
                           <option key={v.id} value={v.id}>{v.nome}</option>
@@ -321,13 +317,13 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                   ) : (
                     segmentos.slice(0, 2).map((seg, idx) => (
                       <div key={seg.value}>
-                        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                        <label className={labelCls}>
                           Vendedor — {seg.label}
                         </label>
                         <select
                           value={idx === 0 ? form.vendedor0 : form.vendedor1}
                           onChange={(e) => set(idx === 0 ? 'vendedor0' : 'vendedor1', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                          className={selectCls}
                         >
                           <option value="">Nenhum</option>
                           {vendedores.map((v) => (
@@ -341,9 +337,8 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                   {/* Parceiro comercial — só para tipo Revenda */}
                   {form.tipo === 'revenda' && (
                     <div className="md:col-span-2">
-                      <label className="block text-xs font-medium text-gray-600 mb-1.5">Parceiro comercial</label>
-                      <select value={form.parceiro_id} onChange={(e) => set('parceiro_id', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                      <label className={labelCls}>Parceiro comercial</label>
+                      <select value={form.parceiro_id} onChange={(e) => set('parceiro_id', e.target.value)} className={selectCls}>
                         <option value="">Selecione...</option>
                         {parceiros.map((p) => (
                           <option key={p.id} value={p.id}>{p.nome}</option>
@@ -359,24 +354,23 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">CEP</label>
+                    <label className={labelCls}>CEP</label>
                     <div className="flex gap-2">
                       <input type="text" value={form.cep}
                         onChange={(e) => set('cep', e.target.value)}
                         onBlur={buscarCep}
                         placeholder="00000-000" maxLength={9}
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        className={`flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`} />
                       <button type="button" onClick={buscarCep} disabled={loadingCep}
-                        className="px-3 py-2 border border-gray-300 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors">
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         <Search size={15} className={loadingCep ? 'animate-spin' : ''} />
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Estado</label>
-                    <select value={form.estado} onChange={(e) => set('estado', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <label className={labelCls}>Estado</label>
+                    <select value={form.estado} onChange={(e) => set('estado', e.target.value)} className={selectCls}>
                       <option value="">UF</option>
                       {ESTADOS_BR.map((uf) => (
                         <option key={uf} value={uf}>{uf}</option>
@@ -385,38 +379,33 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Rua / Logradouro</label>
+                    <label className={labelCls}>Rua / Logradouro</label>
                     <input type="text" value={form.rua} onChange={(e) => set('rua', e.target.value)}
-                      placeholder="Av. Paulista"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      placeholder="Av. Paulista" className={inputCls} />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Número</label>
+                    <label className={labelCls}>Número</label>
                     <input type="text" value={form.numero} onChange={(e) => set('numero', e.target.value)}
-                      placeholder="123"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      placeholder="123" className={inputCls} />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Complemento</label>
+                    <label className={labelCls}>Complemento</label>
                     <input type="text" value={form.complemento} onChange={(e) => set('complemento', e.target.value)}
-                      placeholder="Sala 42"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      placeholder="Sala 42" className={inputCls} />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Bairro</label>
+                    <label className={labelCls}>Bairro</label>
                     <input type="text" value={form.bairro} onChange={(e) => set('bairro', e.target.value)}
-                      placeholder="Bela Vista"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      placeholder="Bela Vista" className={inputCls} />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Cidade</label>
+                    <label className={labelCls}>Cidade</label>
                     <input type="text" value={form.cidade} onChange={(e) => set('cidade', e.target.value)}
-                      placeholder="São Paulo"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      placeholder="São Paulo" className={inputCls} />
                   </div>
                 </div>
               </>
@@ -432,7 +421,7 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
           {/* Footer */}
           <div className="px-5 pb-5 flex gap-3 shrink-0">
             <button type="button" onClick={onClose}
-              className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+              className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               Cancelar
             </button>
             <button type="submit" disabled={saving}

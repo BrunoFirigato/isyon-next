@@ -83,17 +83,21 @@ export default function VendedorFormModal({ vendedor, onClose }: Props) {
     onClose()
   }
 
+  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const selectCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-lg shadow-xl max-h-[90vh] flex flex-col">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-lg shadow-xl max-h-[90vh] flex flex-col">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Editar vendedor' : 'Novo vendedor'}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500">
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
             <X size={18} />
           </button>
         </div>
@@ -103,7 +107,7 @@ export default function VendedorFormModal({ vendedor, onClose }: Props) {
 
           {/* Nome */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className={labelCls}>
               Nome <span className="text-red-500">*</span>
             </label>
             <input
@@ -113,30 +117,30 @@ export default function VendedorFormModal({ vendedor, onClose }: Props) {
               placeholder="Nome completo"
               required
               autoFocus
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputCls}
             />
           </div>
 
           {/* Email + Telefone */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">E-mail</label>
+              <label className={labelCls}>E-mail</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => set('email', e.target.value)}
                 placeholder="email@empresa.com"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Telefone</label>
+              <label className={labelCls}>Telefone</label>
               <input
                 type="tel"
                 value={form.telefone}
                 onChange={(e) => set('telefone', e.target.value)}
                 placeholder="(11) 99999-9999"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
           </div>
@@ -144,23 +148,23 @@ export default function VendedorFormModal({ vendedor, onClose }: Props) {
           {/* Cargo + Ramal */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Cargo</label>
+              <label className={labelCls}>Cargo</label>
               <input
                 type="text"
                 value={form.cargo}
                 onChange={(e) => set('cargo', e.target.value)}
                 placeholder="Ex: Vendedor"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Ramal</label>
+              <label className={labelCls}>Ramal</label>
               <input
                 type="text"
                 value={form.ramal}
                 onChange={(e) => set('ramal', e.target.value)}
                 placeholder="Ex: 1001"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
           </div>
@@ -168,21 +172,21 @@ export default function VendedorFormModal({ vendedor, onClose }: Props) {
           {/* Comissão + Status */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">% Comissão</label>
+              <label className={labelCls}>% Comissão</label>
               <input
                 type="text"
                 value={form.perc_comissao}
                 onChange={(e) => set('perc_comissao', e.target.value)}
                 placeholder="Ex: 2.5"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+              <label className={labelCls}>Status</label>
               <select
                 value={form.status}
                 onChange={(e) => set('status', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className={selectCls}
               >
                 <option value="ativo">Ativo</option>
                 <option value="inativo">Inativo</option>
@@ -190,10 +194,10 @@ export default function VendedorFormModal({ vendedor, onClose }: Props) {
             </div>
           </div>
 
-          {/* Segmentos — só exibe se o tenant tiver segmentos configurados */}
+          {/* Segmentos */}
           {segmentos.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Segmentos</label>
+              <label className={labelCls}>Segmentos</label>
               <div className="flex gap-3 flex-wrap">
                 {segmentos.map(({ value, label }) => (
                   <label
@@ -201,7 +205,7 @@ export default function VendedorFormModal({ vendedor, onClose }: Props) {
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition-colors ${
                       form.segmentos.includes(value)
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     <input
@@ -225,11 +229,11 @@ export default function VendedorFormModal({ vendedor, onClose }: Props) {
         </form>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+        <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+            className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             Cancelar
           </button>

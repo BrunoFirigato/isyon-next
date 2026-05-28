@@ -93,8 +93,8 @@ const STEP_COLORS: Record<string, { done: string; active: string; text: string }
 function JornadaStatus({ status }: { status: string }) {
   if (status === 'perdido') {
     return (
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Jornada</p>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 mb-4">
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Jornada</p>
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
           <span className="text-sm font-medium text-red-600">Lead perdido</span>
@@ -106,8 +106,8 @@ function JornadaStatus({ status }: { status: string }) {
   const currentIdx = JORNADA.findIndex(s => s.value === status)
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Jornada</p>
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 mb-4">
+      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Jornada</p>
       <div className="flex items-center gap-0">
         {JORNADA.map((step, idx) => {
           const isDone    = idx < currentIdx
@@ -121,16 +121,16 @@ function JornadaStatus({ status }: { status: string }) {
                 <div className={`w-3 h-3 rounded-full shrink-0 transition-all ${
                   isDone    ? c.done :
                   isActive  ? `ring-2 ring-offset-2 ${c.active}` :
-                  'bg-gray-200'
+                  'bg-gray-200 dark:bg-gray-600'
                 }`} />
                 <span className={`text-xs font-medium whitespace-nowrap ${
-                  isDone || isActive ? c.text : 'text-gray-400'
+                  isDone || isActive ? c.text : 'text-gray-400 dark:text-gray-500'
                 }`}>
                   {step.label}
                 </span>
               </div>
               {idx < JORNADA.length - 1 && (
-                <div className={`h-0.5 flex-1 mx-1 mb-5 ${idx < currentIdx ? 'bg-gray-400' : 'bg-gray-200'}`} />
+                <div className={`h-0.5 flex-1 mx-1 mb-5 ${idx < currentIdx ? 'bg-gray-400 dark:bg-gray-500' : 'bg-gray-200 dark:bg-gray-600'}`} />
               )}
             </div>
           )
@@ -275,15 +275,15 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
     <>
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-6">
-        <Link href="/leads" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+        <Link href="/leads" className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
           <ArrowLeft size={15} /> Leads
         </Link>
-        <ChevronRight size={13} className="text-gray-300" />
-        <span className="text-sm text-gray-700 font-medium truncate">{lead.nome}</span>
+        <ChevronRight size={13} className="text-gray-300 dark:text-gray-600" />
+        <span className="text-sm text-gray-700 dark:text-gray-300 font-medium truncate">{lead.nome}</span>
       </div>
 
       {/* Card do lead */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 mb-4">
         <div className="flex items-start gap-4">
           <div className={`w-12 h-12 rounded-xl ${avatarBg(lead.nome)} text-white font-bold text-lg flex items-center justify-center shrink-0`}>
             {initials(lead.nome)}
@@ -291,9 +291,9 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
-                <h1 className="text-lg font-semibold text-gray-900 leading-tight">{lead.nome}</h1>
+                <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-tight">{lead.nome}</h1>
                 {lead.empresa && (
-                  <p className="text-sm text-gray-500 mt-0.5">{lead.empresa}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{lead.empresa}</p>
                 )}
               </div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -319,7 +319,7 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
                       <TrendingUp size={11} /> Converter
                     </button>
                     <button onClick={() => setEditOpen(true)}
-                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 border border-gray-200 hover:border-blue-300 px-2.5 py-1 rounded-lg transition-colors">
+                      className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 px-2.5 py-1 rounded-lg transition-colors">
                       <Pencil size={11} /> Editar
                     </button>
                   </>
@@ -329,75 +329,75 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
 
             <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3">
               {lead.email && (
-                <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors">
-                  <Mail size={13} className="text-gray-400 shrink-0" /> {lead.email}
+                <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <Mail size={13} className="text-gray-400 dark:text-gray-500 shrink-0" /> {lead.email}
                 </a>
               )}
               {lead.telefone && (
-                <a href={`tel:${lead.telefone}`} className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition-colors">
-                  <Phone size={13} className="text-gray-400 shrink-0" /> {lead.telefone}
+                <a href={`tel:${lead.telefone}`} className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <Phone size={13} className="text-gray-400 dark:text-gray-500 shrink-0" /> {lead.telefone}
                 </a>
               )}
             </div>
 
             {lead.obs && (
-              <p className="text-sm text-gray-500 mt-2 italic">"{lead.obs}"</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">"{lead.obs}"</p>
             )}
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-400 dark:text-gray-500">
           <span className="flex items-center gap-1"><Calendar size={11} /> Cadastrado em {fmt(lead.criado_em)}</span>
           {lead.origem && (
-            <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{lead.origem}</span>
+            <span className="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full font-medium">{lead.origem}</span>
           )}
         </div>
       </div>
 
       {/* Modal inline de e-mail */}
       {showEmail && lead.email && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-4 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm mb-4 overflow-hidden">
           {/* Cabeçalho */}
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-2">
               <Mail size={15} className="text-blue-500 shrink-0" />
-              <h3 className="text-sm font-semibold text-gray-900">Novo e-mail</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Novo e-mail</h3>
             </div>
-            <button onClick={() => setShowEmail(false)} className="p-1 rounded-full hover:bg-gray-100 text-gray-400 transition-colors">
+            <button onClick={() => setShowEmail(false)} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 transition-colors">
               <X size={15} />
             </button>
           </div>
           {/* Destinatário */}
-          <div className="flex items-center gap-2 px-5 py-2.5 border-b border-gray-100 bg-gray-50">
-            <span className="text-xs font-medium text-gray-500 shrink-0">Para</span>
-            <span className="text-sm font-medium text-gray-800">{lead.nome}</span>
-            <span className="text-xs text-gray-400 truncate">&lt;{lead.email}&gt;</span>
+          <div className="flex items-center gap-2 px-5 py-2.5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">Para</span>
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-100">{lead.nome}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500 truncate">&lt;{lead.email}&gt;</span>
           </div>
           <form onSubmit={handleSendEmail} className="p-5 space-y-4">
             {/* Assunto */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                 Assunto <span className="text-red-500">*</span>
               </label>
               <input
                 type="text" value={emailAssunto} onChange={e => setEmailAssunto(e.target.value)}
                 placeholder="Ex: Olá {nome}, temos uma proposta para você"
                 required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400"
               />
             </div>
             {/* Mensagem */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                 Mensagem <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={emailCorpo} onChange={e => setEmailCorpo(e.target.value)} rows={5}
                 placeholder={`Olá ${lead.nome},\n\nEscreva sua mensagem aqui...`}
                 required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400"
               />
-              <p className="mt-1 text-xs text-gray-400">Cada quebra de linha será preservada no e-mail enviado.</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Cada quebra de linha será preservada no e-mail enviado.</p>
             </div>
             {/* Avisos */}
             {lead.status === 'novo' && !emailErro && (
@@ -413,7 +413,7 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
             {/* Ações */}
             <div className="flex gap-3 pt-1">
               <button type="button" onClick={() => setShowEmail(false)}
-                className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+                className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 Cancelar
               </button>
               <button type="submit" disabled={sendingEmail}
@@ -430,31 +430,31 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
 
       {/* Oportunidade(s) vinculada(s) */}
       {oportunidades.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-4">
-          <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100">
-            <TrendingUp size={15} className="text-gray-400" />
-            <h2 className="text-sm font-semibold text-gray-900">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm mb-4">
+          <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
+            <TrendingUp size={15} className="text-gray-400 dark:text-gray-500" />
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               Oportunidade{oportunidades.length > 1 ? 's' : ''} gerada{oportunidades.length > 1 ? 's' : ''}
             </h2>
-            <span className="text-xs font-medium bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{oportunidades.length}</span>
+            <span className="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-full">{oportunidades.length}</span>
           </div>
           <div className="px-5">
             {oportunidades.map((op) => {
               const badge = opBadge(op.status, op.etapa)
               return (
-                <div key={op.id} className="flex items-center justify-between gap-3 py-3 border-b border-gray-50 last:border-0">
+                <div key={op.id} className="flex items-center justify-between gap-3 py-3 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      {op.numero && <span className="text-xs font-mono text-gray-400">{op.numero}</span>}
-                      <span className="text-sm font-medium text-gray-800 truncate">{op.titulo}</span>
+                      {op.numero && <span className="text-xs font-mono text-gray-400 dark:text-gray-500">{op.numero}</span>}
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{op.titulo}</span>
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 flex items-center gap-1">
                       <Calendar size={10} /> {fmt(op.criado_em)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={`text-xs font-medium px-2 py-1 rounded-lg ${badge.cls}`}>{badge.label}</span>
-                    {brl(op.valor) && <span className="text-sm font-semibold text-gray-700">{brl(op.valor)}</span>}
+                    {brl(op.valor) && <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{brl(op.valor)}</span>}
                   </div>
                 </div>
               )
@@ -464,19 +464,19 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
       )}
 
       {/* Histórico de interações */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-4">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm mb-4">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-2">
-            <MessageSquare size={15} className="text-gray-400" />
-            <h2 className="text-sm font-semibold text-gray-900">Histórico de Interações</h2>
+            <MessageSquare size={15} className="text-gray-400 dark:text-gray-500" />
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Histórico de Interações</h2>
             {historico.length > 0 && (
-              <span className="text-xs font-medium bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{historico.length}</span>
+              <span className="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-full">{historico.length}</span>
             )}
           </div>
           {/* Só permite registrar se o lead ainda está ativo */}
           {!isConvertido && !isPerdido && (
             <button onClick={() => setShowForm(s => !s)}
-              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
+              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:hover:text-blue-400 font-medium transition-colors">
               {showForm ? <><X size={12} /> Cancelar</> : <><Plus size={12} /> Registrar</>}
             </button>
           )}
@@ -512,29 +512,29 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
         )}
 
         {showForm && !isConvertido && !isPerdido && (
-          <form onSubmit={handleSaveInteracao} className="px-5 py-4 border-b border-gray-100 bg-gray-50/50 space-y-3">
+          <form onSubmit={handleSaveInteracao} className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50 space-y-3">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div className="col-span-2 md:col-span-1">
-                <label className="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tipo</label>
                 <select value={tipo} onChange={e => setTipo(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                   {TIPOS_HISTORICO.map(t => (
                     <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Valor (opcional)</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Valor (opcional)</label>
                 <input type="number" min="0" step="0.01" value={valor} onChange={e => setValor(e.target.value)}
                   placeholder="R$ 0,00"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400" />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Descrição *</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Descrição *</label>
               <textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={2}
                 placeholder="Descreva o que foi tratado nessa interação..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400" />
             </div>
             {erro && <p className="text-xs text-red-600">{erro}</p>}
             <button type="submit" disabled={saving}
@@ -548,7 +548,7 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
           {historico.length === 0 && !showForm
             ? (
               <div className="py-8 text-center">
-                <p className="text-sm text-gray-400">Nenhuma interação registrada ainda.</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma interação registrada ainda.</p>
                 {!isConvertido && !isPerdido && (
                   <button onClick={() => setShowForm(true)}
                     className="mt-2 text-sm text-blue-600 hover:underline">
@@ -564,30 +564,30 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
                   <div key={h.id} className="flex gap-3 relative">
                     {/* Timeline column */}
                     <div className="flex flex-col items-center shrink-0 w-9 pt-3.5">
-                      <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-base leading-none shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-base leading-none shrink-0">
                         {icon}
                       </div>
-                      {!isLast && <div className="w-px flex-1 bg-gray-100 mt-1" />}
+                      {!isLast && <div className="w-px flex-1 bg-gray-100 dark:bg-gray-700 mt-1" />}
                     </div>
                     {/* Content */}
                     <div className="flex-1 min-w-0 py-3 pb-4">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-xs font-semibold text-gray-700">{label}</span>
+                            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{label}</span>
                             {h.usuario_nome && (
-                              <span className="text-xs text-gray-400">· {h.usuario_nome}</span>
+                              <span className="text-xs text-gray-400 dark:text-gray-500">· {h.usuario_nome}</span>
                             )}
                           </div>
                           {h.texto && (
-                            <p className="text-sm text-gray-600 mt-0.5 leading-snug">{h.texto}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 leading-snug">{h.texto}</p>
                           )}
                         </div>
                         {h.valor != null && (
-                          <span className="text-sm font-semibold text-gray-700 shrink-0">{brl(h.valor)}</span>
+                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 shrink-0">{brl(h.valor)}</span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-400 mt-1.5">{fmtDatetime(h.criado_em)}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">{fmtDatetime(h.criado_em)}</p>
                     </div>
                   </div>
                 )

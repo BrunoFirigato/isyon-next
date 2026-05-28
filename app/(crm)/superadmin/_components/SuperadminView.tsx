@@ -55,7 +55,7 @@ function fmt(iso: string) {
 }
 
 function relativo(iso: string | null): { label: string; dot: string; txt: string } {
-  if (!iso) return { label: 'Nunca acessou', dot: 'bg-gray-300', txt: 'text-gray-400' }
+  if (!iso) return { label: 'Nunca acessou', dot: 'bg-gray-300 dark:bg-gray-600', txt: 'text-gray-400 dark:text-gray-500' }
   const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
   if (d === 0) return { label: 'Hoje',            dot: 'bg-green-500', txt: 'text-green-600' }
   if (d === 1) return { label: 'Ontem',           dot: 'bg-green-400', txt: 'text-green-600' }
@@ -67,15 +67,15 @@ function relativo(iso: string | null): { label: string; dot: string; txt: string
 function expInfo(data: string | null): { label: string; cls: string } | null {
   if (!data) return null
   const d = Math.ceil((new Date(data).getTime() - Date.now()) / 86_400_000)
-  if (d < 0)   return { label: 'Expirado',        cls: 'text-red-600   bg-red-50   border border-red-200'   }
-  if (d <= 30) return { label: `Expira em ${d}d`,  cls: 'text-amber-600 bg-amber-50 border border-amber-200' }
-  return         { label: fmt(data),              cls: 'text-gray-500 bg-gray-100 border border-gray-200'   }
+  if (d < 0)   return { label: 'Expirado',        cls: 'text-red-600   bg-red-50   border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700'   }
+  if (d <= 30) return { label: `Expira em ${d}d`,  cls: 'text-amber-600 bg-amber-50 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700' }
+  return         { label: fmt(data),              cls: 'text-gray-500 bg-gray-100 border border-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600'   }
 }
 
 function corPlano(plano: string | null) {
-  if (plano === 'Enterprise')   return 'bg-purple-100 text-purple-700'
-  if (plano === 'Profissional') return 'bg-blue-100   text-blue-700'
-  return 'bg-gray-100 text-gray-600'
+  if (plano === 'Enterprise')   return 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+  if (plano === 'Profissional') return 'bg-blue-100   text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+  return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
 }
 
 /* ─────────────────────────────── Main ── */
@@ -133,8 +133,8 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
       {/* Cabeçalho */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Painel do Fornecedor</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Painel do Fornecedor</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             {tenants.length} tenant{tenants.length !== 1 ? 's' : ''} · {ativos} ativo{ativos !== 1 ? 's' : ''}
           </p>
         </div>
@@ -149,13 +149,13 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
       </div>
 
       {/* Abas */}
-      <div className="flex border-b border-gray-200 mb-6">
+      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
         {TABS.map(({ key, label, Icon }) => (
           <button key={key} onClick={() => setAba(key)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               aba === key
                 ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
             }`}>
             <Icon size={15} /> {label}
           </button>
@@ -164,26 +164,26 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
 
       {/* ── Aba: Tenants ── */}
       {aba === 'tenants' && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Empresa</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Plano</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Usuários</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Contrato</th>
+              <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Empresa</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Plano</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">Usuários</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">Contrato</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
               {tenants.map((t) => {
                 const exp = expInfo(t.expiracao_contrato)
                 return (
-                  <tr key={t.id} className="hover:bg-gray-50 transition-colors group">
+                  <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{t.nome}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">desde {fmt(t.criado_em)}</div>
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{t.nome}</div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">desde {fmt(t.criado_em)}</div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <span className={`text-xs font-medium px-2 py-1 rounded-lg ${corPlano(t.plano)}`}>
@@ -192,33 +192,35 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-block text-xs font-medium px-2 py-1 rounded-lg ${
-                        t.status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                        t.status === 'ativo'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                          : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
                       }`}>
                         {t.status ?? '—'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 hidden lg:table-cell">{t.total_usuarios}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 hidden lg:table-cell">{t.total_usuarios}</td>
                     <td className="px-4 py-3 hidden lg:table-cell">
                       {exp
                         ? <span className={`text-xs font-medium px-2 py-1 rounded-lg ${exp.cls}`}>{exp.label}</span>
-                        : <span className="text-xs text-gray-400">—</span>
+                        : <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
                       }
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => setModal({ tipo: 'criar_usuario', tenant_id: t.id, nome_tenant: t.nome })}
                           title="Adicionar usuário"
-                          className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
+                          className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                           <UserPlus size={14} />
                         </button>
                         <button onClick={() => setModal({ tipo: 'editar_tenant', tenant: t })}
                           title="Editar"
-                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                           <Pencil size={14} />
                         </button>
                         <button onClick={() => toggleStatus(t)}
                           title={t.status === 'ativo' ? 'Desativar' : 'Ativar'}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                           {t.status === 'ativo' ? <XCircle size={14} /> : <CheckCircle size={14} />}
                         </button>
                       </div>
@@ -228,7 +230,7 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
               })}
               {tenants.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400 dark:text-gray-500">
                     Nenhum tenant cadastrado.
                   </td>
                 </tr>
@@ -245,7 +247,7 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
       {aba === 'logs' && <LogsTab logs={logsAcesso} />}
 
       {erro && (
-        <p className="mt-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">{erro}</p>
+        <p className="mt-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-4 py-3">{erro}</p>
       )}
 
       {/* ── Modal: Criar tenant ── */}
@@ -289,16 +291,16 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
       {modal?.tipo === 'reset_link' && (
         <ModalBase titulo="Link de reset de senha" onClose={() => setModal(null)}>
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">Copie e envie este link para o usuário. Ele expira em 1 hora.</p>
-            <div className="flex items-center gap-2 bg-gray-50 rounded-lg border border-gray-200 px-3 py-2">
-              <p className="text-xs text-gray-500 truncate flex-1 font-mono">{modal.link}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Copie e envie este link para o usuário. Ele expira em 1 hora.</p>
+            <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate flex-1 font-mono">{modal.link}</p>
               <button onClick={() => copiarLink(modal.link)}
-                className="shrink-0 p-1 rounded hover:bg-gray-200 text-gray-500 transition-colors">
+                className="shrink-0 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors">
                 {copiado ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
               </button>
             </div>
             <button onClick={() => setModal(null)}
-              className="w-full border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+              className="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               Fechar
             </button>
           </div>
@@ -355,19 +357,21 @@ function IntegracaoTab({ configs }: { configs: ConfigRow[] }) {
   return (
     <div className="space-y-4 max-w-2xl">
       {/* Card Resend */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center">
-              <Mail size={16} className="text-indigo-600" />
+            <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
+              <Mail size={16} className="text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">E-mail — Resend</h3>
-              <p className="text-xs text-gray-500">Propostas e convites de novos usuários</p>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">E-mail — Resend</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Propostas e convites de novos usuários</p>
             </div>
           </div>
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-            keyOk ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+            keyOk
+              ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+              : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
           }`}>
             {keyOk ? '● Configurado' : '○ Não configurado'}
           </span>
@@ -376,10 +380,10 @@ function IntegracaoTab({ configs }: { configs: ConfigRow[] }) {
         <div className="space-y-4">
           {/* API Key */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
               API Key
               {keyOk && (
-                <span className="ml-2 font-normal text-gray-400">atual: {keyMasked}</span>
+                <span className="ml-2 font-normal text-gray-400 dark:text-gray-500">atual: {keyMasked}</span>
               )}
             </label>
             <div className="flex gap-2">
@@ -388,10 +392,10 @@ function IntegracaoTab({ configs }: { configs: ConfigRow[] }) {
                 value={novaKey}
                 onChange={e => setNovaKey(e.target.value)}
                 placeholder={keyOk ? 'Digite para substituir a chave atual' : 're_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
               />
               <button type="button" onClick={() => setShowKey(s => !s)}
-                className="px-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-500 transition-colors">
+                className="px-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors">
                 {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
@@ -399,24 +403,24 @@ function IntegracaoTab({ configs }: { configs: ConfigRow[] }) {
 
           {/* Remetente */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">Remetente</label>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Remetente</label>
             <input
               type="text"
               value={fromEmail}
               onChange={e => setFromEmail(e.target.value)}
               placeholder="Isyon CRM <noreply@seudominio.com.br>"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             />
-            <p className="text-xs text-gray-400 mt-1.5">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
               Padrão: <span className="font-mono">Isyon CRM &lt;onboarding@resend.dev&gt;</span>
             </p>
           </div>
 
           {saveErro && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{saveErro}</p>
+            <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2">{saveErro}</p>
           )}
           {saveOk && (
-            <p className="text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2 flex items-center gap-1.5">
+            <p className="text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-lg px-3 py-2 flex items-center gap-1.5">
               <Check size={14} /> Configurações salvas com sucesso.
             </p>
           )}
@@ -429,8 +433,8 @@ function IntegracaoTab({ configs }: { configs: ConfigRow[] }) {
       </div>
 
       {/* Placeholder futuras integrações */}
-      <div className="rounded-xl border border-dashed border-gray-200 p-5 text-center">
-        <p className="text-sm text-gray-400">Mais integrações em breve — WhatsApp, NF-e, …</p>
+      <div className="rounded-xl border border-dashed border-gray-200 dark:border-gray-700 p-5 text-center">
+        <p className="text-sm text-gray-400 dark:text-gray-500">Mais integrações em breve — WhatsApp, NF-e, …</p>
       </div>
     </div>
   )
@@ -440,28 +444,28 @@ function IntegracaoTab({ configs }: { configs: ConfigRow[] }) {
 
 function LogsTab({ logs }: { logs: LogAcesso[] }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-gray-100 bg-gray-50">
-            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Empresa</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Usuário</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Último Acesso</th>
+          <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Empresa</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Usuário</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Último Acesso</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-50">
+        <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
           {logs.map((l) => {
             const rel = relativo(l.ultimo_acesso)
             return (
-              <tr key={l.tenant_id} className="hover:bg-gray-50">
+              <tr key={l.tenant_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                 <td className="px-4 py-3">
-                  <div className="font-medium text-gray-900">{l.nome_tenant}</div>
-                  <span className={`text-xs ${l.status_tenant === 'ativo' ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div className="font-medium text-gray-900 dark:text-gray-100">{l.nome_tenant}</div>
+                  <span className={`text-xs ${l.status_tenant === 'ativo' ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                     {l.status_tenant ?? '—'}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
-                  {l.nome_usuario ?? <span className="text-gray-300">—</span>}
+                <td className="px-4 py-3 text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                  {l.nome_usuario ?? <span className="text-gray-300 dark:text-gray-600">—</span>}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
@@ -469,7 +473,7 @@ function LogsTab({ logs }: { logs: LogAcesso[] }) {
                     <span className={`text-sm ${rel.txt}`}>{rel.label}</span>
                   </div>
                   {l.ultimo_acesso && (
-                    <div className="text-xs text-gray-400 mt-0.5 ml-4">
+                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 ml-4">
                       {new Date(l.ultimo_acesso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
                     </div>
                   )}
@@ -479,7 +483,7 @@ function LogsTab({ logs }: { logs: LogAcesso[] }) {
           })}
           {logs.length === 0 && (
             <tr>
-              <td colSpan={3} className="px-4 py-10 text-center text-sm text-gray-400">
+              <td colSpan={3} className="px-4 py-10 text-center text-sm text-gray-400 dark:text-gray-500">
                 Nenhum registro de acesso ainda.
               </td>
             </tr>
@@ -498,10 +502,10 @@ function ModalBase({ titulo, onClose, children }: {
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-md max-h-[94vh] flex flex-col shadow-xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
-          <h2 className="text-base font-semibold text-gray-900">{titulo}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-md max-h-[94vh] flex flex-col shadow-xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{titulo}</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500">
             <X size={18} />
           </button>
         </div>
@@ -529,9 +533,9 @@ function CriarTenantForm({ loading, erro, onSubmit, onClose }: {
       className="space-y-4">
       <Field label="Nome da empresa *"      value={nome}      onChange={setNome}      placeholder="Acme Ltda" />
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1.5">Plano</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Plano</label>
         <select value={plano} onChange={e => setPlano(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
           {['Básico', 'Profissional', 'Enterprise'].map(p => <option key={p}>{p}</option>)}
         </select>
       </div>
@@ -539,7 +543,7 @@ function CriarTenantForm({ loading, erro, onSubmit, onClose }: {
       <Field label="Nome do admin"           value={nomeAdmin} onChange={setNomeAdmin} placeholder="João Silva" />
       <Field label="E-mail do admin *"       value={email}     onChange={setEmail}     placeholder="admin@empresa.com" type="email" />
       <Field label="Senha temporária *"      value={senha}     onChange={setSenha}     placeholder="Mínimo 6 caracteres" type="password" />
-      {erro && <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{erro}</p>}
+      {erro && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2">{erro}</p>}
       <FormFooter loading={loading} labelConfirm="Criar tenant" onClose={onClose} />
     </form>
   )
@@ -562,29 +566,29 @@ function EditarTenantForm({ tenant, loading, erro, onSubmit, onClose, onResetSen
       className="space-y-4">
       <Field label="Nome da empresa *"     value={nome}      onChange={setNome} />
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1.5">Plano</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Plano</label>
         <select value={plano} onChange={e => setPlano(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
           {['Básico', 'Profissional', 'Enterprise'].map(p => <option key={p}>{p}</option>)}
         </select>
       </div>
       <Field label="Expiração do contrato" value={expiracao} onChange={setExpiracao} type="date" />
 
-      <div className="border-t border-gray-100 pt-4">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Reset de senha</p>
+      <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Reset de senha</p>
         <div className="flex gap-2">
           <input type="email" value={emailReset} onChange={e => setEmailReset(e.target.value)}
             placeholder="E-mail do usuário"
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500" />
           <button type="button" onClick={() => emailReset && onResetSenha(emailReset)}
             disabled={!emailReset || loading}
-            className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-sm font-medium transition-colors disabled:opacity-40">
+            className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-40">
             <KeyRound size={13} /> Gerar link
           </button>
         </div>
       </div>
 
-      {erro && <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{erro}</p>}
+      {erro && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2">{erro}</p>}
       <FormFooter loading={loading} labelConfirm="Salvar" onClose={onClose} />
     </form>
   )
@@ -608,15 +612,15 @@ function CriarUsuarioForm({ tenantId: _tid, loading, erro, onSubmit, onClose }: 
       <Field label="E-mail *"           value={email} onChange={setEmail} placeholder="maria@empresa.com" type="email" />
       <Field label="Senha temporária *" value={senha} onChange={setSenha} placeholder="Mínimo 6 caracteres" type="password" />
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1.5">Perfil</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Perfil</label>
         <select value={perfil} onChange={e => setPerfil(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
           {['admin', 'gestor', 'vendedor', 'financeiro'].map(p => (
             <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
           ))}
         </select>
       </div>
-      {erro && <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{erro}</p>}
+      {erro && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2">{erro}</p>}
       <FormFooter loading={loading} labelConfirm="Criar usuário" onClose={onClose} />
     </form>
   )
@@ -629,10 +633,10 @@ function Field({ label, value, onChange, placeholder, type = 'text' }: {
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1.5">{label}</label>
+      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">{label}</label>
       <input type={type} value={value} onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500" />
     </div>
   )
 }
@@ -643,7 +647,7 @@ function FormFooter({ loading, labelConfirm, onClose }: {
   return (
     <div className="flex gap-3 pt-2">
       <button type="button" onClick={onClose}
-        className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+        className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
         Cancelar
       </button>
       <button type="submit" disabled={loading}

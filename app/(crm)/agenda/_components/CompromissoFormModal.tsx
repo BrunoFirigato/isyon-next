@@ -100,17 +100,21 @@ export default function CompromissoFormModal({ compromisso, onClose }: Props) {
     onClose()
   }
 
+  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const selectCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const labelCls = 'block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5'
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-lg max-h-[92vh] flex flex-col shadow-xl">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-lg max-h-[92vh] flex flex-col shadow-xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Editar atividade' : 'Nova atividade'}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500">
             <X size={18} />
           </button>
         </div>
@@ -120,24 +124,24 @@ export default function CompromissoFormModal({ compromisso, onClose }: Props) {
 
             {/* Título */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              <label className={labelCls}>
                 Título <span className="text-red-500">*</span>
               </label>
               <input type="text" value={form.titulo} onChange={e => set('titulo', e.target.value)}
                 autoFocus required placeholder="Ex: Reunião com cliente"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className={inputCls} />
             </div>
 
             {/* Tipo */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Tipo</label>
+              <label className={labelCls}>Tipo</label>
               <div className="flex flex-wrap gap-2">
                 {TIPOS_COMPROMISSO.map(t => (
                   <button key={t.value} type="button" onClick={() => set('tipo', t.value)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                       form.tipo === t.value
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     <span className={`w-2 h-2 rounded-full ${t.dot}`} />
@@ -150,27 +154,27 @@ export default function CompromissoFormModal({ compromisso, onClose }: Props) {
             {/* Data/hora + duração */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                <label className={labelCls}>
                   Data e hora <span className="text-red-500">*</span>
                 </label>
                 <input type="datetime-local" value={form.data_hora} onChange={e => set('data_hora', e.target.value)}
                   required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className={inputCls} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Duração (min)</label>
+                <label className={labelCls}>Duração (min)</label>
                 <input type="number" min="5" step="5" value={form.duracao_min} onChange={e => set('duracao_min', e.target.value)}
                   placeholder="60"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className={inputCls} />
               </div>
             </div>
 
             {/* Vínculo */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Vincular a cliente</label>
+                <label className={labelCls}>Vincular a cliente</label>
                 <select value={form.cliente_id} onChange={e => handleClienteChange(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  className={selectCls}>
                   <option value="">Nenhum</option>
                   {clientes.map(c => (
                     <option key={c.id} value={c.id}>
@@ -180,9 +184,9 @@ export default function CompromissoFormModal({ compromisso, onClose }: Props) {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Vincular a lead</label>
+                <label className={labelCls}>Vincular a lead</label>
                 <select value={form.lead_id} onChange={e => handleLeadChange(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  className={selectCls}>
                   <option value="">Nenhum</option>
                   {leads.map(l => (
                     <option key={l.id} value={l.id}>{l.nome}</option>
@@ -193,9 +197,9 @@ export default function CompromissoFormModal({ compromisso, onClose }: Props) {
 
             {/* Status */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Status</label>
+              <label className={labelCls}>Status</label>
               <select value={form.status} onChange={e => set('status', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                className={selectCls}>
                 {STATUS_COMPROMISSO.map(s => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
@@ -204,10 +208,10 @@ export default function CompromissoFormModal({ compromisso, onClose }: Props) {
 
             {/* Descrição */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Descrição</label>
+              <label className={labelCls}>Descrição</label>
               <textarea value={form.descricao} onChange={e => set('descricao', e.target.value)}
                 rows={3} placeholder="Notas, pauta, observações..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
             </div>
 
             {error && (
@@ -218,7 +222,7 @@ export default function CompromissoFormModal({ compromisso, onClose }: Props) {
           {/* Footer */}
           <div className="px-5 pb-5 flex gap-3 shrink-0">
             <button type="button" onClick={onClose}
-              className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+              className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               Cancelar
             </button>
             <button type="submit" disabled={saving}

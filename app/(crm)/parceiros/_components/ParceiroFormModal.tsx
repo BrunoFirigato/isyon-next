@@ -29,7 +29,6 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
   const [cidade, setCidade] = useState(parceiro?.cidade ?? '')
   const [estado, setEstado] = useState(parceiro?.estado ?? '')
   const [status, setStatus] = useState(parceiro?.status ?? 'ativo')
-  // slot 0 → vendedor_maq_id, slot 1 → vendedor_pec_id (rótulos vêm dos segmentos configurados)
   const [vendedor0, setVendedor0] = useState(parceiro?.vendedor_maq_id ?? '')
   const [vendedor1, setVendedor1] = useState(parceiro?.vendedor_pec_id ?? '')
 
@@ -99,16 +98,20 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
     onClose()
   }
 
+  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const selectCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const labelCls = 'block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5'
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-lg max-h-[94vh] flex flex-col shadow-xl">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-lg max-h-[94vh] flex flex-col shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Editar parceiro comercial' : 'Novo parceiro comercial'}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500">
             <X size={18} />
           </button>
         </div>
@@ -117,45 +120,45 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
           <div className="p-5 space-y-4">
             {/* Nome */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              <label className={labelCls}>
                 Nome <span className="text-red-500">*</span>
               </label>
               <input
                 type="text" value={nome} onChange={(e) => setNome(e.target.value)}
                 required placeholder="Nome do parceiro ou empresa"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Email */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">E-mail</label>
+                <label className={labelCls}>E-mail</label>
                 <input
                   type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                   placeholder="contato@parceiro.com.br"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={inputCls}
                 />
               </div>
 
               {/* Telefone */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Telefone</label>
+                <label className={labelCls}>Telefone</label>
                 <input
                   type="tel" value={telefone} onChange={(e) => setTelefone(e.target.value)}
                   placeholder="(00) 00000-0000"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={inputCls}
                 />
               </div>
 
               {/* CNPJ */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">CNPJ</label>
+                <label className={labelCls}>CNPJ</label>
                 <div className="relative">
                   <input
                     type="text" value={cnpj} onChange={(e) => handleCnpjChange(e.target.value)}
                     placeholder="00.000.000/0000-00" maxLength={18}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 pr-9 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                   />
                   {buscandoCnpj && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" />}
                   {!buscandoCnpj && cnpjStatus === 'success' && <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
@@ -168,10 +171,10 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
 
               {/* Status */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Status</label>
+                <label className={labelCls}>Status</label>
                 <select
                   value={status} onChange={(e) => setStatus(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className={selectCls}
                 >
                   <option value="ativo">Ativo</option>
                   <option value="inativo">Inativo</option>
@@ -180,20 +183,20 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
 
               {/* Cidade */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Cidade</label>
+                <label className={labelCls}>Cidade</label>
                 <input
                   type="text" value={cidade} onChange={(e) => setCidade(e.target.value)}
                   placeholder="São Paulo"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={inputCls}
                 />
               </div>
 
               {/* Estado */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Estado</label>
+                <label className={labelCls}>Estado</label>
                 <select
                   value={estado} onChange={(e) => setEstado(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className={selectCls}
                 >
                   <option value="">Selecione...</option>
                   {ESTADOS_BR.map((uf) => (
@@ -204,12 +207,11 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
 
               {/* Vendedores — dinâmico por segmento */}
               {segmentos.length === 0 ? (
-                /* Sem segmentos: campo único */
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Vendedor responsável</label>
+                  <label className={labelCls}>Vendedor responsável</label>
                   <select
                     value={vendedor0} onChange={(e) => setVendedor0(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className={selectCls}
                   >
                     <option value="">Nenhum</option>
                     {vendedores.map((v) => (
@@ -218,16 +220,15 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
                   </select>
                 </div>
               ) : (
-                /* Com segmentos: um seletor por segmento (máx. 2 slots no banco) */
                 segmentos.slice(0, 2).map((seg, idx) => (
                   <div key={seg.value}>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    <label className={labelCls}>
                       Vendedor — {seg.label}
                     </label>
                     <select
                       value={idx === 0 ? vendedor0 : vendedor1}
                       onChange={(e) => idx === 0 ? setVendedor0(e.target.value) : setVendedor1(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className={selectCls}
                     >
                       <option value="">Nenhum</option>
                       {vendedores.map((v) => (
@@ -249,7 +250,7 @@ export default function ParceiroFormModal({ parceiro, onClose }: Props) {
           {/* Footer */}
           <div className="px-5 pb-5 flex gap-3 shrink-0">
             <button type="button" onClick={onClose}
-              className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+              className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               Cancelar
             </button>
             <button type="submit" disabled={saving}

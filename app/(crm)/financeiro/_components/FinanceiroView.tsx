@@ -144,8 +144,8 @@ export default function FinanceiroView({
       {/* ── Cabeçalho ──────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Financeiro</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Controle financeiro do negócio</p>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Financeiro</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Controle financeiro do negócio</p>
         </div>
         {currentAba === 'lancamentos' && (
           <button
@@ -162,24 +162,24 @@ export default function FinanceiroView({
       {/* ── Cards de resumo (aba lançamentos) ──────────────────────────────── */}
       {currentAba === 'lancamentos' && (
         <div className="grid grid-cols-3 gap-3 mb-5">
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-center gap-1.5 mb-1">
               <TrendingUp size={14} className="text-green-500" />
-              <span className="text-xs font-medium text-gray-500">Receitas</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Receitas</span>
             </div>
             <p className="text-base font-bold text-green-600">{brl(totalReceitas)}</p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-center gap-1.5 mb-1">
               <TrendingDown size={14} className="text-red-500" />
-              <span className="text-xs font-medium text-gray-500">Despesas</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Despesas</span>
             </div>
             <p className="text-base font-bold text-red-600">{brl(totalDespesas)}</p>
           </div>
           <div className={`rounded-xl border p-4 ${saldo >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
             <div className="flex items-center gap-1.5 mb-1">
               <DollarSign size={14} className={saldo >= 0 ? 'text-green-600' : 'text-red-600'} />
-              <span className="text-xs font-medium text-gray-500">Saldo</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Saldo</span>
             </div>
             <p className={`text-base font-bold ${saldo >= 0 ? 'text-green-700' : 'text-red-700'}`}>
               {brl(saldo)}
@@ -197,7 +197,7 @@ export default function FinanceiroView({
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               currentAba === value
                 ? 'bg-blue-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             {label}
@@ -213,17 +213,17 @@ export default function FinanceiroView({
           {/* Filtros: período + tipo */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
             {/* Navegação de mês */}
-            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1.5">
-              <button onClick={prevMes} className="p-1 rounded hover:bg-gray-100 text-gray-500 transition-colors">
+            <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5">
+              <button onClick={prevMes} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors">
                 <ChevronLeft size={15} />
               </button>
-              <span className="text-sm font-medium text-gray-700 w-40 text-center">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-40 text-center">
                 {MESES[currentMes - 1]} {currentAno}
               </span>
               <button
                 onClick={nextMes}
                 disabled={isCurrentMonth}
-                className="p-1 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-30 transition-colors"
+                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 disabled:opacity-30 transition-colors"
               >
                 <ChevronRight size={15} />
               </button>
@@ -240,7 +240,7 @@ export default function FinanceiroView({
                       ? t === 'receita' ? 'bg-green-600 text-white'
                         : t === 'despesa' ? 'bg-red-600 text-white'
                         : 'bg-gray-800 text-white'
-                      : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   {t === 'todos' ? 'Todos' : t === 'receita' ? 'Receitas' : 'Despesas'}
@@ -250,9 +250,9 @@ export default function FinanceiroView({
           </div>
 
           {lancamentosFiltrados.length === 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 py-16 text-center">
               <TrendingUp size={28} className="mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-400 dark:text-gray-500 text-sm">
                 {lancamentos.length === 0
                   ? `Nenhum lançamento em ${MESES[currentMes - 1]}.`
                   : 'Nenhum resultado para o filtro selecionado.'}
@@ -270,24 +270,24 @@ export default function FinanceiroView({
 
           {/* Desktop table */}
           {lancamentosFiltrados.length > 0 && (
-            <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Data</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Descrição</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Categoria</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Tipo</th>
-                    <th className="text-right px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Valor</th>
+                  <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Data</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Descrição</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Categoria</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tipo</th>
+                    <th className="text-right px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Valor</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {lancamentosFiltrados.map((l) => (
                     <tr key={l.id} className="hover:bg-blue-50/40 transition-colors group">
-                      <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">{formatDate(l.data)}</td>
-                      <td className="px-4 py-3 text-gray-900 font-medium">{l.descricao}</td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">{l.categoria ?? '—'}</td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">{formatDate(l.data)}</td>
+                      <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-medium">{l.descricao}</td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{l.categoria ?? '—'}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-lg ${
                           l.tipo === 'receita' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
@@ -329,14 +329,14 @@ export default function FinanceiroView({
           {lancamentosFiltrados.length > 0 && (
             <div className="md:hidden space-y-2">
               {lancamentosFiltrados.map((l) => (
-                <div key={l.id} className="bg-white rounded-xl border border-gray-200 p-4">
+                <div key={l.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 text-sm truncate">{l.descricao}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">{l.descricao}</p>
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        <span className="text-xs text-gray-400">{formatDate(l.data)}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(l.data)}</span>
                         {l.categoria && (
-                          <span className="text-xs text-gray-400">· {l.categoria}</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">· {l.categoria}</span>
                         )}
                       </div>
                     </div>
@@ -353,16 +353,16 @@ export default function FinanceiroView({
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-1 justify-end mt-2 pt-2 border-t border-gray-50">
+                  <div className="flex gap-1 justify-end mt-2 pt-2 border-t border-gray-50 dark:border-gray-700">
                     <button
                       onClick={() => { setEditingLancamento(l); setFormOpen(true) }}
-                      className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600"
+                      className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 dark:text-gray-500 hover:text-blue-600"
                     >
                       <Pencil size={14} />
                     </button>
                     <button
                       onClick={() => setDeletingId(l.id)}
-                      className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500"
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 dark:text-gray-500 hover:text-red-500"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -388,7 +388,7 @@ export default function FinanceiroView({
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   statusFatura === value
                     ? 'bg-gray-800 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 {label}
@@ -397,40 +397,40 @@ export default function FinanceiroView({
           </div>
 
           {faturasFiltradas.length === 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
-              <p className="text-gray-400 text-sm">Nenhuma fatura encontrada.</p>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 py-16 text-center">
+              <p className="text-gray-400 dark:text-gray-500 text-sm">Nenhuma fatura encontrada.</p>
             </div>
           )}
 
           {/* Desktop table */}
           {faturasFiltradas.length > 0 && (
-            <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Número</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Cliente</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                    <th className="text-right px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Valor</th>
+                  <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Número</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Cliente</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="text-right px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Valor</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {faturasFiltradas.map((f) => (
                     <tr key={f.id} className="hover:bg-blue-50/40 transition-colors group">
                       <td className="px-4 py-3">
-                        <p className="font-mono text-xs text-gray-500">{f.numero ?? '—'}</p>
+                        <p className="font-mono text-xs text-gray-500 dark:text-gray-400">{f.numero ?? '—'}</p>
                         {f.obs && (
-                          <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[200px]">{f.obs}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate max-w-[200px]">{f.obs}</p>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{clienteNome(f.cliente_id) ?? '—'}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{clienteNome(f.cliente_id) ?? '—'}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-lg ${faturaStatusStyle(f.status)}`}>
                           {statusLabel(STATUS_FATURA, f.status)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold text-gray-900 tabular-nums">
+                      <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-gray-100 tabular-nums">
                         {brl(f.valor)}
                       </td>
                       <td className="px-4 py-3">
@@ -457,22 +457,22 @@ export default function FinanceiroView({
           {faturasFiltradas.length > 0 && (
             <div className="md:hidden space-y-2">
               {faturasFiltradas.map((f) => (
-                <div key={f.id} className="bg-white rounded-xl border border-gray-200 p-4">
+                <div key={f.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono text-xs text-gray-400">{f.numero ?? '—'}</p>
-                      <p className="font-medium text-gray-900 text-sm mt-0.5">{clienteNome(f.cliente_id) ?? '—'}</p>
-                      {f.obs && <p className="text-xs text-gray-400 mt-0.5 truncate">{f.obs}</p>}
+                      <p className="font-mono text-xs text-gray-400 dark:text-gray-500">{f.numero ?? '—'}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100 text-sm mt-0.5">{clienteNome(f.cliente_id) ?? '—'}</p>
+                      {f.obs && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">{f.obs}</p>}
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className="font-bold text-sm text-gray-900 tabular-nums">{brl(f.valor)}</span>
+                      <span className="font-bold text-sm text-gray-900 dark:text-gray-100 tabular-nums">{brl(f.valor)}</span>
                       <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${faturaStatusStyle(f.status)}`}>
                         {statusLabel(STATUS_FATURA, f.status)}
                       </span>
                     </div>
                   </div>
                   {f.status === 'pendente' && (
-                    <div className="flex justify-end mt-2 pt-2 border-t border-gray-50">
+                    <div className="flex justify-end mt-2 pt-2 border-t border-gray-50 dark:border-gray-700">
                       <button
                         onClick={() => updateFaturaStatus(f.id, 'pago')}
                         className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium"
@@ -503,7 +503,7 @@ export default function FinanceiroView({
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   statusComissao === value
                     ? 'bg-gray-800 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 {label}
@@ -512,30 +512,30 @@ export default function FinanceiroView({
           </div>
 
           {comissoesFiltradas.length === 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
-              <p className="text-gray-400 text-sm">Nenhuma comissão encontrada.</p>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 py-16 text-center">
+              <p className="text-gray-400 dark:text-gray-500 text-sm">Nenhuma comissão encontrada.</p>
             </div>
           )}
 
           {/* Desktop table */}
           {comissoesFiltradas.length > 0 && (
-            <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Vendedor</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Vlr pedido</th>
-                    <th className="text-right px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Comissão</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                  <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Vendedor</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Vlr pedido</th>
+                    <th className="text-right px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Comissão</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {comissoesFiltradas.map((c) => (
                     <tr key={c.id} className="hover:bg-blue-50/40 transition-colors group">
-                      <td className="px-4 py-3 text-gray-900 font-medium">{vendedorNome(c.vendedor_id) ?? '—'}</td>
-                      <td className="px-4 py-3 text-gray-500 tabular-nums">{brl(c.valor_pedido)}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-gray-900 tabular-nums">{brl(c.valor_comissao)}</td>
+                      <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-medium">{vendedorNome(c.vendedor_id) ?? '—'}</td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 tabular-nums">{brl(c.valor_pedido)}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{brl(c.valor_comissao)}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-lg ${comissaoStatusStyle(c.status)}`}>
                           {statusLabel(STATUS_COMISSAO, c.status)}
@@ -574,23 +574,23 @@ export default function FinanceiroView({
           {comissoesFiltradas.length > 0 && (
             <div className="md:hidden space-y-2">
               {comissoesFiltradas.map((c) => (
-                <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4">
+                <div key={c.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 text-sm">{vendedorNome(c.vendedor_id) ?? '—'}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{vendedorNome(c.vendedor_id) ?? '—'}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                         Pedido: <span className="tabular-nums">{brl(c.valor_pedido)}</span>
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className="font-bold text-sm text-gray-900 tabular-nums">{brl(c.valor_comissao)}</span>
+                      <span className="font-bold text-sm text-gray-900 dark:text-gray-100 tabular-nums">{brl(c.valor_comissao)}</span>
                       <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${comissaoStatusStyle(c.status)}`}>
                         {statusLabel(STATUS_COMISSAO, c.status)}
                       </span>
                     </div>
                   </div>
                   {(c.status === 'pendente' || c.status === 'aprovada') && (
-                    <div className="flex justify-end mt-2 pt-2 border-t border-gray-50">
+                    <div className="flex justify-end mt-2 pt-2 border-t border-gray-50 dark:border-gray-700">
                       {c.status === 'pendente' && (
                         <button
                           onClick={() => updateComissaoStatus(c.id, 'aprovada')}
@@ -622,13 +622,13 @@ export default function FinanceiroView({
       {deletingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeletingId(null)} />
-          <div className="relative bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-base font-semibold text-gray-900 mb-2">Excluir lançamento?</h3>
-            <p className="text-sm text-gray-500 mb-5">Esta ação não pode ser desfeita.</p>
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Excluir lançamento?</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Esta ação não pode ser desfeita.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeletingId(null)}
-                className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Cancelar
               </button>
