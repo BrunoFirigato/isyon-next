@@ -7,7 +7,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import ClienteFormModal from './ClienteFormModal'
 import {
-  type Cliente, STATUS_CLIENTE, TIPOS,
+  type Cliente, type VendedorRef, type ParceiroRef,
+  STATUS_CLIENTE, TIPOS,
   tipoLabel, statusStyle, statusLabel,
   brl, formatDate,
 } from './types'
@@ -18,9 +19,13 @@ interface Props {
   clientes: Cliente[]
   currentStatus: string
   currentQ: string
+  currentVendedor: string
+  currentParceiro: string
+  vendedores: VendedorRef[]
+  parceiros: ParceiroRef[]
 }
 
-export default function ClientesView({ clientes, currentStatus, currentQ }: Props) {
+export default function ClientesView({ clientes, currentStatus, currentQ, currentVendedor, currentParceiro, vendedores, parceiros }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [, startTransition] = useTransition()
@@ -33,10 +38,23 @@ export default function ClientesView({ clientes, currentStatus, currentQ }: Prop
   const [deletingId, setDeletingId]       = useState<string | null>(null)
   const [expandedId, setExpandedId]       = useState<string | null>(null)
 
+  // Lookups rápidos ID → nome
+  const vendedorMap = Object.fromEntries(vendedores.map(v => [v.id, v.nome]))
+  const parceiroMap = Object.fromEntries(parceiros.map(p => [p.id, p.nome]))
+
+  function vendedorNome(c: Cliente): string | null {
+    const maq = c.vendedor_maq_id ? vendedorMap[c.vendedor_maq_id] : null
+    const pec = c.vendedor_pec_id ? vendedorMap[c.vendedor_pec_id] : null
+    if (maq && pec && maq !== pec) return `${maq} / ${pec}`
+    return maq ?? pec ?? null
+  }
+
   function updateParams(params: Record<string, string>) {
     const sp = new URLSearchParams()
     if (params.status && params.status !== 'todos') sp.set('status', params.status)
     if (params.q?.trim()) sp.set('q', params.q.trim())
+    if (params.vendedor) sp.set('vendedor', params.vendedor)
+    if (params.parceiro) sp.set('parceiro', params.parceiro)
     const qs = sp.toString()
     startTransition(() => {
       router.push(pathname + (qs ? '?' + qs : ''))
@@ -45,12 +63,12 @@ export default function ClientesView({ clientes, currentStatus, currentQ }: Prop
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
-    updateParams({ status: currentStatus, q: search })
+    updateParams({ status: currentStatus, q: search, vendedor: currentVendedor, parceiro: currentParceiro })
   }
 
   function clearSearch() {
     setSearch('')
-    updateParams({ status: currentStatus, q: '' })
+    updateParams({ status: currentStatus, q: '', vendedor: currentVendedor, parceiro: currentParceiro })
   }
 
   async function handleDelete(id: string) {
@@ -89,11 +107,11 @@ export default function ClientesView({ clientes, currentStatus, currentQ }: Prop
       </div>
 
       {/* Filtros por status */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-hide">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-3 scrollbar-hide">
         {STATUS_CLIENTE.map(({ value, label }) => (
           <button
             key={value}
-            onClick={() => updateParams({ status: value, q: search })}
+            onClick={() => updateParams({ status: value, q: search, vendedor: currentVendedor, parceiro: currentParceiro })}
             className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               currentStatus === value
                 ? 'bg-blue-600 text-white'
@@ -104,6 +122,44 @@ export default function ClientesView({ clientes, currentStatus, currentQ }: Prop
           </button>
         ))}
       </div>
+
+      {/* Filtros por vendedor e parceiro */}
+      {(vendedores.length > 0 || parceiros.length > 0) && (
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {vendedores.length > 0 && (
+            <select
+              value={currentVendedor}
+              onChange={e => updateParams({ status: currentStatus, q: search, vendedor: e.target.value, parceiro: currentParceiro })}
+              className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+            >
+              <option value="">Todos os vendedores</option>
+              {vendedores.map(v => (
+                <option key={v.id} value={v.id}>{v.nome}</option>
+              ))}
+            </select>
+          )}
+          {parceiros.length > 0 && (
+            <select
+              value={currentParceiro}
+              onChange={e => updateParams({ status: currentStatus, q: search, vendedor: currentVendedor, parceiro: e.target.value })}
+              className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+            >
+              <option value="">Todos os parceiros</option>
+              {parceiros.map(p => (
+                <option key={p.id} value={p.id}>{p.nome}</option>
+              ))}
+            </select>
+          )}
+          {(currentVendedor || currentParceiro) && (
+            <button
+              onClick={() => updateParams({ status: currentStatus, q: search, vendedor: '', parceiro: '' })}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 border border-gray-300 dark:border-gray-600 transition-colors"
+            >
+              <X size={13} /> Limpar filtros
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Busca */}
       <form onSubmit={handleSearch} className="flex gap-2 mb-5">
@@ -145,10 +201,11 @@ export default function ClientesView({ clientes, currentStatus, currentQ }: Prop
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Razão social / Nome</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">CPF / CNPJ</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Contato</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tipo</th>
                 {segmentos.length > 0 && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Segmento</th>}
+                {vendedores.length > 0 && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Vendedor</th>}
+                {parceiros.length > 0 && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Parceiro</th>}
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -172,7 +229,6 @@ export default function ClientesView({ clientes, currentStatus, currentQ }: Prop
                           </button>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs">{c.cpf_cnpj ?? '—'}</td>
                       <td className="px-4 py-3">
                         {c.email && <p className="text-gray-600 dark:text-gray-400">{c.email}</p>}
                         {c.telefone && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{c.telefone}</p>}
@@ -181,6 +237,16 @@ export default function ClientesView({ clientes, currentStatus, currentQ }: Prop
                         <span className="text-xs text-gray-600 dark:text-gray-400">{tipoLabel(c.tipo)}</span>
                       </td>
                       {segmentos.length > 0 && <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{segmentoLabel(c.segmento, segmentos)}</td>}
+                      {vendedores.length > 0 && (
+                        <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 max-w-[130px]">
+                          {vendedorNome(c) ?? <span className="text-gray-300 dark:text-gray-600">—</span>}
+                        </td>
+                      )}
+                      {parceiros.length > 0 && (
+                        <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 max-w-[130px] truncate">
+                          {c.parceiro_id ? (parceiroMap[c.parceiro_id] ?? '—') : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                        </td>
+                      )}
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${st.bg} ${st.text}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
@@ -206,7 +272,7 @@ export default function ClientesView({ clientes, currentStatus, currentQ }: Prop
                     </tr>
                     {expandedId === c.id && (
                       <tr key={`${c.id}-addr`} className="bg-blue-50/40 dark:bg-blue-900/10">
-                        <td colSpan={7} className="px-4 py-2">
+                        <td colSpan={9} className="px-4 py-2">
                           <p className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                             <MapPin size={11} className="text-blue-400" />
                             {[c.rua, c.numero, c.complemento, c.bairro, c.cidade, c.estado, c.cep]
@@ -245,6 +311,21 @@ export default function ClientesView({ clientes, currentStatus, currentQ }: Prop
                   <div className="text-sm text-gray-600 dark:text-gray-400 space-y-0.5 mb-2">
                     {c.email && <p className="truncate">{c.email}</p>}
                     {c.telefone && <p className="text-xs text-gray-500 dark:text-gray-400">{c.telefone}</p>}
+                  </div>
+                )}
+
+                {(vendedorNome(c) || c.parceiro_id) && (
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2 mb-1">
+                    {vendedorNome(c) && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-gray-400 dark:text-gray-500">Vendedor:</span> {vendedorNome(c)}
+                      </span>
+                    )}
+                    {c.parceiro_id && parceiroMap[c.parceiro_id] && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-gray-400 dark:text-gray-500">Parceiro:</span> {parceiroMap[c.parceiro_id]}
+                      </span>
+                    )}
                   </div>
                 )}
 

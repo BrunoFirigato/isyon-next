@@ -2,12 +2,17 @@ import { createClient } from '@/lib/supabase/server'
 import ClientesView from './_components/ClientesView'
 
 interface Props {
-  searchParams: Promise<{ status?: string; q?: string }>
+  searchParams: Promise<{ status?: string; q?: string; vendedor?: string; parceiro?: string }>
 }
 
 export default async function ClientesPage({ searchParams }: Props) {
-  const { status, q } = await searchParams
+  const { status, q, vendedor, parceiro } = await searchParams
   const supabase = await createClient()
+
+  const [{ data: vendedores }, { data: parceiros }] = await Promise.all([
+    supabase.from('vendedores').select('id, nome').eq('status', 'ativo').order('nome'),
+    supabase.from('parceiros').select('id, nome').eq('status', 'ativo').order('nome'),
+  ])
 
   let query = supabase
     .from('clientes')
@@ -27,6 +32,14 @@ export default async function ClientesPage({ searchParams }: Props) {
     )
   }
 
+  if (vendedor) {
+    query = query.or(`vendedor_maq_id.eq.${vendedor},vendedor_pec_id.eq.${vendedor}`)
+  }
+
+  if (parceiro) {
+    query = query.eq('parceiro_id', parceiro)
+  }
+
   const { data: clientes } = await query
 
   return (
@@ -34,6 +47,10 @@ export default async function ClientesPage({ searchParams }: Props) {
       clientes={clientes ?? []}
       currentStatus={status ?? 'todos'}
       currentQ={q ?? ''}
+      currentVendedor={vendedor ?? ''}
+      currentParceiro={parceiro ?? ''}
+      vendedores={vendedores ?? []}
+      parceiros={parceiros ?? []}
     />
   )
 }
