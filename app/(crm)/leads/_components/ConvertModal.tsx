@@ -85,20 +85,19 @@ export default function ConvertModal({ lead, onClose }: Props) {
 
     const supabase = createClient()
 
-    // 1. Cria o prospect a partir dos dados do lead
+    // 1. Cria o prospect — pertence ao tenant, sem vínculo de filial
     const { data: prospect, error: prospectErr } = await supabase
       .from('clientes')
       .insert({
-        tenant_id:  tenantId,
-        nome:       lead.nome,
-        empresa:    lead.empresa   ?? null,   // empresa do cliente (texto do lead)
-        empresa_id: empresaId      || null,   // filial do tenant responsável
-        email:      lead.email     ?? null,
-        telefone:   lead.telefone  ?? null,
-        tipo:       'direto',
-        status:     'prospect',
-        origem:     lead.origem    ?? null,
-        lead_id:    lead.id,
+        tenant_id: tenantId,
+        nome:      lead.nome,
+        empresa:   lead.empresa  ?? null,
+        email:     lead.email    ?? null,
+        telefone:  lead.telefone ?? null,
+        tipo:      'direto',
+        status:    'prospect',
+        origem:    lead.origem   ?? null,
+        lead_id:   lead.id,
       })
       .select('id')
       .single()
