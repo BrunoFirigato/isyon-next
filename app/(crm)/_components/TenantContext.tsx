@@ -5,6 +5,8 @@ import { createContext, useContext } from 'react'
 interface TenantCtx {
   tenantId: string
   whatsappTemplate: string | null
+  emailTemplateAssunto: string | null
+  emailTemplateCorpo: string | null
 }
 
 const TenantContext = createContext<TenantCtx | null>(null)
@@ -12,14 +14,18 @@ const TenantContext = createContext<TenantCtx | null>(null)
 export function TenantProvider({
   tenantId,
   whatsappTemplate,
+  emailTemplateAssunto,
+  emailTemplateCorpo,
   children,
 }: {
   tenantId: string
   whatsappTemplate: string | null
+  emailTemplateAssunto: string | null
+  emailTemplateCorpo: string | null
   children: React.ReactNode
 }) {
   return (
-    <TenantContext.Provider value={{ tenantId, whatsappTemplate }}>
+    <TenantContext.Provider value={{ tenantId, whatsappTemplate, emailTemplateAssunto, emailTemplateCorpo }}>
       {children}
     </TenantContext.Provider>
   )

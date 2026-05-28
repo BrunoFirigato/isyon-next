@@ -170,7 +170,10 @@ function formatPhone(tel: string) {
 
 export default function Lead360View({ lead, oportunidades, historico }: Props) {
   const router = useRouter()
-  const { tenantId, whatsappTemplate } = useTenantConfig()
+  const { tenantId, whatsappTemplate, emailTemplateAssunto, emailTemplateCorpo } = useTenantConfig()
+
+  const DEFAULT_EMAIL_ASSUNTO = `Olá ${lead.nome}`
+  const DEFAULT_EMAIL_CORPO   = ''
 
   const [editOpen,    setEditOpen]    = useState(false)
   const [convertOpen, setConvertOpen] = useState(false)
@@ -183,10 +186,14 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
   const [saving,    setSaving]    = useState(false)
   const [erro,      setErro]      = useState('')
 
-  // Form de e-mail
+  // Form de e-mail — pré-preenchido com o template configurado
   const [showEmail,    setShowEmail]    = useState(false)
-  const [emailAssunto, setEmailAssunto] = useState(`Olá ${lead.nome}`)
-  const [emailCorpo,   setEmailCorpo]   = useState('')
+  const [emailAssunto, setEmailAssunto] = useState(
+    emailTemplateAssunto ? applyTemplate(emailTemplateAssunto, lead) : DEFAULT_EMAIL_ASSUNTO
+  )
+  const [emailCorpo,   setEmailCorpo]   = useState(
+    emailTemplateCorpo ? applyTemplate(emailTemplateCorpo, lead) : DEFAULT_EMAIL_CORPO
+  )
   const [sendingEmail, setSendingEmail] = useState(false)
   const [emailErro,    setEmailErro]    = useState('')
 
@@ -235,7 +242,9 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
       setEmailErro(data.error ?? 'Erro ao enviar e-mail.')
       return
     }
-    setShowEmail(false); setEmailCorpo(''); setEmailAssunto(`Olá ${lead.nome}`)
+    setShowEmail(false)
+    setEmailCorpo(emailTemplateCorpo ? applyTemplate(emailTemplateCorpo, lead) : DEFAULT_EMAIL_CORPO)
+    setEmailAssunto(emailTemplateAssunto ? applyTemplate(emailTemplateAssunto, lead) : DEFAULT_EMAIL_ASSUNTO)
     await registrarPrimeiroContato('email')
   }
 

@@ -18,7 +18,7 @@ export default async function ConfiguracoesPage() {
 
   const { data: tenantData } = await supabase
     .from('tenants')
-    .select('id, nome, plano, status, criado_em, segmentos, whatsapp_template')
+    .select('id, nome, plano, status, criado_em, segmentos, whatsapp_template, email_template_assunto, email_template_corpo')
     .eq('id', tenantId)
     .maybeSingle()
 
