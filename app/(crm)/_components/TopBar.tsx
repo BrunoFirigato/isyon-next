@@ -44,7 +44,7 @@ function getPageLabel(pathname: string): string {
   return match ? PAGE_LABELS[match] : ''
 }
 
-export default function TopBar({ userEmail }: { userEmail: string }) {
+export default function TopBar({ userEmail, userName: userNameProp }: { userEmail: string; userName: string }) {
   const router   = useRouter()
   const pathname = usePathname()
   const [menuOpen,   setMenuOpen]   = useState(false)
@@ -54,7 +54,7 @@ export default function TopBar({ userEmail }: { userEmail: string }) {
   const { breadcrumb } = useBreadcrumb()
 
   const pageLabel  = getPageLabel(pathname)
-  const userName   = userEmail.split('@')[0]
+  const userName   = userNameProp || userEmail.split('@')[0]
   const initials   = avatarInitials(userName)
 
   // Fecha menu ao clicar fora

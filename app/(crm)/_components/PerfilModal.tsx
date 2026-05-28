@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { X, Eye, EyeOff, User, Lock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from './Toast'
@@ -14,7 +15,8 @@ interface Props {
 type Tab = 'perfil' | 'senha'
 
 export default function PerfilModal({ userEmail, userName: initialName, onClose }: Props) {
-  const toast = useToast()
+  const toast  = useToast()
+  const router = useRouter()
   const [tab, setTab] = useState<Tab>('perfil')
 
   // Perfil
@@ -40,6 +42,7 @@ export default function PerfilModal({ userEmail, userName: initialName, onClose 
     setSavingPerfil(false)
     if (error) { toast(error.message, 'error'); return }
     toast('Nome atualizado!')
+    router.refresh()
     onClose()
   }
 
