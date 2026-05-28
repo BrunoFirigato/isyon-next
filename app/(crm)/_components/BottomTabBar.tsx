@@ -1,9 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard,
   Target,
@@ -17,7 +16,6 @@ import {
   BarChart3,
   Settings2,
   UserCog,
-  LogOut,
   X,
   BookOpen,
   Package,
@@ -88,15 +86,7 @@ const tabItems = [
 
 export default function BottomTabBar({ perfil }: { perfil: Perfil }) {
   const pathname = usePathname()
-  const router = useRouter()
   const [open, setOpen] = useState(false)
-
-  async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
-  }
 
   function canSee(item: MoreItem) {
     if (!item.perfis) return true
@@ -205,16 +195,6 @@ export default function BottomTabBar({ perfil }: { perfil: Perfil }) {
                 )
               })}
 
-              {/* Logout */}
-              <div className="pt-1 border-t border-gray-100">
-                <button
-                  onClick={handleLogout}
-                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-xs font-medium bg-gray-50 text-red-500 hover:bg-red-50 transition-colors w-full"
-                >
-                  <LogOut size={22} />
-                  Sair
-                </button>
-              </div>
             </div>
           </div>
         </div>
