@@ -21,6 +21,7 @@ import {
   Package,
   Calendar,
   Megaphone,
+  Plug,
 } from 'lucide-react'
 
 type Perfil = 'admin' | 'gestor' | 'vendedor' | 'financeiro'
@@ -69,10 +70,16 @@ const moreGroups: MoreGroup[] = [
     ],
   },
   {
+    label: 'Integrações',
+    items: [
+      { href: '/integracoes', label: 'Integrações', icon: Plug, perfis: ['admin'] },
+    ],
+  },
+  {
     label: 'Administração',
     items: [
       { href: '/configuracoes', label: 'Configurações', icon: Settings2 },
-      { href: '/usuarios',      label: 'Usuários',      icon: Users2,   perfis: ['admin'] },
+      { href: '/usuarios',      label: 'Usuários',      icon: Users2,    perfis: ['admin'] },
       { href: '/empresas',      label: 'Empresas',      icon: Building2, perfis: ['admin'] },
     ],
   },

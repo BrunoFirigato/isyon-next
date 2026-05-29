@@ -20,6 +20,7 @@ import {
   Package,
   Calendar,
   Megaphone,
+  Plug,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -67,6 +68,12 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { href: '/financeiro', label: 'Financeiro', icon: Wallet,    perfis: ['admin', 'gestor', 'financeiro'] },
       { href: '/relatorios', label: 'Relatórios', icon: BarChart3, perfis: ['admin', 'gestor', 'financeiro'] },
+    ],
+  },
+  {
+    label: 'Integrações',
+    items: [
+      { href: '/integracoes', label: 'Integrações', icon: Plug, perfis: ['admin'] },
     ],
   },
   {

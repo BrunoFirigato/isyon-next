@@ -21,7 +21,6 @@ export default async function ConfiguracoesPage() {
     .select(`
       id, nome, plano, status, criado_em,
       segmentos, whatsapp_template, email_template_assunto, email_template_corpo,
-      evolution_url, evolution_key, evolution_instance,
       razao_social, nome_fantasia, cnpj,
       inscricao_estadual, inscricao_municipal, regime_tributario, crt, cnae,
       cep, rua, numero, complemento, bairro, cidade, estado,
