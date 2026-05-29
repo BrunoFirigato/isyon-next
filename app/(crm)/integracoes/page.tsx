@@ -18,7 +18,7 @@ export default async function IntegracoesPage() {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, evolution_url, evolution_key, evolution_instance')
+    .select('id, evolution_url, evolution_key, evolution_instance, whatsapp_template, email_template_assunto, email_template_corpo')
     .eq('id', usuario.tenant_id)
     .maybeSingle()
 
@@ -42,6 +42,9 @@ export default async function IntegracoesPage() {
         key:      (tenant?.evolution_key      as string | null) ?? null,
         instance: (tenant?.evolution_instance as string | null) ?? null,
       }}
+      waTemplate={      (tenant?.whatsapp_template        as string | null) ?? null}
+      emailAssunto={    (tenant?.email_template_assunto   as string | null) ?? null}
+      emailCorpo={      (tenant?.email_template_corpo     as string | null) ?? null}
       emailConfigurado={emailConfigurado}
     />
   )

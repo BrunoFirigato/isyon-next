@@ -2,13 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X, MessageCircle, Info, Mail, BarChart2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X, Mail, MessageCircle, BarChart2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { type Segmento } from '@/app/(crm)/_components/SegmentosContext'
 import { fetchCnpj, maskCnpj } from '@/lib/cnpj'
-
-const DEFAULT_WA_TEMPLATE = 'Olá {nome}, tudo bem? Gostaria de entrar em contato para conhecer melhor suas necessidades.'
 
 interface Tenant {
   id: string
@@ -16,9 +14,6 @@ interface Tenant {
   plano: string | null
   status: string | null
   criado_em: string
-  whatsapp_template: string | null
-  email_template_assunto: string | null
-  email_template_corpo: string | null
   // Dados da empresa
   razao_social: string | null
   nome_fantasia: string | null
@@ -221,39 +216,6 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
     router.refresh()
   }
 
-  // ─── WhatsApp Template ──────────────────────────────────────────────────
-  const [waTemplate, setWaTemplate] = useState(tenant.whatsapp_template ?? DEFAULT_WA_TEMPLATE)
-  const [savingWa, setSavingWa] = useState(false)
-
-  async function salvarWaTemplate() {
-    setSavingWa(true)
-    const supabase = createClient()
-    await supabase.from('tenants').update({ whatsapp_template: waTemplate.trim() || DEFAULT_WA_TEMPLATE }).eq('id', tenant.id)
-    setSavingWa(false)
-    toast('Template WhatsApp salvo!')
-    router.refresh()
-  }
-
-  // ─── Email Template ──────────────────────────────────────────────────────
-  const DEFAULT_EMAIL_ASSUNTO = 'Olá {nome}, seguem informações conforme nosso contato.'
-  const DEFAULT_EMAIL_CORPO   = 'Olá {nome},\n\nFico à disposição para qualquer dúvida.\n\nAtenciosamente.'
-
-  const [emailAssunto, setEmailAssunto] = useState(tenant.email_template_assunto ?? DEFAULT_EMAIL_ASSUNTO)
-  const [emailCorpo,   setEmailCorpo]   = useState(tenant.email_template_corpo   ?? DEFAULT_EMAIL_CORPO)
-  const [savingEmail,  setSavingEmail]  = useState(false)
-
-  async function salvarEmailTemplate() {
-    setSavingEmail(true)
-    const supabase = createClient()
-    await supabase.from('tenants').update({
-      email_template_assunto: emailAssunto.trim() || DEFAULT_EMAIL_ASSUNTO,
-      email_template_corpo:   emailCorpo.trim()   || DEFAULT_EMAIL_CORPO,
-    }).eq('id', tenant.id)
-    setSavingEmail(false)
-    toast('Template de e-mail salvo!')
-    router.refresh()
-  }
-
   // ─── Segmentos ───────────────────────────────────────────────────────────
   const [segmentos, setSegmentos] = useState<Segmento[]>(segmentosIniciais)
   const [novoLabel, setNovoLabel] = useState('')
@@ -315,10 +277,9 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
   }
 
   const TABS = [
-    { key: 'empresa',      label: 'Empresa',      icon: Building2 },
-    { key: 'segmentos',    label: 'Segmentos',    icon: Tag },
-    { key: 'comunicacao',  label: 'Comunicação',  icon: MessageCircle },
-    { key: 'comercial',    label: 'Comercial',    icon: BarChart2 },
+    { key: 'empresa',   label: 'Empresa',   icon: Building2 },
+    { key: 'segmentos', label: 'Segmentos', icon: Tag },
+    { key: 'comercial', label: 'Comercial', icon: BarChart2 },
   ] as const
   type TabKey = typeof TABS[number]['key']
   const [tab, setTab] = useState<TabKey>('empresa')
@@ -641,78 +602,6 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                 <Save size={14} />
                 {savingSegs ? 'Salvando...' : 'Salvar segmentos'}
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* ─── Comunicação ───────────────────────────────────────────────── */}
-        {tab === 'comunicacao' && (
-          <div className="space-y-5">
-            {/* WhatsApp */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                <MessageCircle size={16} className="text-gray-400 dark:text-gray-500" />
-                <div>
-                  <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Template de WhatsApp</h2>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Mensagem enviada ao iniciar contato com um lead</p>
-                </div>
-              </div>
-              <div className="p-5 space-y-3">
-                <textarea
-                  value={waTemplate} onChange={(e) => setWaTemplate(e.target.value)}
-                  rows={4}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
-                />
-                <div className="flex items-start gap-1.5 text-xs text-gray-400 dark:text-gray-500">
-                  <Info size={13} className="mt-0.5 shrink-0" />
-                  <span>
-                    Use <code className="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-1 rounded">{'{nome}'}</code> e{' '}
-                    <code className="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-1 rounded">{'{empresa}'}</code> como variáveis — substituídas automaticamente pelos dados do lead.
-                  </span>
-                </div>
-                <button onClick={salvarWaTemplate} disabled={savingWa}
-                  className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-                  <Save size={14} />
-                  {savingWa ? 'Salvando...' : 'Salvar template'}
-                </button>
-              </div>
-            </div>
-
-            {/* E-mail */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                <Mail size={16} className="text-gray-400 dark:text-gray-500" />
-                <div>
-                  <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Template de E-mail</h2>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Mensagem pré-preenchida ao iniciar contato por e-mail com um lead</p>
-                </div>
-              </div>
-              <div className="p-5 space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Assunto</label>
-                  <input type="text" value={emailAssunto} onChange={(e) => setEmailAssunto(e.target.value)}
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Corpo</label>
-                  <textarea value={emailCorpo} onChange={(e) => setEmailCorpo(e.target.value)} rows={6}
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-700 dark:text-gray-100"
-                  />
-                </div>
-                <div className="flex items-start gap-1.5 text-xs text-gray-400 dark:text-gray-500">
-                  <Info size={13} className="mt-0.5 shrink-0" />
-                  <span>
-                    Use <code className="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-1 rounded">{'{nome}'}</code> e{' '}
-                    <code className="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-1 rounded">{'{empresa}'}</code> como variáveis — substituídas automaticamente pelos dados do lead.
-                  </span>
-                </div>
-                <button onClick={salvarEmailTemplate} disabled={savingEmail}
-                  className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-                  <Save size={14} />
-                  {savingEmail ? 'Salvando...' : 'Salvar template'}
-                </button>
-              </div>
             </div>
           </div>
         )}

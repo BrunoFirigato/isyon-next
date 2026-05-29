@@ -20,7 +20,7 @@ export default async function ConfiguracoesPage() {
     .from('tenants')
     .select(`
       id, nome, plano, status, criado_em,
-      segmentos, whatsapp_template, email_template_assunto, email_template_corpo,
+      segmentos,
       razao_social, nome_fantasia, cnpj,
       inscricao_estadual, inscricao_municipal, regime_tributario, crt, cnae,
       cep, rua, numero, complemento, bairro, cidade, estado,
