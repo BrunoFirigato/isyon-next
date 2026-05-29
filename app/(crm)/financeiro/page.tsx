@@ -41,7 +41,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
       .order('data', { ascending: false }),
     supabase
       .from('faturas')
-      .select('id, numero, status, valor, cliente_id, pedido_id, obs, criado_em')
+      .select('id, numero, status, valor, cliente_id, pedido_id, empresa_id, obs, criado_em')
       .order('criado_em', { ascending: false }),
     supabase
       .from('comissoes')

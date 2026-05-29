@@ -14,6 +14,7 @@ export interface Proposta {
   obs: string | null
   cliente_id: string | null
   vendedor_id: string | null
+  empresa_id: string | null
   validade: string | null
   segmento: string | null
   itens: ItemProposta[] | null

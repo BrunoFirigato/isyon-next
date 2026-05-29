@@ -11,7 +11,7 @@ export default async function PropostasPage({ searchParams }: Props) {
 
   let query = supabase
     .from('propostas')
-    .select('id, titulo, status, valor, numero, obs, cliente_id, vendedor_id, validade, itens, segmento, criado_em')
+    .select('id, titulo, status, valor, numero, obs, cliente_id, vendedor_id, empresa_id, validade, itens, segmento, criado_em')
     .order('criado_em', { ascending: false })
 
   if (status && status !== 'todos') {

@@ -14,6 +14,7 @@ export interface Pedido {
   cliente_id: string | null
   vendedor_id: string | null
   proposta_id: string | null
+  empresa_id: string | null
   segmento: string | null
   itens: ItemPedido[] | null
   criado_em: string

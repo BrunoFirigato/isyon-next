@@ -277,12 +277,12 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
   }
 
   const TABS = [
-    { key: 'empresa',   label: 'Empresa',   icon: Building2 },
+    { key: 'conta',     label: 'Conta',     icon: Building2 },
     { key: 'segmentos', label: 'Segmentos', icon: Tag },
     { key: 'comercial', label: 'Comercial', icon: BarChart2 },
   ] as const
   type TabKey = typeof TABS[number]['key']
-  const [tab, setTab] = useState<TabKey>('empresa')
+  const [tab, setTab] = useState<TabKey>('conta')
 
   return (
     <>
@@ -315,7 +315,7 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
       <div className="max-w-2xl">
 
         {/* ─── Empresa ───────────────────────────────────────────────────── */}
-        {tab === 'empresa' && (
+        {tab === 'conta' && (
           <form onSubmit={salvarEmpresa} className="space-y-5">
 
             {/* Identificação */}

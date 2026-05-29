@@ -135,7 +135,7 @@ export default function EmpresaFormModal({ empresa, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            {isEditing ? 'Editar empresa' : 'Nova empresa'}
+            {isEditing ? 'Editar filial' : 'Nova filial'}
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400">
             <X size={18} />
@@ -265,7 +265,7 @@ export default function EmpresaFormModal({ empresa, onClose }: Props) {
             </button>
             <button type="submit" disabled={saving}
               className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition-colors">
-              {saving ? 'Salvando...' : isEditing ? 'Salvar' : 'Criar empresa'}
+              {saving ? 'Salvando...' : isEditing ? 'Salvar' : 'Criar filial'}
             </button>
           </div>
         </form>

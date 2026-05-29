@@ -26,6 +26,7 @@ export default function PropostaFormModal({ proposta, onClose }: Props) {
 
   const [titulo, setTitulo] = useState(proposta?.titulo ?? '')
   const [clienteId, setClienteId] = useState(proposta?.cliente_id ?? '')
+  const [empresaId, setEmpresaId] = useState(proposta?.empresa_id ?? '')
   const [validade, setValidade] = useState(proposta?.validade?.slice(0, 10) ?? '')
   const [segmento, setSegmento] = useState(proposta?.segmento ?? '')
   const [status, setStatus] = useState(proposta?.status ?? 'rascunho')
@@ -35,16 +36,23 @@ export default function PropostaFormModal({ proposta, onClose }: Props) {
   )
 
   const [clientes, setClientes] = useState<ClienteRef[]>([])
+  const [filiais,  setFiliais]  = useState<{ id: string; nome: string; sigla: string }[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     const supabase = createClient()
-    supabase
-      .from('clientes')
-      .select('id, nome, empresa')
-      .order('nome')
-      .then(({ data }) => { if (data) setClientes(data) })
+    Promise.all([
+      supabase.from('clientes').select('id, nome, empresa').order('nome'),
+      supabase.from('empresas').select('id, nome, sigla').order('nome'),
+    ]).then(([{ data: cls }, { data: emps }]) => {
+      if (cls)  setClientes(cls)
+      if (emps) {
+        setFiliais(emps)
+        // Auto-seleciona se só houver uma filial e não estiver editando
+        if (emps.length === 1 && !proposta?.empresa_id) setEmpresaId(emps[0].id)
+      }
+    })
   }, [])
 
   function setItem(id: string, field: keyof ItemProposta, value: string | number) {
@@ -76,12 +84,13 @@ export default function PropostaFormModal({ proposta, onClose }: Props) {
     const itensLimpos = itens.map(({ id: _id, ...rest }) => rest)
 
     const payload = {
-      titulo: titulo.trim(),
-      cliente_id: clienteId || null,
-      validade: validade || null,
-      segmento: segmento || null,
+      titulo:     titulo.trim(),
+      cliente_id: clienteId  || null,
+      empresa_id: empresaId  || null,
+      validade:   validade   || null,
+      segmento:   segmento   || null,
       status,
-      obs: obs.trim() || null,
+      obs:   obs.trim() || null,
       itens: itensLimpos,
       valor: total,
     }
@@ -146,6 +155,18 @@ export default function PropostaFormModal({ proposta, onClose }: Props) {
                   ))}
                 </select>
               </div>
+
+              {filiais.length > 0 && (
+                <div>
+                  <label className={labelCls}>Filial emissora</label>
+                  <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)} className={selectCls}>
+                    <option value="">Selecione...</option>
+                    {filiais.map((f) => (
+                      <option key={f.id} value={f.id}>{f.nome} ({f.sigla})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className={labelCls}>Validade</label>

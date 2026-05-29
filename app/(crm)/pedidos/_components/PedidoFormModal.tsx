@@ -25,6 +25,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
   const isEditing = !!pedido
 
   const [clienteId, setClienteId] = useState(pedido?.cliente_id ?? '')
+  const [empresaId, setEmpresaId] = useState(pedido?.empresa_id ?? '')
   const [segmento, setSegmento] = useState(pedido?.segmento ?? '')
   const [status, setStatus] = useState(pedido?.status ?? 'aguardando')
   const [obs, setObs] = useState(pedido?.obs ?? '')
@@ -33,16 +34,22 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
   )
 
   const [clientes, setClientes] = useState<ClienteRef[]>([])
+  const [filiais,  setFiliais]  = useState<{ id: string; nome: string; sigla: string }[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     const supabase = createClient()
-    supabase
-      .from('clientes')
-      .select('id, nome, empresa')
-      .order('nome')
-      .then(({ data }) => { if (data) setClientes(data) })
+    Promise.all([
+      supabase.from('clientes').select('id, nome, empresa').order('nome'),
+      supabase.from('empresas').select('id, nome, sigla').order('nome'),
+    ]).then(([{ data: cls }, { data: emps }]) => {
+      if (cls)  setClientes(cls)
+      if (emps) {
+        setFiliais(emps)
+        if (emps.length === 1 && !pedido?.empresa_id) setEmpresaId(emps[0].id)
+      }
+    })
   }, [])
 
   function setItem(id: string, field: keyof ItemPedido, value: string | number) {
@@ -70,10 +77,11 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
     const itensLimpos = itens.map(({ id: _id, ...rest }) => rest)
 
     const payload = {
-      cliente_id: clienteId || null,
-      segmento: segmento || null,
+      cliente_id: clienteId  || null,
+      empresa_id: empresaId  || null,
+      segmento:   segmento   || null,
       status,
-      obs: obs.trim() || null,
+      obs:   obs.trim() || null,
       itens: itensLimpos,
       valor: total,
     }
@@ -129,6 +137,18 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
                   ))}
                 </select>
               </div>
+
+              {filiais.length > 0 && (
+                <div>
+                  <label className={labelCls}>Filial emissora</label>
+                  <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)} className={selectCls}>
+                    <option value="">Selecione...</option>
+                    {filiais.map((f) => (
+                      <option key={f.id} value={f.id}>{f.nome} ({f.sigla})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {segmentos.length > 0 && (
                 <div>
