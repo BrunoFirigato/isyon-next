@@ -1,0 +1,44 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { generateTemplate } from '@/lib/excel/generate'
+import { parseExcel } from '@/lib/excel/parse'
+import { COLS_CLIENTES, EXEMPLO_CLIENTE } from '@/lib/excel/columns'
+
+const REQUIRED = ['nome']
+const MAX_ROWS  = 1000
+
+// GET — baixar template
+export async function GET() {
+  const buffer = await generateTemplate(COLS_CLIENTES, EXEMPLO_CLIENTE, 'Clientes')
+  return new Response(buffer, {
+    headers: {
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename="template_clientes.xlsx"',
+    },
+  })
+}
+
+// POST — fazer parse e retornar preview (não insere)
+export async function POST(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
+  const formData = await req.formData()
+  const file = formData.get('file') as File | null
+  if (!file) return NextResponse.json({ error: 'Arquivo não enviado' }, { status: 400 })
+
+  const arrayBuffer = await file.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+
+  const rows = await parseExcel(buffer, COLS_CLIENTES, REQUIRED)
+
+  if (rows.length > MAX_ROWS) {
+    return NextResponse.json({ error: `Máximo de ${MAX_ROWS} linhas por importação.` }, { status: 400 })
+  }
+
+  const validos   = rows.filter(r => r.valido).length
+  const invalidos = rows.filter(r => !r.valido).length
+
+  return NextResponse.json({ rows, total: rows.length, validos, invalidos })
+}

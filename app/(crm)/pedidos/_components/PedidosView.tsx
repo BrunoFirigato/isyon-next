@@ -6,6 +6,7 @@ import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
   CheckCircle, XCircle, PackageCheck,
 } from 'lucide-react'
+import ExportButton from '@/app/(crm)/_components/ExportButton'
 import { createClient } from '@/lib/supabase/client'
 import PedidoFormModal from './PedidoFormModal'
 import {
@@ -81,14 +82,17 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
             {totalFiltrado > 0 && ` · ${brl(totalFiltrado)}`}
           </p>
         </div>
-        <button
-          onClick={() => { setEditingPedido(null); setFormOpen(true) }}
-          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
-        >
-          <Plus size={16} />
-          <span className="hidden sm:inline">Novo pedido</span>
-          <span className="sm:hidden">Novo</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportButton href="/api/exportar/pedidos" label="Exportar" filename="pedidos.xlsx" />
+          <button
+            onClick={() => { setEditingPedido(null); setFormOpen(true) }}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+          >
+            <Plus size={16} />
+            <span className="hidden sm:inline">Novo pedido</span>
+            <span className="sm:hidden">Novo</span>
+          </button>
+        </div>
       </div>
 
       {/* Filtros */}

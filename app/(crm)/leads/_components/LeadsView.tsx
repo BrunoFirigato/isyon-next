@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid, Mail, MessageCircle, Send } from 'lucide-react'
+import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid, Mail, MessageCircle, Send, Upload } from 'lucide-react'
+import ExportButton from '@/app/(crm)/_components/ExportButton'
+import ImportModal  from '@/app/(crm)/_components/ImportModal'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LeadFormModal from './LeadFormModal'
@@ -35,7 +37,8 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
   const { tenantId, whatsappTemplate, emailTemplateAssunto, emailTemplateCorpo } = useTenantConfig()
 
   const [search, setSearch] = useState(currentQ)
-  const [formOpen, setFormOpen] = useState(false)
+  const [formOpen,   setFormOpen]   = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [editingLead, setEditingLead] = useState<Lead | null>(null)
   const [convertingLead, setConvertingLead] = useState<Lead | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -157,14 +160,28 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
             {currentStatus !== 'todos' && ` · ${statusLabel(currentStatus)}`}
           </p>
         </div>
-        <button
-          onClick={() => { setEditingLead(null); setFormOpen(true) }}
-          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
-        >
-          <Plus size={16} />
-          <span className="hidden sm:inline">Novo lead</span>
-          <span className="sm:hidden">Novo</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportButton
+            href={`/api/exportar/leads?status=${currentStatus}`}
+            label="Exportar"
+            filename={`leads_${new Date().toISOString().slice(0,10)}.xlsx`}
+          />
+          <button
+            onClick={() => setImportOpen(true)}
+            className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors"
+          >
+            <Upload size={14} />
+            <span className="hidden sm:inline">Importar</span>
+          </button>
+          <button
+            onClick={() => { setEditingLead(null); setFormOpen(true) }}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+          >
+            <Plus size={16} />
+            <span className="hidden sm:inline">Novo lead</span>
+            <span className="sm:hidden">Novo</span>
+          </button>
+        </div>
       </div>
 
       {/* Filtros de status */}
@@ -508,6 +525,10 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
             </form>
           </div>
         </div>
+      )}
+
+      {importOpen && (
+        <ImportModal modulo="leads" onClose={() => setImportOpen(false)} />
       )}
     </>
   )

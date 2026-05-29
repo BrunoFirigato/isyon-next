@@ -2,10 +2,12 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, Trash2, MapPin, LayoutGrid } from 'lucide-react'
+import { Plus, Search, X, Pencil, Trash2, MapPin, LayoutGrid, Upload } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import ClienteFormModal from './ClienteFormModal'
+import ExportButton from '@/app/(crm)/_components/ExportButton'
+import ImportModal from '@/app/(crm)/_components/ImportModal'
 import {
   type Cliente, type VendedorRef, type ParceiroRef,
   STATUS_CLIENTE, TIPOS,
@@ -33,7 +35,8 @@ export default function ClientesView({ clientes, currentStatus, currentQ, curren
   const segmentos = useSegmentos()
 
   const [search, setSearch]               = useState(currentQ)
-  const [formOpen, setFormOpen]           = useState(false)
+  const [formOpen,   setFormOpen]   = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
   const [deletingId, setDeletingId]       = useState<string | null>(null)
   const [expandedId, setExpandedId]       = useState<string | null>(null)
@@ -96,14 +99,28 @@ export default function ClientesView({ clientes, currentStatus, currentQ, curren
             {currentStatus !== 'todos' && ` · ${statusLabel(currentStatus)}`}
           </p>
         </div>
-        <button
-          onClick={() => { setEditingCliente(null); setFormOpen(true) }}
-          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
-        >
-          <Plus size={16} />
-          <span className="hidden sm:inline">Novo cliente</span>
-          <span className="sm:hidden">Novo</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportButton
+            href={`/api/exportar/clientes?status=${currentStatus}`}
+            label="Exportar"
+            filename={`clientes_${new Date().toISOString().slice(0,10)}.xlsx`}
+          />
+          <button
+            onClick={() => setImportOpen(true)}
+            className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors"
+          >
+            <Upload size={14} />
+            <span className="hidden sm:inline">Importar</span>
+          </button>
+          <button
+            onClick={() => { setEditingCliente(null); setFormOpen(true) }}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+          >
+            <Plus size={16} />
+            <span className="hidden sm:inline">Novo cliente</span>
+            <span className="sm:hidden">Novo</span>
+          </button>
+        </div>
       </div>
 
       {/* Filtros por status */}
@@ -383,6 +400,13 @@ export default function ClientesView({ clientes, currentStatus, currentQ, curren
         <ClienteFormModal
           cliente={editingCliente ?? undefined}
           onClose={() => { setFormOpen(false); setEditingCliente(null) }}
+        />
+      )}
+
+      {importOpen && (
+        <ImportModal
+          modulo="clientes"
+          onClose={() => setImportOpen(false)}
         />
       )}
     </>
