@@ -581,7 +581,7 @@ export default function IntegracoesView({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
         <WhatsAppCard tenantId={tenantId} initial={evolution} initialTemplate={waTemplate} />
         <EmailCard
           tenantId={tenantId}
@@ -592,6 +592,7 @@ export default function IntegracoesView({
           initialCorpo={emailCorpo}
         />
         <NFeProviderCard
+          key="brasilnfe"
           tenantId={tenantId}
           nome="BrasilNFe"
           descricao="Emissão de NF-e via BrasilNFe. Configure o token do seu painel em brasilnfe.com.br."
@@ -601,6 +602,7 @@ export default function IntegracoesView({
           initialToken={tokenBrasilNFe}
         />
         <NFeProviderCard
+          key="focusnfe"
           tenantId={tenantId}
           nome="Focus NFe"
           descricao="Emissão de NF-e via Focus NFe. Configure o token do seu painel em focusnfe.com.br."
