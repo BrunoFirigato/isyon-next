@@ -20,6 +20,8 @@ interface Props {
   emailAssunto:     string | null
   emailCorpo:       string | null
   emailConfigurado: boolean
+  resendApiKey:     string | null
+  resendFromEmail:  string | null
   tokenBrasilNFe:   string | null
   tokenFocusNFe:    string | null
 }
@@ -238,22 +240,66 @@ function WhatsAppCard({
 // ── E-mail card ───────────────────────────────────────────────────────────────
 function EmailCard({
   tenantId,
-  configurado,
+  plataformaConfigurada,
+  initialApiKey,
+  initialFromEmail,
   initialAssunto,
   initialCorpo,
 }: {
-  tenantId:       string
-  configurado:    boolean
-  initialAssunto: string | null
-  initialCorpo:   string | null
+  tenantId:             string
+  plataformaConfigurada:boolean
+  initialApiKey:        string | null
+  initialFromEmail:     string | null
+  initialAssunto:       string | null
+  initialCorpo:         string | null
 }) {
   const router = useRouter()
   const toast  = useToast()
 
-  const [open,        setOpen]        = useState(false)
-  const [assunto,     setAssunto]     = useState(initialAssunto ?? DEFAULT_EMAIL_ASSUNTO)
-  const [corpo,       setCorpo]       = useState(initialCorpo   ?? DEFAULT_EMAIL_CORPO)
-  const [savingTpl,   setSavingTpl]   = useState(false)
+  const [open,       setOpen]       = useState(false)
+  const [apiKey,     setApiKey]     = useState(initialApiKey     ?? '')
+  const [fromEmail,  setFromEmail]  = useState(initialFromEmail  ?? '')
+  const [showKey,    setShowKey]    = useState(false)
+  const [savingConn, setSavingConn] = useState(false)
+  const [testing,    setTesting]    = useState(false)
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null)
+
+  const [assunto,    setAssunto]    = useState(initialAssunto ?? DEFAULT_EMAIL_ASSUNTO)
+  const [corpo,      setCorpo]      = useState(initialCorpo   ?? DEFAULT_EMAIL_CORPO)
+  const [savingTpl,  setSavingTpl]  = useState(false)
+
+  const isConfigured = !!initialApiKey
+
+  async function salvarConexao() {
+    setSavingConn(true)
+    const supabase = createClient()
+    const { error } = await supabase.from('tenants').update({
+      resend_api_key:    apiKey.trim()    || null,
+      resend_from_email: fromEmail.trim() || null,
+    }).eq('id', tenantId)
+    setSavingConn(false)
+    if (error) { toast('Erro ao salvar', 'error'); return }
+    toast('Configuração de e-mail salva!')
+    router.refresh()
+    setOpen(false)
+  }
+
+  async function testar() {
+    if (!apiKey.trim()) { setTestResult({ ok: false, msg: 'Informe a API key antes de testar.' }); return }
+    setTesting(true); setTestResult(null)
+    try {
+      const res  = await fetch('/api/email/test', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey }),
+      })
+      const data = await res.json()
+      setTestResult(data.ok
+        ? { ok: true,  msg: data.status ?? 'Conexão bem-sucedida ✓' }
+        : { ok: false, msg: data.error  ?? 'Falha na conexão' }
+      )
+    } catch { setTestResult({ ok: false, msg: 'Erro ao testar' }) }
+    setTesting(false)
+  }
 
   async function salvarTemplate() {
     setSavingTpl(true)
@@ -278,43 +324,97 @@ function EmailCard({
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Resend</p>
             </div>
           </div>
-          <Badge status={configurado ? 'connected' : 'disconnected'} />
+          <Badge status={isConfigured ? 'connected' : plataformaConfigurada ? 'connected' : 'disconnected'} />
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          Envio de e-mails transacionais e campanhas. Gerenciado pelo administrador da plataforma.
+
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          Envio de campanhas e e-mails de contato.
         </p>
-        {!configurado && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-lg px-3 py-2 mb-4">
-            Chave Resend não configurada. Contate o suporte para ativar o envio de e-mails.
+
+        {!isConfigured && (
+          <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg px-3 py-2 mb-3">
+            {plataformaConfigurada
+              ? 'Usando a chave padrão da plataforma. Configure sua própria chave para enviar pelo seu domínio.'
+              : 'Sem chave configurada. Configure abaixo ou contate o suporte.'}
           </p>
         )}
+
         <button
-          onClick={() => setOpen(o => !o)}
+          onClick={() => { setOpen(o => !o); setTestResult(null) }}
           className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
         >
           {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-          {open ? 'Fechar' : 'Configurar template'}
+          {open ? 'Fechar' : isConfigured ? 'Editar' : 'Configurar'}
         </button>
       </div>
 
       {open && (
-        <div className="border-t border-gray-100 dark:border-gray-700 px-5 py-4 space-y-3 bg-gray-50/50 dark:bg-gray-800/50">
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Template de mensagem</p>
-          <div>
-            <label className={labelCls}>Assunto</label>
-            <input type="text" value={assunto} onChange={e => setAssunto(e.target.value)} className={inputCls} />
+        <div className="border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+          {/* Seção conexão */}
+          <div className="px-5 py-4 space-y-3">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Conexão</p>
+            <div>
+              <label className={labelCls}>API Key do Resend</label>
+              <div className="relative">
+                <input type={showKey ? 'text' : 'password'} value={apiKey}
+                  onChange={e => setApiKey(e.target.value)}
+                  placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxx"
+                  className={inputCls + ' pr-10'} />
+                <button type="button" onClick={() => setShowKey(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                  {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className={labelCls}>E-mail remetente</label>
+              <input type="email" value={fromEmail} onChange={e => setFromEmail(e.target.value)}
+                placeholder="Isyon CRM <noreply@suaempresa.com.br>"
+                className={inputCls} />
+            </div>
+            {testResult && (
+              <div className={`flex items-start gap-2 text-xs px-3 py-2 rounded-lg border ${
+                testResult.ok
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800 text-green-700 dark:text-green-400'
+                  : 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800 text-red-600 dark:text-red-400'
+              }`}>
+                {testResult.ok ? <CheckCircle2 size={13} className="mt-0.5 shrink-0" /> : <AlertCircle size={13} className="mt-0.5 shrink-0" />}
+                {testResult.msg}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button onClick={testar} disabled={testing}
+                className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-60 text-sm font-medium px-3 py-2 rounded-lg transition-colors">
+                {testing ? <Loader2 size={14} className="animate-spin" /> : <Wifi size={14} />}
+                {testing ? 'Testando...' : 'Testar'}
+              </button>
+              <button onClick={salvarConexao} disabled={savingConn}
+                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors">
+                <Save size={14} />
+                {savingConn ? 'Salvando...' : 'Salvar conexão'}
+              </button>
+            </div>
           </div>
-          <div>
-            <label className={labelCls}>Corpo</label>
-            <textarea value={corpo} onChange={e => setCorpo(e.target.value)} rows={6}
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-700 dark:text-gray-100" />
+
+          {/* Seção template */}
+          <div className="px-5 py-4 space-y-3 border-t border-gray-100 dark:border-gray-700">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Template de mensagem</p>
+            <div>
+              <label className={labelCls}>Assunto</label>
+              <input type="text" value={assunto} onChange={e => setAssunto(e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Corpo</label>
+              <textarea value={corpo} onChange={e => setCorpo(e.target.value)} rows={5}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <VarsHint />
+            <button onClick={salvarTemplate} disabled={savingTpl}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors">
+              <Save size={14} />
+              {savingTpl ? 'Salvando...' : 'Salvar template'}
+            </button>
           </div>
-          <VarsHint />
-          <button onClick={salvarTemplate} disabled={savingTpl}
-            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors">
-            <Save size={14} />
-            {savingTpl ? 'Salvando...' : 'Salvar template'}
-          </button>
         </div>
       )}
     </Card>
@@ -469,7 +569,8 @@ function NFeProviderCard({
 // ── View principal ────────────────────────────────────────────────────────────
 export default function IntegracoesView({
   tenantId, evolution, waTemplate, emailAssunto, emailCorpo,
-  emailConfigurado, tokenBrasilNFe, tokenFocusNFe,
+  emailConfigurado, resendApiKey, resendFromEmail,
+  tokenBrasilNFe, tokenFocusNFe,
 }: Props) {
   return (
     <>
@@ -482,7 +583,14 @@ export default function IntegracoesView({
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <WhatsAppCard tenantId={tenantId} initial={evolution} initialTemplate={waTemplate} />
-        <EmailCard tenantId={tenantId} configurado={emailConfigurado} initialAssunto={emailAssunto} initialCorpo={emailCorpo} />
+        <EmailCard
+          tenantId={tenantId}
+          plataformaConfigurada={emailConfigurado}
+          initialApiKey={resendApiKey}
+          initialFromEmail={resendFromEmail}
+          initialAssunto={emailAssunto}
+          initialCorpo={emailCorpo}
+        />
         <NFeProviderCard
           tenantId={tenantId}
           nome="BrasilNFe"

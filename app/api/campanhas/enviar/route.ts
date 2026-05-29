@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
     if (campanha.tipo === 'email') {
       let resendClient: Awaited<ReturnType<typeof createResend>> | null = null
       try {
-        resendClient = await createResend()
+        resendClient = await createResend(tenantId)
       } catch {
         await admin.from('campanhas').update({ status: 'rascunho' }).eq('id', campanhaId)
         return NextResponse.json({ error: 'E-mail não configurado. Configure a chave Resend nas configurações.' }, { status: 400 })

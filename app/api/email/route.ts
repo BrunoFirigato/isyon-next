@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   let resend: Awaited<ReturnType<typeof createResend>>
   try {
-    resend = await createResend()
+    resend = await createResend(caller?.tenantId)
   } catch {
     return NextResponse.json(
       { error: 'email_not_configured', message: 'Integração de e-mail não configurada.' },

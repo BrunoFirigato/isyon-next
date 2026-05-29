@@ -4,12 +4,33 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const DEFAULT_FROM = 'Isyon CRM <onboarding@resend.dev>'
 
 /**
- * Lê a configuração de e-mail do banco (sistema_config).
- * Fallback para variáveis de ambiente se não houver registro.
+ * Lê a configuração de e-mail com prioridade:
+ * 1. Chave do tenant (tenants.resend_api_key)
+ * 2. Global (sistema_config)
+ * 3. Variável de ambiente
+ *
  * Lança 'email_not_configured' se nenhuma chave for encontrada.
  */
-export async function getEmailConfig(): Promise<{ apiKey: string; fromEmail: string }> {
+export async function getEmailConfig(tenantId?: string): Promise<{ apiKey: string; fromEmail: string }> {
   const admin = createAdminClient()
+
+  // 1. Chave específica do tenant
+  if (tenantId) {
+    const { data: tenant } = await admin
+      .from('tenants')
+      .select('resend_api_key, resend_from_email')
+      .eq('id', tenantId)
+      .maybeSingle()
+
+    if (tenant?.resend_api_key) {
+      return {
+        apiKey:    tenant.resend_api_key,
+        fromEmail: tenant.resend_from_email ?? DEFAULT_FROM,
+      }
+    }
+  }
+
+  // 2. Chave global (sistema_config — configurada pelo superadmin)
   const { data } = await admin
     .from('sistema_config')
     .select('chave, valor')
@@ -21,7 +42,7 @@ export async function getEmailConfig(): Promise<{ apiKey: string; fromEmail: str
       .map((r) => [r.chave, r.valor as string])
   )
 
-  const apiKey = map['resend_api_key'] ?? process.env.RESEND_API_KEY ?? ''
+  const apiKey    = map['resend_api_key']    ?? process.env.RESEND_API_KEY    ?? ''
   const fromEmail = map['resend_from_email'] ?? process.env.RESEND_FROM_EMAIL ?? DEFAULT_FROM
 
   if (!apiKey) throw new Error('email_not_configured')
@@ -29,8 +50,8 @@ export async function getEmailConfig(): Promise<{ apiKey: string; fromEmail: str
   return { apiKey, fromEmail }
 }
 
-/** Cria uma instância do Resend com a config do banco. */
-export async function createResend(): Promise<{ resend: Resend; fromEmail: string }> {
-  const { apiKey, fromEmail } = await getEmailConfig()
+/** Cria uma instância do Resend com a config do tenant (ou plataforma como fallback). */
+export async function createResend(tenantId?: string): Promise<{ resend: Resend; fromEmail: string }> {
+  const { apiKey, fromEmail } = await getEmailConfig(tenantId)
   return { resend: new Resend(apiKey), fromEmail }
 }

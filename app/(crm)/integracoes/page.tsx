@@ -18,7 +18,7 @@ export default async function IntegracoesPage() {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, evolution_url, evolution_key, evolution_instance, whatsapp_template, email_template_assunto, email_template_corpo, token_brasilnfe, token_focusnfe')
+    .select('id, evolution_url, evolution_key, evolution_instance, whatsapp_template, email_template_assunto, email_template_corpo, token_brasilnfe, token_focusnfe, resend_api_key, resend_from_email')
     .eq('id', usuario.tenant_id)
     .maybeSingle()
 
@@ -46,8 +46,10 @@ export default async function IntegracoesPage() {
       emailAssunto={    (tenant?.email_template_assunto   as string | null) ?? null}
       emailCorpo={      (tenant?.email_template_corpo     as string | null) ?? null}
       emailConfigurado={emailConfigurado}
-      tokenBrasilNFe={(tenant?.token_brasilnfe as string | null) ?? null}
-      tokenFocusNFe={ (tenant?.token_focusnfe  as string | null) ?? null}
+      resendApiKey={   (tenant?.resend_api_key   as string | null) ?? null}
+      resendFromEmail={(tenant?.resend_from_email as string | null) ?? null}
+      tokenBrasilNFe={ (tenant?.token_brasilnfe  as string | null) ?? null}
+      tokenFocusNFe={  (tenant?.token_focusnfe   as string | null) ?? null}
     />
   )
 }
