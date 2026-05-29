@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Loader2 } from 'lucide-react'
+import { X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { fetchCnpj, maskCnpj } from '@/lib/cnpj'
 import type { Empresa } from './types'
 
 interface Props {
@@ -25,30 +26,30 @@ const ESTADOS_BR = [
   'RJ','RN','RS','RO','RR','SC','SP','SE','TO',
 ]
 
-function maskCnpj(v: string) {
-  return v.replace(/\D/g, '').slice(0, 14)
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2')
+function maskCep(v: string) {
+  return v.replace(/\D/g,'').slice(0,8).replace(/^(\d{5})(\d)/,'$1-$2')
 }
 
-function maskCep(v: string) {
-  return v.replace(/\D/g, '').slice(0, 8).replace(/^(\d{5})(\d)/, '$1-$2')
-}
+type TabKey = 'geral' | 'endereco' | 'fiscal'
 
 export default function EmpresaFormModal({ empresa, onClose }: Props) {
-  const router    = useRouter()
-  const toast     = useToast()
-  const tenantId  = useTenantId()
+  const router   = useRouter()
+  const toast    = useToast()
+  const tenantId = useTenantId()
   const isEditing = !!empresa
 
+  const [tab, setTab] = useState<TabKey>('geral')
+
   const [form, setForm] = useState({
+    // Geral
     nome:               empresa?.nome               ?? '',
     sigla:              empresa?.sigla              ?? '',
     cnpj:               empresa?.cnpj               ?? '',
+    razao_social:       empresa?.razao_social       ?? '',
     telefone:           empresa?.telefone           ?? '',
     email:              empresa?.email              ?? '',
+    cor:                empresa?.cor                ?? '#1a56a0',
+    // Endereço
     cep:                empresa?.cep                ?? '',
     rua:                empresa?.rua                ?? '',
     numero:             empresa?.numero             ?? '',
@@ -56,60 +57,108 @@ export default function EmpresaFormModal({ empresa, onClose }: Props) {
     bairro:             empresa?.bairro             ?? '',
     cidade:             empresa?.cidade             ?? '',
     estado:             empresa?.estado             ?? '',
+    // Fiscal & NF-e
     inscricao_estadual: empresa?.inscricao_estadual ?? '',
-    cor:                empresa?.cor                ?? '#1a56a0',
+    inscricao_municipal:empresa?.inscricao_municipal?? '',
+    regime_tributario:  empresa?.regime_tributario  ?? '',
+    crt:                empresa?.crt                ?? '',
+    cnae:               empresa?.cnae               ?? '',
+    token_brasilnfe:    empresa?.token_brasilnfe    ?? '',
+    ambiente_nfe:       empresa?.ambiente_nfe       ?? '',
+    aliq_pis:           empresa?.aliq_pis != null   ? String(empresa.aliq_pis)    : '',
+    aliq_cofins:        empresa?.aliq_cofins != null ? String(empresa.aliq_cofins) : '',
   })
 
-  const [saving,      setSaving]      = useState(false)
-  const [buscandoCep, setBuscandoCep] = useState(false)
-  const [error,       setError]       = useState('')
+  const [saving,       setSaving]       = useState(false)
+  const [buscandoCep,  setBuscandoCep]  = useState(false)
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false)
+  const [cnpjStatus,   setCnpjStatus]   = useState<'success' | 'notfound' | null>(null)
+  const [error,        setError]        = useState('')
 
   function set(field: keyof typeof form, value: string) {
     setForm(f => ({ ...f, [field]: value }))
   }
 
+  // ── Lookup CNPJ na Receita Federal ────────────────────────────────────────
+  async function handleCnpjChange(raw: string) {
+    const masked = maskCnpj(raw)
+    set('cnpj', masked)
+    setCnpjStatus(null)
+    const digits = masked.replace(/\D/g,'')
+    if (digits.length !== 14) return
+    setBuscandoCnpj(true)
+    const data = await fetchCnpj(digits)
+    setBuscandoCnpj(false)
+    if (!data) { setCnpjStatus('notfound'); return }
+    setForm(prev => ({
+      ...prev,
+      razao_social:  data.razao_social   ?? prev.razao_social,
+      rua:           data.logradouro     ?? prev.rua,
+      numero:        data.numero         ?? prev.numero,
+      complemento:   data.complemento   ?? prev.complemento,
+      bairro:        data.bairro         ?? prev.bairro,
+      cidade:        data.municipio      ?? prev.cidade,
+      estado:        data.uf             ?? prev.estado,
+      cep:           data.cep ? maskCep(data.cep) : prev.cep,
+      telefone:      data.ddd_telefone_1 ?? prev.telefone,
+      email:         data.email          ?? prev.email,
+    }))
+    setCnpjStatus('success')
+  }
+
+  // ── Lookup CEP no ViaCEP ──────────────────────────────────────────────────
   async function buscarCep(cep: string) {
-    const digits = cep.replace(/\D/g, '')
+    const digits = cep.replace(/\D/g,'')
     if (digits.length !== 8) return
     setBuscandoCep(true)
     try {
       const res  = await fetch(`https://viacep.com.br/ws/${digits}/json/`)
       const data = await res.json()
       if (!data.erro) {
-        setForm(f => ({
-          ...f,
-          rua:    data.logradouro ?? f.rua,
-          bairro: data.bairro     ?? f.bairro,
-          cidade: data.localidade ?? f.cidade,
-          estado: data.uf         ?? f.estado,
+        setForm(prev => ({
+          ...prev,
+          rua:    data.logradouro ?? prev.rua,
+          bairro: data.bairro     ?? prev.bairro,
+          cidade: data.localidade ?? prev.cidade,
+          estado: data.uf         ?? prev.estado,
         }))
       }
     } catch { /* ignore */ }
     setBuscandoCep(false)
   }
 
+  // ── Submit ────────────────────────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.nome.trim()) { setError('Nome é obrigatório'); return }
-    if (!form.sigla.trim()) { setError('Sigla é obrigatória'); return }
+    if (!form.nome.trim())  { setError('Nome é obrigatório');  setTab('geral'); return }
+    if (!form.sigla.trim()) { setError('Sigla é obrigatória'); setTab('geral'); return }
     setSaving(true); setError('')
 
     const supabase = createClient()
     const payload = {
-      nome:               form.nome.trim().toUpperCase() === form.nome.trim() ? form.nome.trim() : form.nome.trim(),
-      sigla:              form.sigla.trim().toUpperCase(),
-      cnpj:               form.cnpj.replace(/\D/g, '') || null,
-      telefone:           form.telefone.trim() || null,
-      email:              form.email.trim()    || null,
-      cep:                form.cep.replace(/\D/g, '') || null,
-      rua:                form.rua.trim()          || null,
-      numero:             form.numero.trim()        || null,
-      complemento:        form.complemento.trim()   || null,
-      bairro:             form.bairro.trim()         || null,
-      cidade:             form.cidade.trim()         || null,
-      estado:             form.estado                || null,
-      inscricao_estadual: form.inscricao_estadual.trim() || null,
-      cor:                form.cor,
+      nome:                form.nome.trim(),
+      sigla:               form.sigla.trim().toUpperCase(),
+      cnpj:                form.cnpj.replace(/\D/g,'')     || null,
+      razao_social:        form.razao_social.trim()        || null,
+      telefone:            form.telefone.trim()            || null,
+      email:               form.email.trim()               || null,
+      cep:                 form.cep.replace(/\D/g,'')      || null,
+      rua:                 form.rua.trim()                 || null,
+      numero:              form.numero.trim()              || null,
+      complemento:         form.complemento.trim()         || null,
+      bairro:              form.bairro.trim()              || null,
+      cidade:              form.cidade.trim()              || null,
+      estado:              form.estado                     || null,
+      inscricao_estadual:  form.inscricao_estadual.trim()  || null,
+      inscricao_municipal: form.inscricao_municipal.trim() || null,
+      regime_tributario:   form.regime_tributario          || null,
+      crt:                 form.crt                        || null,
+      cnae:                form.cnae.trim()                || null,
+      token_brasilnfe:     form.token_brasilnfe.trim()     || null,
+      ambiente_nfe:        form.ambiente_nfe               || null,
+      aliq_pis:            form.aliq_pis    ? parseFloat(form.aliq_pis)    : null,
+      aliq_cofins:         form.aliq_cofins ? parseFloat(form.aliq_cofins) : null,
+      cor:                 form.cor,
     }
 
     const { error: err } = isEditing
@@ -119,18 +168,25 @@ export default function EmpresaFormModal({ empresa, onClose }: Props) {
     setSaving(false)
     if (err) { setError(err.message); return }
 
-    toast(isEditing ? 'Empresa atualizada!' : 'Empresa criada!')
+    toast(isEditing ? 'Filial atualizada!' : 'Filial criada!')
     router.refresh()
     onClose()
   }
 
-  const inputCls  = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
-  const labelCls  = 'block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5'
+  // ── Estilos ───────────────────────────────────────────────────────────────
+  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const labelCls = 'block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5'
+
+  const TABS: { key: TabKey; label: string }[] = [
+    { key: 'geral',    label: 'Geral' },
+    { key: 'endereco', label: 'Endereço' },
+    { key: 'fiscal',   label: 'Fiscal & NF-e' },
+  ]
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-lg max-h-[92vh] flex flex-col shadow-xl">
+      <div className="relative bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-lg max-h-[94vh] flex flex-col shadow-xl">
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
@@ -142,114 +198,244 @@ export default function EmpresaFormModal({ empresa, onClose }: Props) {
           </button>
         </div>
 
+        {/* Tabs */}
+        <div className="flex border-b border-gray-100 dark:border-gray-700 shrink-0 px-1">
+          {TABS.map(t => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
+                tab === t.key
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              {t.label}
+              {tab === t.key && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+
         <form onSubmit={handleSubmit} className="overflow-y-auto flex-1">
           <div className="p-5 space-y-4">
 
-            {/* Nome + Sigla */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2">
-                <label className={labelCls}>Nome <span className="text-red-500">*</span></label>
-                <input value={form.nome} onChange={e => set('nome', e.target.value)}
-                  required placeholder="Razão social ou nome fantasia" className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Sigla <span className="text-red-500">*</span></label>
-                <input value={form.sigla} onChange={e => set('sigla', e.target.value.toUpperCase())}
-                  required maxLength={10} placeholder="EX" className={inputCls} />
-              </div>
-            </div>
+            {/* ── Aba Geral ─────────────────────────────────────────────── */}
+            {tab === 'geral' && (
+              <>
+                {/* Nome + Sigla */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className={labelCls}>Nome <span className="text-red-500">*</span></label>
+                    <input value={form.nome} onChange={e => set('nome', e.target.value)}
+                      required placeholder="Nome fantasia ou razão social curta" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Sigla <span className="text-red-500">*</span></label>
+                    <input value={form.sigla} onChange={e => set('sigla', e.target.value.toUpperCase())}
+                      required maxLength={10} placeholder="EX" className={inputCls} />
+                  </div>
+                </div>
 
-            {/* CNPJ + IE */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>CNPJ</label>
-                <input value={form.cnpj} onChange={e => set('cnpj', maskCnpj(e.target.value))}
-                  placeholder="00.000.000/0000-00" className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Inscrição Estadual</label>
-                <input value={form.inscricao_estadual} onChange={e => set('inscricao_estadual', e.target.value)}
-                  placeholder="000.000.000.000" className={inputCls} />
-              </div>
-            </div>
+                {/* CNPJ com lookup Receita Federal */}
+                <div>
+                  <label className={labelCls}>CNPJ</label>
+                  <div className="relative">
+                    <input value={form.cnpj} onChange={e => handleCnpjChange(e.target.value)}
+                      placeholder="00.000.000/0000-00" maxLength={18}
+                      className={inputCls + ' pr-9 font-mono'} />
+                    {buscandoCnpj && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" />}
+                    {!buscandoCnpj && cnpjStatus === 'success'  && <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
+                    {!buscandoCnpj && cnpjStatus === 'notfound' && <AlertCircle  size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500" />}
+                  </div>
+                  {buscandoCnpj                    && <p className="text-xs text-blue-500 mt-1">Buscando na Receita Federal...</p>}
+                  {!buscandoCnpj && cnpjStatus === 'success'  && <p className="text-xs text-green-600 mt-1">Dados preenchidos automaticamente ✓</p>}
+                  {!buscandoCnpj && cnpjStatus === 'notfound' && <p className="text-xs text-amber-600 mt-1">CNPJ não encontrado</p>}
+                </div>
 
-            {/* Telefone + Email */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>Telefone</label>
-                <input value={form.telefone} onChange={e => set('telefone', e.target.value)}
-                  placeholder="(00) 00000-0000" className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>E-mail</label>
-                <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
-                  placeholder="contato@empresa.com.br" className={inputCls} />
-              </div>
-            </div>
+                {/* Razão Social */}
+                <div>
+                  <label className={labelCls}>Razão Social</label>
+                  <input value={form.razao_social} onChange={e => set('razao_social', e.target.value)}
+                    placeholder="Razão social completa (para NF-e)" className={inputCls} />
+                </div>
 
-            {/* CEP */}
-            <div>
-              <label className={labelCls}>CEP</label>
-              <div className="flex gap-2">
-                <input value={form.cep}
-                  onChange={e => set('cep', maskCep(e.target.value))}
-                  onBlur={e => buscarCep(e.target.value)}
-                  placeholder="00000-000" className={inputCls} />
-                {buscandoCep && <Loader2 size={16} className="self-center text-gray-400 animate-spin shrink-0" />}
-              </div>
-            </div>
+                {/* Telefone + E-mail */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>Telefone</label>
+                    <input value={form.telefone} onChange={e => set('telefone', e.target.value)}
+                      placeholder="(00) 00000-0000" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>E-mail</label>
+                    <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
+                      placeholder="contato@filial.com.br" className={inputCls} />
+                  </div>
+                </div>
 
-            {/* Rua + Número */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2">
-                <label className={labelCls}>Logradouro</label>
-                <input value={form.rua} onChange={e => set('rua', e.target.value)}
-                  placeholder="Rua, Av..." className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Número</label>
-                <input value={form.numero} onChange={e => set('numero', e.target.value)}
-                  placeholder="100" className={inputCls} />
-              </div>
-            </div>
+                {/* Cor de identificação */}
+                <div>
+                  <label className={labelCls}>Cor de identificação</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {CORES.map(c => (
+                      <button key={c} type="button" onClick={() => set('cor', c)}
+                        className={`w-7 h-7 rounded-full transition-all ${form.cor === c ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : 'hover:scale-105'}`}
+                        style={{ backgroundColor: c }} />
+                    ))}
+                    <input type="color" value={form.cor} onChange={e => set('cor', e.target.value)}
+                      className="w-7 h-7 rounded-full cursor-pointer border-0 p-0 overflow-hidden" title="Cor personalizada" />
+                  </div>
+                </div>
+              </>
+            )}
 
-            {/* Bairro + Cidade + Estado */}
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className={labelCls}>Bairro</label>
-                <input value={form.bairro} onChange={e => set('bairro', e.target.value)}
-                  placeholder="Bairro" className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Cidade</label>
-                <input value={form.cidade} onChange={e => set('cidade', e.target.value)}
-                  placeholder="Cidade" className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Estado</label>
-                <select value={form.estado} onChange={e => set('estado', e.target.value)}
-                  className={inputCls}>
-                  <option value="">UF</option>
-                  {ESTADOS_BR.map(uf => <option key={uf} value={uf}>{uf}</option>)}
-                </select>
-              </div>
-            </div>
+            {/* ── Aba Endereço ──────────────────────────────────────────── */}
+            {tab === 'endereco' && (
+              <>
+                {/* CEP com ViaCEP */}
+                <div>
+                  <label className={labelCls}>CEP</label>
+                  <div className="flex gap-2">
+                    <input value={form.cep}
+                      onChange={e => set('cep', maskCep(e.target.value))}
+                      onBlur={e => buscarCep(e.target.value)}
+                      placeholder="00000-000" className={inputCls} />
+                    {buscandoCep && <Loader2 size={16} className="self-center text-gray-400 animate-spin shrink-0" />}
+                  </div>
+                </div>
 
-            {/* Cor */}
-            <div>
-              <label className={labelCls}>Cor de identificação</label>
-              <div className="flex gap-2 flex-wrap">
-                {CORES.map(c => (
-                  <button key={c} type="button" onClick={() => set('cor', c)}
-                    className={`w-7 h-7 rounded-full transition-all ${form.cor === c ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : 'hover:scale-105'}`}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
-                <input type="color" value={form.cor} onChange={e => set('cor', e.target.value)}
-                  className="w-7 h-7 rounded-full cursor-pointer border-0 p-0 overflow-hidden"
-                  title="Cor personalizada" />
-              </div>
-            </div>
+                {/* Rua + Número */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className={labelCls}>Logradouro</label>
+                    <input value={form.rua} onChange={e => set('rua', e.target.value)}
+                      placeholder="Rua, Av..." className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Número</label>
+                    <input value={form.numero} onChange={e => set('numero', e.target.value)}
+                      placeholder="100" className={inputCls} />
+                  </div>
+                </div>
+
+                {/* Complemento + Bairro */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>Complemento</label>
+                    <input value={form.complemento} onChange={e => set('complemento', e.target.value)}
+                      placeholder="Sala, Galpão..." className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Bairro</label>
+                    <input value={form.bairro} onChange={e => set('bairro', e.target.value)}
+                      className={inputCls} />
+                  </div>
+                </div>
+
+                {/* Cidade + Estado */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className={labelCls}>Cidade</label>
+                    <input value={form.cidade} onChange={e => set('cidade', e.target.value)}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Estado</label>
+                    <select value={form.estado} onChange={e => set('estado', e.target.value)}
+                      className={inputCls}>
+                      <option value="">UF</option>
+                      {ESTADOS_BR.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── Aba Fiscal & NF-e ─────────────────────────────────────── */}
+            {tab === 'fiscal' && (
+              <>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Dados fiscais</p>
+
+                {/* IE + IM */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>Inscrição Estadual</label>
+                    <input value={form.inscricao_estadual} onChange={e => set('inscricao_estadual', e.target.value)}
+                      placeholder="000.000.000.000" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Inscrição Municipal</label>
+                    <input value={form.inscricao_municipal} onChange={e => set('inscricao_municipal', e.target.value)}
+                      placeholder="000000" className={inputCls} />
+                  </div>
+                </div>
+
+                {/* Regime + CRT */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className={labelCls}>Regime Tributário</label>
+                    <select value={form.regime_tributario} onChange={e => set('regime_tributario', e.target.value)} className={inputCls}>
+                      <option value="">Selecione...</option>
+                      <option value="mei">MEI</option>
+                      <option value="simples_nacional">Simples Nacional</option>
+                      <option value="lucro_presumido">Lucro Presumido</option>
+                      <option value="lucro_real">Lucro Real</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>CRT <span className="text-gray-400 font-normal">(NF-e)</span></label>
+                    <select value={form.crt} onChange={e => set('crt', e.target.value)} className={inputCls}>
+                      <option value="">—</option>
+                      <option value="1">1 — Simples Nacional</option>
+                      <option value="2">2 — Simples (excesso)</option>
+                      <option value="3">3 — Regime Normal</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* CNAE */}
+                <div>
+                  <label className={labelCls}>CNAE principal</label>
+                  <input value={form.cnae} onChange={e => set('cnae', e.target.value)}
+                    placeholder="Ex: 4679-6/99" className={inputCls} />
+                </div>
+
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider pt-2">Configuração NF-e</p>
+
+                {/* Token BrasilNFe + Ambiente */}
+                <div>
+                  <label className={labelCls}>Token BrasilNFe</label>
+                  <input type="password" value={form.token_brasilnfe} onChange={e => set('token_brasilnfe', e.target.value)}
+                    placeholder="Token de acesso à API BrasilNFe" className={inputCls} />
+                </div>
+
+                <div>
+                  <label className={labelCls}>Ambiente</label>
+                  <select value={form.ambiente_nfe} onChange={e => set('ambiente_nfe', e.target.value)} className={inputCls}>
+                    <option value="">Selecione...</option>
+                    <option value="homologacao">Homologação (testes)</option>
+                    <option value="producao">Produção</option>
+                  </select>
+                </div>
+
+                {/* Alíquotas PIS + COFINS */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>Alíquota PIS (%)</label>
+                    <input type="number" min="0" step="0.01" value={form.aliq_pis} onChange={e => set('aliq_pis', e.target.value)}
+                      placeholder="0,65" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Alíquota COFINS (%)</label>
+                    <input type="number" min="0" step="0.01" value={form.aliq_cofins} onChange={e => set('aliq_cofins', e.target.value)}
+                      placeholder="3,00" className={inputCls} />
+                  </div>
+                </div>
+              </>
+            )}
 
             {error && (
               <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2">

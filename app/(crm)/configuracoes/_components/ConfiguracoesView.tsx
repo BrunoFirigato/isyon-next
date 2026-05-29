@@ -6,7 +6,6 @@ import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X, Mai
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { type Segmento } from '@/app/(crm)/_components/SegmentosContext'
-import { fetchCnpj, maskCnpj } from '@/lib/cnpj'
 
 interface Tenant {
   id: string
@@ -14,25 +13,6 @@ interface Tenant {
   plano: string | null
   status: string | null
   criado_em: string
-  // Dados da empresa
-  razao_social: string | null
-  nome_fantasia: string | null
-  cnpj: string | null
-  inscricao_estadual: string | null
-  inscricao_municipal: string | null
-  regime_tributario: string | null
-  crt: string | null
-  cnae: string | null
-  cep: string | null
-  rua: string | null
-  numero: string | null
-  complemento: string | null
-  bairro: string | null
-  cidade: string | null
-  estado: string | null
-  telefone: string | null
-  email_empresa: string | null
-  website: string | null
 }
 
 interface ConfigUsuario {
@@ -69,123 +49,23 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
   const router = useRouter()
   const toast = useToast()
 
-  // ─── Empresa ────────────────────────────────────────────────────────────────
-  const [empresa, setEmpresa] = useState({
-    nome:               tenant.nome              ?? '',
-    razao_social:       tenant.razao_social       ?? '',
-    nome_fantasia:      tenant.nome_fantasia      ?? '',
-    cnpj:               tenant.cnpj               ?? '',
-    inscricao_estadual: tenant.inscricao_estadual ?? '',
-    inscricao_municipal:tenant.inscricao_municipal?? '',
-    regime_tributario:  tenant.regime_tributario  ?? '',
-    crt:                tenant.crt                ?? '',
-    cnae:               tenant.cnae               ?? '',
-    cep:                tenant.cep                ?? '',
-    rua:                tenant.rua                ?? '',
-    numero:             tenant.numero             ?? '',
-    complemento:        tenant.complemento        ?? '',
-    bairro:             tenant.bairro             ?? '',
-    cidade:             tenant.cidade             ?? '',
-    estado:             tenant.estado             ?? '',
-    telefone:           tenant.telefone           ?? '',
-    email_empresa:      tenant.email_empresa      ?? '',
-    website:            tenant.website            ?? '',
-  })
-  const [savingEmpresa, setSavingEmpresa] = useState(false)
-  const [buscandoCep,   setBuscandoCep]   = useState(false)
-  const [buscandoCnpj,  setBuscandoCnpj]  = useState(false)
-  const [cnpjStatus,    setCnpjStatus]    = useState<'success' | 'notfound' | null>(null)
+  // ─── Conta ───────────────────────────────────────────────────────────────────
+  const [nomeConta,    setNomeConta]    = useState(tenant.nome ?? '')
+  const [savingConta,  setSavingConta]  = useState(false)
 
-  function setE(field: keyof typeof empresa, value: string) {
-    setEmpresa((prev) => ({ ...prev, [field]: value }))
-  }
-
-  async function handleCnpjChange(raw: string) {
-    const masked = maskCnpj(raw)
-    setE('cnpj', masked)
-    setCnpjStatus(null)
-    const digits = masked.replace(/\D/g, '')
-    if (digits.length !== 14) return
-    setBuscandoCnpj(true)
-    const data = await fetchCnpj(digits)
-    setBuscandoCnpj(false)
-    if (!data) { setCnpjStatus('notfound'); return }
-    setEmpresa((prev) => ({
-      ...prev,
-      razao_social:  data.razao_social  ?? prev.razao_social,
-      nome_fantasia: data.nome_fantasia ?? prev.nome_fantasia,
-      rua:           data.logradouro    ?? prev.rua,
-      numero:        data.numero        ?? prev.numero,
-      complemento:   data.complemento  ?? prev.complemento,
-      bairro:        data.bairro        ?? prev.bairro,
-      cidade:        data.municipio     ?? prev.cidade,
-      estado:        data.uf            ?? prev.estado,
-      cep:           data.cep ? maskCep(data.cep) : prev.cep,
-      telefone:      data.ddd_telefone_1 ?? prev.telefone,
-      email_empresa: data.email         ?? prev.email_empresa,
-    }))
-    setCnpjStatus('success')
-  }
-
-  function maskCep(v: string) {
-    return v.replace(/\D/g,'').slice(0,8).replace(/^(\d{5})(\d)/,'$1-$2')
-  }
-
-  async function buscarCep(cep: string) {
-    const digits = cep.replace(/\D/g,'')
-    if (digits.length !== 8) return
-    setBuscandoCep(true)
-    try {
-      const res  = await fetch(`https://viacep.com.br/ws/${digits}/json/`)
-      const data = await res.json()
-      if (!data.erro) {
-        setEmpresa((prev) => ({
-          ...prev,
-          rua:    data.logradouro ?? prev.rua,
-          bairro: data.bairro     ?? prev.bairro,
-          cidade: data.localidade ?? prev.cidade,
-          estado: data.uf         ?? prev.estado,
-        }))
-      }
-    } catch { /* silently ignore */ }
-    setBuscandoCep(false)
-  }
-
-  async function salvarEmpresa(e: React.FormEvent) {
+  async function salvarConta(e: React.FormEvent) {
     e.preventDefault()
-    setSavingEmpresa(true)
+    if (!nomeConta.trim()) return
+    setSavingConta(true)
     const supabase = createClient()
-    const { error, count } = await supabase.from('tenants').update({
-      nome:               empresa.nome.trim()               || tenant.nome,
-      razao_social:       empresa.razao_social.trim()       || null,
-      nome_fantasia:      empresa.nome_fantasia.trim()      || null,
-      cnpj:               empresa.cnpj.replace(/\D/g,'')   || null,
-      inscricao_estadual: empresa.inscricao_estadual.trim() || null,
-      inscricao_municipal:empresa.inscricao_municipal.trim()|| null,
-      regime_tributario:  empresa.regime_tributario         || null,
-      crt:                empresa.crt                       || null,
-      cnae:               empresa.cnae.trim()               || null,
-      cep:                empresa.cep.replace(/\D/g,'')     || null,
-      rua:                empresa.rua.trim()                || null,
-      numero:             empresa.numero.trim()             || null,
-      complemento:        empresa.complemento.trim()        || null,
-      bairro:             empresa.bairro.trim()             || null,
-      cidade:             empresa.cidade.trim()             || null,
-      estado:             empresa.estado.trim()             || null,
-      telefone:           empresa.telefone.trim()           || null,
-      email_empresa:      empresa.email_empresa.trim()      || null,
-      website:            empresa.website.trim()            || null,
-    }, { count: 'exact' }).eq('id', tenant.id)
-    setSavingEmpresa(false)
-    if (error) {
-      toast(`Erro ao salvar: ${error.message}`, 'error')
-      return
-    }
-    if (count === 0) {
-      toast('Sem permissão para atualizar. Verifique as políticas RLS da tabela tenants.', 'error')
-      return
-    }
-    toast('Dados da empresa salvos!')
+    const { error, count } = await supabase
+      .from('tenants')
+      .update({ nome: nomeConta.trim() }, { count: 'exact' })
+      .eq('id', tenant.id)
+    setSavingConta(false)
+    if (error) { toast(`Erro ao salvar: ${error.message}`, 'error'); return }
+    if (count === 0) { toast('Sem permissão para atualizar.', 'error'); return }
+    toast('Nome da conta atualizado!')
     router.refresh()
   }
 
@@ -314,219 +194,59 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
 
       <div className="max-w-2xl">
 
-        {/* ─── Empresa ───────────────────────────────────────────────────── */}
+        {/* ─── Conta ─────────────────────────────────────────────────────── */}
         {tab === 'conta' && (
-          <form onSubmit={salvarEmpresa} className="space-y-5">
-
-            {/* Identificação */}
+          <form onSubmit={salvarConta} className="space-y-5">
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
                 <Building2 size={15} className="text-gray-400 dark:text-gray-500" />
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Identificação</h3>
-              </div>
-              <div className="p-5 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Razão Social</label>
-                    <input value={empresa.razao_social} onChange={(e) => setE('razao_social', e.target.value)}
-                      placeholder="Ex: ACME Produtos Industriais Ltda"
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Nome Fantasia</label>
-                    <input value={empresa.nome_fantasia} onChange={(e) => setE('nome_fantasia', e.target.value)}
-                      placeholder="Ex: ACME"
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-                  </div>
-                </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">CNPJ</label>
-                  <div className="relative">
-                    <input value={maskCnpj(empresa.cnpj)} onChange={(e) => handleCnpjChange(e.target.value)}
-                      placeholder="00.000.000/0000-00" maxLength={18}
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-                    {buscandoCnpj && (
-                      <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" />
-                    )}
-                    {!buscandoCnpj && cnpjStatus === 'success' && (
-                      <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
-                    )}
-                    {!buscandoCnpj && cnpjStatus === 'notfound' && (
-                      <AlertCircle size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500" />
-                    )}
-                  </div>
-                  {buscandoCnpj && (
-                    <p className="text-xs text-blue-500 mt-1">Buscando na Receita Federal...</p>
-                  )}
-                  {!buscandoCnpj && cnpjStatus === 'success' && (
-                    <p className="text-xs text-green-600 mt-1">Dados preenchidos automaticamente ✓</p>
-                  )}
-                  {!buscandoCnpj && cnpjStatus === 'notfound' && (
-                    <p className="text-xs text-amber-600 mt-1">CNPJ não encontrado na Receita Federal</p>
-                  )}
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dados da conta</h3>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Nome exibido no seletor de login</p>
                 </div>
-              </div>
-            </div>
-
-            {/* Dados tributários */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
-                <Tag size={15} className="text-gray-400 dark:text-gray-500" />
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dados tributários</h3>
               </div>
               <div className="p-5 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Inscrição Estadual (IE)</label>
-                    <input value={empresa.inscricao_estadual} onChange={(e) => setE('inscricao_estadual', e.target.value)}
-                      placeholder="000.000.000.000"
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Inscrição Municipal (IM)</label>
-                    <input value={empresa.inscricao_municipal} onChange={(e) => setE('inscricao_municipal', e.target.value)}
-                      placeholder="000000"
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Regime Tributário</label>
-                    <select value={empresa.regime_tributario} onChange={(e) => setE('regime_tributario', e.target.value)}
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100">
-                      <option value="">Selecione...</option>
-                      <option value="mei">MEI</option>
-                      <option value="simples_nacional">Simples Nacional</option>
-                      <option value="lucro_presumido">Lucro Presumido</option>
-                      <option value="lucro_real">Lucro Real</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">CRT <span className="text-gray-400 dark:text-gray-500 font-normal">(NF-e)</span></label>
-                    <select value={empresa.crt} onChange={(e) => setE('crt', e.target.value)}
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100">
-                      <option value="">—</option>
-                      <option value="1">1 — Simples Nacional</option>
-                      <option value="2">2 — Simples Nacional (excesso)</option>
-                      <option value="3">3 — Regime Normal</option>
-                    </select>
-                  </div>
-                </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">CNAE principal</label>
-                  <input value={empresa.cnae} onChange={(e) => setE('cnae', e.target.value)}
-                    placeholder="Ex: 4679-6/99"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                    Nome da conta <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    value={nomeConta}
+                    onChange={e => setNomeConta(e.target.value)}
+                    required
+                    placeholder="Nome que aparece no login"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
+                  />
                 </div>
+
+                {/* Info read-only */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Plano</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{tenant.plano ?? '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</p>
+                    <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${
+                      tenant.status === 'ativo'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                    }`}>
+                      {tenant.status ?? '—'}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg px-3 py-2">
+                  Dados fiscais (CNPJ, regime tributário, NF-e) são configurados por filial em <strong>Administração → Filiais</strong>.
+                </p>
               </div>
             </div>
 
-            {/* Endereço */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
-                <Mail size={15} className="text-gray-400 dark:text-gray-500" />
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Endereço</h3>
-              </div>
-              <div className="p-5 space-y-4">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">CEP</label>
-                    <div className="relative">
-                      <input
-                        value={maskCep(empresa.cep)}
-                        onChange={(e) => {
-                          const v = maskCep(e.target.value)
-                          setE('cep', v)
-                          if (v.replace(/\D/g,'').length === 8) buscarCep(v)
-                        }}
-                        placeholder="00000-000" maxLength={9}
-                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
-                      />
-                      {buscandoCep && (
-                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-blue-500">buscando...</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="col-span-2 sm:col-span-3">
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Logradouro / Rua</label>
-                    <input value={empresa.rua} onChange={(e) => setE('rua', e.target.value)}
-                      placeholder="Rua, Avenida, Travessa..."
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Número</label>
-                    <input value={empresa.numero} onChange={(e) => setE('numero', e.target.value)}
-                      placeholder="000"
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-                  </div>
-                  <div className="col-span-1 sm:col-span-3">
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Complemento</label>
-                    <input value={empresa.complemento} onChange={(e) => setE('complemento', e.target.value)}
-                      placeholder="Sala, Andar, Galpão..."
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Bairro</label>
-                    <input value={empresa.bairro} onChange={(e) => setE('bairro', e.target.value)}
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Cidade</label>
-                    <input value={empresa.cidade} onChange={(e) => setE('cidade', e.target.value)}
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">UF</label>
-                    <select value={empresa.estado} onChange={(e) => setE('estado', e.target.value)}
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100">
-                      <option value="">—</option>
-                      {['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(uf => (
-                        <option key={uf} value={uf}>{uf}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Contato */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
-                <MessageCircle size={15} className="text-gray-400 dark:text-gray-500" />
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Contato</h3>
-              </div>
-              <div className="p-5 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Telefone</label>
-                    <input value={empresa.telefone} onChange={(e) => setE('telefone', e.target.value)}
-                      placeholder="(00) 00000-0000"
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">E-mail</label>
-                    <input type="email" value={empresa.email_empresa} onChange={(e) => setE('email_empresa', e.target.value)}
-                      placeholder="contato@empresa.com.br"
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Website</label>
-                    <input value={empresa.website} onChange={(e) => setE('website', e.target.value)}
-                      placeholder="https://empresa.com.br"
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <button type="submit" disabled={savingEmpresa}
+            <button type="submit" disabled={savingConta}
               className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors">
               <Save size={14} />
-              {savingEmpresa ? 'Salvando...' : 'Salvar dados da empresa'}
+              {savingConta ? 'Salvando...' : 'Salvar'}
             </button>
           </form>
         )}

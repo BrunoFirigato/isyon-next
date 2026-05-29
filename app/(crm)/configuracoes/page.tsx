@@ -18,14 +18,7 @@ export default async function ConfiguracoesPage() {
 
   const { data: tenantData } = await supabase
     .from('tenants')
-    .select(`
-      id, nome, plano, status, criado_em,
-      segmentos,
-      razao_social, nome_fantasia, cnpj,
-      inscricao_estadual, inscricao_municipal, regime_tributario, crt, cnae,
-      cep, rua, numero, complemento, bairro, cidade, estado,
-      telefone, email_empresa, website
-    `)
+    .select('id, nome, plano, status, criado_em, segmentos')
     .eq('id', tenantId)
     .maybeSingle()
 
