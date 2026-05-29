@@ -63,7 +63,6 @@ export default function EmpresaFormModal({ empresa, onClose }: Props) {
     regime_tributario:  empresa?.regime_tributario  ?? '',
     crt:                empresa?.crt                ?? '',
     cnae:               empresa?.cnae               ?? '',
-    token_brasilnfe:    empresa?.token_brasilnfe    ?? '',
     ambiente_nfe:       empresa?.ambiente_nfe       ?? '',
     aliq_pis:           empresa?.aliq_pis != null   ? String(empresa.aliq_pis)    : '',
     aliq_cofins:        empresa?.aliq_cofins != null ? String(empresa.aliq_cofins) : '',
@@ -154,7 +153,6 @@ export default function EmpresaFormModal({ empresa, onClose }: Props) {
       regime_tributario:   form.regime_tributario          || null,
       crt:                 form.crt                        || null,
       cnae:                form.cnae.trim()                || null,
-      token_brasilnfe:     form.token_brasilnfe.trim()     || null,
       ambiente_nfe:        form.ambiente_nfe               || null,
       aliq_pis:            form.aliq_pis    ? parseFloat(form.aliq_pis)    : null,
       aliq_cofins:         form.aliq_cofins ? parseFloat(form.aliq_cofins) : null,
@@ -405,20 +403,16 @@ export default function EmpresaFormModal({ empresa, onClose }: Props) {
 
                 <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider pt-2">Configuração NF-e</p>
 
-                {/* Token BrasilNFe + Ambiente */}
                 <div>
-                  <label className={labelCls}>Token BrasilNFe</label>
-                  <input type="password" value={form.token_brasilnfe} onChange={e => set('token_brasilnfe', e.target.value)}
-                    placeholder="Token de acesso à API BrasilNFe" className={inputCls} />
-                </div>
-
-                <div>
-                  <label className={labelCls}>Ambiente</label>
+                  <label className={labelCls}>Ambiente desta filial</label>
                   <select value={form.ambiente_nfe} onChange={e => set('ambiente_nfe', e.target.value)} className={inputCls}>
                     <option value="">Selecione...</option>
                     <option value="homologacao">Homologação (testes)</option>
                     <option value="producao">Produção</option>
                   </select>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    O token do emissor é configurado em <strong>Integrações</strong>.
+                  </p>
                 </div>
 
                 {/* Alíquotas PIS + COFINS */}

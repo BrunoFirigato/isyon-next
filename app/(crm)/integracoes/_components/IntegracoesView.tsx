@@ -15,11 +15,13 @@ const DEFAULT_EMAIL_CORPO    = 'Olá {nome},\n\nFico à disposição para qualqu
 
 interface Props {
   tenantId: string
-  evolution:      { url: string | null; key: string | null; instance: string | null }
-  waTemplate:     string | null
-  emailAssunto:   string | null
-  emailCorpo:     string | null
+  evolution:        { url: string | null; key: string | null; instance: string | null }
+  waTemplate:       string | null
+  emailAssunto:     string | null
+  emailCorpo:       string | null
   emailConfigurado: boolean
+  tokenBrasilNFe:   string | null
+  tokenFocusNFe:    string | null
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -319,31 +321,156 @@ function EmailCard({
   )
 }
 
-// ── NF-e card ─────────────────────────────────────────────────────────────────
-function NFeCard() {
+// ── Card genérico NF-e (BrasilNFe / Focus NFe) ────────────────────────────────
+function NFeProviderCard({
+  tenantId,
+  nome,
+  descricao,
+  bgColor,
+  tokenField,
+  testEndpoint,
+  initialToken,
+}: {
+  tenantId:     string
+  nome:         string
+  descricao:    string
+  bgColor:      string
+  tokenField:   'token_brasilnfe' | 'token_focusnfe'
+  testEndpoint: string
+  initialToken: string | null
+}) {
+  const router = useRouter()
+  const toast  = useToast()
+
+  const [open,       setOpen]       = useState(false)
+  const [token,      setToken]      = useState(initialToken ?? '')
+  const [showToken,  setShowToken]  = useState(false)
+  const [saving,     setSaving]     = useState(false)
+  const [testing,    setTesting]    = useState(false)
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null)
+
+  const isConfigured = !!initialToken
+
+  async function salvar() {
+    setSaving(true)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('tenants')
+      .update({ [tokenField]: token.trim() || null })
+      .eq('id', tenantId)
+    setSaving(false)
+    if (error) { toast('Erro ao salvar', 'error'); return }
+    toast(`${nome} salvo!`)
+    router.refresh()
+    setOpen(false)
+  }
+
+  async function testar() {
+    if (!token.trim()) { setTestResult({ ok: false, msg: 'Informe o token antes de testar.' }); return }
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const res  = await fetch(testEndpoint, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ token }),
+      })
+      const data = await res.json()
+      setTestResult(data.ok
+        ? { ok: true,  msg: data.status ?? 'Conexão bem-sucedida ✓' }
+        : { ok: false, msg: data.error  ?? 'Falha na conexão' }
+      )
+    } catch {
+      setTestResult({ ok: false, msg: 'Erro ao testar conexão' })
+    }
+    setTesting(false)
+  }
+
   return (
-    <Card>
+    <Card expanded={open}>
+      {/* Cabeçalho */}
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-xl shrink-0">📄</div>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 ${bgColor}`}>
+              📄
+            </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">NF-e</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">BrasilNFe</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{nome}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Emissor NF-e</p>
             </div>
           </div>
-          <Badge status="soon" />
+          <Badge status={isConfigured ? 'connected' : 'disconnected'} />
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Emissão de Notas Fiscais Eletrônicas diretamente pelo CRM. Em desenvolvimento.
-        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{descricao}</p>
+        <button
+          onClick={() => { setOpen(o => !o); setTestResult(null) }}
+          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+        >
+          {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+          {open ? 'Fechar' : isConfigured ? 'Editar token' : 'Configurar'}
+        </button>
       </div>
+
+      {/* Formulário expandido */}
+      {open && (
+        <div className="border-t border-gray-100 dark:border-gray-700 px-5 py-4 space-y-3 bg-gray-50/50 dark:bg-gray-800/50">
+          <div>
+            <label className={labelCls}>Token da API</label>
+            <div className="relative">
+              <input
+                type={showToken ? 'text' : 'password'}
+                value={token}
+                onChange={e => setToken(e.target.value)}
+                placeholder="Cole o token gerado no painel do provedor"
+                className={inputCls + ' pr-10'}
+              />
+              <button
+                type="button"
+                onClick={() => setShowToken(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                {showToken ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
+          </div>
+
+          {testResult && (
+            <div className={`flex items-start gap-2 text-xs px-3 py-2 rounded-lg border ${
+              testResult.ok
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800 text-green-700 dark:text-green-400'
+                : 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800 text-red-600 dark:text-red-400'
+            }`}>
+              {testResult.ok
+                ? <CheckCircle2 size={13} className="mt-0.5 shrink-0" />
+                : <AlertCircle  size={13} className="mt-0.5 shrink-0" />}
+              {testResult.msg}
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button onClick={testar} disabled={testing}
+              className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-60 text-sm font-medium px-3 py-2 rounded-lg transition-colors">
+              {testing ? <Loader2 size={14} className="animate-spin" /> : <Wifi size={14} />}
+              {testing ? 'Testando...' : 'Testar conexão'}
+            </button>
+            <button onClick={salvar} disabled={saving}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors">
+              <Save size={14} />
+              {saving ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
+        </div>
+      )}
     </Card>
   )
 }
 
 // ── View principal ────────────────────────────────────────────────────────────
-export default function IntegracoesView({ tenantId, evolution, waTemplate, emailAssunto, emailCorpo, emailConfigurado }: Props) {
+export default function IntegracoesView({
+  tenantId, evolution, waTemplate, emailAssunto, emailCorpo,
+  emailConfigurado, tokenBrasilNFe, tokenFocusNFe,
+}: Props) {
   return (
     <>
       <div className="mb-6">
@@ -356,7 +483,24 @@ export default function IntegracoesView({ tenantId, evolution, waTemplate, email
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <WhatsAppCard tenantId={tenantId} initial={evolution} initialTemplate={waTemplate} />
         <EmailCard tenantId={tenantId} configurado={emailConfigurado} initialAssunto={emailAssunto} initialCorpo={emailCorpo} />
-        <NFeCard />
+        <NFeProviderCard
+          tenantId={tenantId}
+          nome="BrasilNFe"
+          descricao="Emissão de NF-e via BrasilNFe. Configure o token do seu painel em brasilnfe.com.br."
+          bgColor="bg-green-50 dark:bg-green-900/20"
+          tokenField="token_brasilnfe"
+          testEndpoint="/api/nfe/test/brasilnfe"
+          initialToken={tokenBrasilNFe}
+        />
+        <NFeProviderCard
+          tenantId={tenantId}
+          nome="Focus NFe"
+          descricao="Emissão de NF-e via Focus NFe. Configure o token do seu painel em focusnfe.com.br."
+          bgColor="bg-blue-50 dark:bg-blue-900/20"
+          tokenField="token_focusnfe"
+          testEndpoint="/api/nfe/test/focusnfe"
+          initialToken={tokenFocusNFe}
+        />
       </div>
     </>
   )
