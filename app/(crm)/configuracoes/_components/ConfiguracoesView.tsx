@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X, MessageCircle, Info, Mail, BarChart2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X, MessageCircle, Info, Mail, BarChart2, Loader2, CheckCircle2, AlertCircle, Wifi } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { type Segmento } from '@/app/(crm)/_components/SegmentosContext'
@@ -19,6 +19,9 @@ interface Tenant {
   whatsapp_template: string | null
   email_template_assunto: string | null
   email_template_corpo: string | null
+  evolution_url: string | null
+  evolution_key: string | null
+  evolution_instance: string | null
   // Dados da empresa
   razao_social: string | null
   nome_fantasia: string | null
@@ -252,6 +255,52 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
     setSavingEmail(false)
     toast('Template de e-mail salvo!')
     router.refresh()
+  }
+
+  // ─── Evolution API (WhatsApp) ────────────────────────────────────────────
+  const [evolUrl,      setEvolUrl]      = useState(tenant.evolution_url      ?? '')
+  const [evolKey,      setEvolKey]      = useState(tenant.evolution_key      ?? '')
+  const [evolInstance, setEvolInstance] = useState(tenant.evolution_instance ?? '')
+  const [savingEvol,   setSavingEvol]   = useState(false)
+  const [testingEvol,  setTestingEvol]  = useState(false)
+  const [evolTestMsg,  setEvolTestMsg]  = useState<{ ok: boolean; msg: string } | null>(null)
+
+  async function salvarEvolution() {
+    setSavingEvol(true)
+    const supabase = createClient()
+    const { error } = await supabase.from('tenants').update({
+      evolution_url:      evolUrl.trim()      || null,
+      evolution_key:      evolKey.trim()      || null,
+      evolution_instance: evolInstance.trim() || null,
+    }).eq('id', tenant.id)
+    setSavingEvol(false)
+    if (error) { toast('Erro ao salvar', 'error'); return }
+    toast('Configuração WhatsApp salva!')
+    router.refresh()
+  }
+
+  async function testarEvolution() {
+    if (!evolUrl || !evolKey || !evolInstance) {
+      setEvolTestMsg({ ok: false, msg: 'Preencha URL, chave e instância antes de testar.' })
+      return
+    }
+    setTestingEvol(true)
+    setEvolTestMsg(null)
+    try {
+      const res = await fetch('/api/whatsapp/test', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ url: evolUrl, key: evolKey, instance: evolInstance }),
+      })
+      const data = await res.json()
+      setEvolTestMsg(data.ok
+        ? { ok: true,  msg: `Conectado ✓ — status: ${data.status ?? 'online'}` }
+        : { ok: false, msg: data.error ?? 'Falha na conexão' }
+      )
+    } catch {
+      setEvolTestMsg({ ok: false, msg: 'Erro ao testar conexão' })
+    }
+    setTestingEvol(false)
   }
 
   // ─── Segmentos ───────────────────────────────────────────────────────────
@@ -675,6 +724,67 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                   <Save size={14} />
                   {savingWa ? 'Salvando...' : 'Salvar template'}
                 </button>
+              </div>
+            </div>
+
+            {/* Evolution API */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+                <Wifi size={16} className="text-gray-400 dark:text-gray-500" />
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Evolution API — WhatsApp</h2>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Necessário para envio de campanhas WhatsApp</p>
+                </div>
+              </div>
+              <div className="p-5 space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">URL da API</label>
+                  <input
+                    type="text" value={evolUrl} onChange={e => setEvolUrl(e.target.value)}
+                    placeholder="http://seu-servidor:8080"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">API Key</label>
+                  <input
+                    type="password" value={evolKey} onChange={e => setEvolKey(e.target.value)}
+                    placeholder="Chave de autenticação"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Nome da instância</label>
+                  <input
+                    type="text" value={evolInstance} onChange={e => setEvolInstance(e.target.value)}
+                    placeholder="ex: isyon-principal"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
+                  />
+                </div>
+
+                {evolTestMsg && (
+                  <div className={`flex items-start gap-2 text-xs px-3 py-2 rounded-lg border ${
+                    evolTestMsg.ok
+                      ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800 text-green-700 dark:text-green-400'
+                      : 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800 text-red-600 dark:text-red-400'
+                  }`}>
+                    {evolTestMsg.ok ? <CheckCircle2 size={13} className="mt-0.5 shrink-0" /> : <AlertCircle size={13} className="mt-0.5 shrink-0" />}
+                    {evolTestMsg.msg}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <button onClick={testarEvolution} disabled={testingEvol}
+                    className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-60 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                    {testingEvol ? <Loader2 size={14} className="animate-spin" /> : <Wifi size={14} />}
+                    {testingEvol ? 'Testando...' : 'Testar conexão'}
+                  </button>
+                  <button onClick={salvarEvolution} disabled={savingEvol}
+                    className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                    <Save size={14} />
+                    {savingEvol ? 'Salvando...' : 'Salvar'}
+                  </button>
+                </div>
               </div>
             </div>
 
