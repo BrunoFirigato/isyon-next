@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, TrendingUp, Loader2 } from 'lucide-react'
+import { X, TrendingUp, Loader2, Building2, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Lead } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
@@ -84,7 +84,11 @@ export default function ConvertModal({ lead, onClose }: Props) {
     e.preventDefault()
 
     // Validações obrigatórias
-    if (empresas.length > 0 && !empresaId) {
+    if (empresas.length === 0) {
+      setError('Cadastre uma filial antes de converter — ela emite as notas dos pedidos.')
+      return
+    }
+    if (!empresaId) {
       setError('Selecione a empresa (filial) responsável.')
       return
     }
@@ -209,6 +213,30 @@ export default function ConvertModal({ lead, onClose }: Props) {
               </div>
             )}
 
+            {/* Sem filial cadastrada: guia o usuário ao primeiro cadastro */}
+            {!loadingVendedor && empresas.length === 0 && (
+              <div className="rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/20 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+                    <Building2 size={17} className="text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Cadastre sua primeira filial</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                      A filial é quem emite as notas dos seus pedidos. Você precisa de pelo menos uma para abrir oportunidades.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => router.push('/empresas')}
+                      className="mt-3 inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors"
+                    >
+                      Cadastrar filial <ArrowRight size={13} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Valor + Etapa */}
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -279,8 +307,8 @@ export default function ConvertModal({ lead, onClose }: Props) {
               className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               Cancelar
             </button>
-            <button type="submit" disabled={saving}
-              className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition-colors">
+            <button type="submit" disabled={saving || (!loadingVendedor && empresas.length === 0)}
+              className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg text-sm transition-colors">
               {saving ? 'Convertendo...' : 'Converter'}
             </button>
           </div>
