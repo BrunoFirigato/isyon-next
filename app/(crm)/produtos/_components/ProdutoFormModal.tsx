@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Produto, UNIDADES, ORIGENS } from './types'
+import NcmSearch from './NcmSearch'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
@@ -214,16 +215,12 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
           <div>
             <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Dados fiscais</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div>
-                <label className={smallLabelCls}>NCM</label>
-                <input
-                  type="text"
-                  value={form.ncm}
-                  onChange={(e) => set('ncm', e.target.value)}
-                  placeholder="Ex: 84729021"
-                  className={smallInputCls}
-                />
-              </div>
+              <NcmSearch
+                value={form.ncm}
+                onChange={(codigo) => set('ncm', codigo)}
+                inputCls={smallInputCls}
+                labelCls={smallLabelCls}
+              />
               {!isServico && (
                 <div>
                   <label className={smallLabelCls}>CEST</label>
