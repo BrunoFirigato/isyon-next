@@ -19,6 +19,7 @@ import {
   X,
   BookOpen,
   Package,
+  Tag,
   Calendar,
   Megaphone,
   Plug,
@@ -57,6 +58,7 @@ const moreGroups: MoreGroup[] = [
     label: 'Cadastros',
     items: [
       { href: '/produtos',   label: 'Produtos',   icon: Package },
+      { href: '/tabelas-preco', label: 'Tab. preço', icon: Tag, perfis: ['admin', 'gestor'] },
       { href: '/vendedores', label: 'Vendedores', icon: UserCog,  perfis: ['admin', 'gestor'] },
       { href: '/parceiros',  label: 'Parc. Comerciais', icon: Users2 },
       { href: '/cadastros',  label: 'Outros',     icon: BookOpen, perfis: ['admin', 'gestor'] },
