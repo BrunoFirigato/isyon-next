@@ -9,11 +9,12 @@ import {
   brl, calcTotal, novoItem,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
-import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 
 interface ProdutoRef       { id: string; nome: string; preco: number | null; ncm: string | null; unidade: string | null; tipo: string | null }
 interface CondPagamentoRef { id: string; nome: string }
+interface VendedorRef      { id: string; nome: string }
 
 export interface PrefillProposta {
   titulo?:     string
@@ -32,7 +33,7 @@ interface Props {
 export default function PropostaFormModal({ proposta, prefill, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
-  const tenantId = useTenantId()
+  const { tenantId, perfil, divisaoCarteira } = useTenantConfig()
   const segmentos = useSegmentos()
   const isEditing = !!proposta
 
@@ -59,6 +60,7 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
   const [filiais,  setFiliais]  = useState<{ id: string; nome: string; sigla: string }[]>([])
   const [produtos, setProdutos] = useState<ProdutoRef[]>([])
   const [condPagamentos, setCondPagamentos] = useState<CondPagamentoRef[]>([])
+  const [vendedores, setVendedores] = useState<VendedorRef[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -66,17 +68,19 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
     const supabase = createClient()
 
     async function init() {
-      const [{ data: cls }, { data: emps }, { data: prods }, { data: conds }, { data: { user } }] = await Promise.all([
+      const [{ data: cls }, { data: emps }, { data: prods }, { data: conds }, { data: vends }, { data: { user } }] = await Promise.all([
         supabase.from('clientes').select('id, nome, empresa').order('nome'),
         supabase.from('empresas').select('id, nome, sigla').order('nome'),
         supabase.from('produtos').select('id, nome, preco, ncm, unidade, tipo').eq('ativo', true).order('nome'),
         supabase.from('cond_pagamentos').select('id, nome').eq('ativo', true).order('nome'),
+        supabase.from('vendedores').select('id, nome').eq('status', 'ativo').order('nome'),
         supabase.auth.getUser(),
       ])
 
       if (cls)   setClientes(cls)
       if (prods) setProdutos(prods)
       if (conds) setCondPagamentos(conds)
+      if (vends) setVendedores(vends)
       if (emps) {
         setFiliais(emps)
         if (emps.length === 1 && !proposta?.empresa_id && !prefill?.empresaId) setEmpresaId(emps[0].id)
@@ -93,6 +97,9 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
     init()
   }, [])
 
+  // Vendedor travado: herdado da oportunidade ou sob divisão de carteira (perfil vendedor)
+  const vendedorTravado = !!prefill?.vendedorId || (divisaoCarteira && perfil === 'vendedor')
+
   function setItem(id: string, field: keyof ItemProposta, value: string | number) {
     setItens((prev) =>
       prev.map((it) => {
@@ -104,7 +111,11 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
   }
 
   function removeItem(id: string) {
-    setItens((prev) => prev.filter((it) => it.id !== id))
+    setItens((prev) => {
+      const filtrado = prev.filter((it) => it.id !== id)
+      // Nunca deixa a tabela vazia — reseta para um item em branco
+      return filtrado.length ? filtrado : [novoItem()]
+    })
   }
 
   // Descrição com autocomplete: se o texto casar com um produto cadastrado,
@@ -285,6 +296,27 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
                   ))}
                 </select>
               </div>
+
+              <div>
+                <label className={`${labelCls} flex items-center gap-1`}>
+                  Vendedor
+                  {vendedorTravado && <Lock size={11} className="text-gray-400" />}
+                </label>
+                <select
+                  value={vendedorId}
+                  onChange={(e) => setVendedorId(e.target.value)}
+                  disabled={vendedorTravado}
+                  className={`${selectCls} ${vendedorTravado ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">Selecione...</option>
+                  {vendedores.map((v) => (
+                    <option key={v.id} value={v.id}>{v.nome}</option>
+                  ))}
+                </select>
+                {prefill?.vendedorId && (
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Herdado da oportunidade.</p>
+                )}
+              </div>
             </div>
 
             {/* Itens */}
@@ -323,10 +355,10 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
 
                 <div className="divide-y divide-gray-100 dark:divide-gray-600">
                   {itens.map((item, idx) => (
-                    <div key={item.id}
-                      className="grid grid-cols-[1fr_36px] md:grid-cols-[1fr_80px_120px_100px_36px] gap-2 items-center px-3 py-2">
-                      {/* Descrição com autocomplete de produtos */}
-                      <div>
+                    <div key={item.id} className="px-3 py-2">
+                      {/* Linha principal — alinhada num único nível */}
+                      <div className="grid grid-cols-[1fr_auto] md:grid-cols-[1fr_80px_120px_100px_36px] gap-2 items-center">
+                        {/* Descrição com autocomplete de produtos */}
                         <input
                           type="text"
                           value={item.descricao}
@@ -335,49 +367,52 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
                           placeholder={`Buscar produto ou digitar item ${idx + 1}`}
                           className={`w-full ${itemInputCls}`}
                         />
-                        {item.produto_id && (
-                          <p className="flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400 mt-1">
-                            <Package size={10} />
-                            Produto vinculado{item.ncm ? ` · NCM ${item.ncm}` : ''}
-                          </p>
-                        )}
-                        {/* Mobile: qtd + valor */}
-                        <div className="flex gap-2 mt-1.5 md:hidden">
-                          <input type="number" min="1" value={item.quantidade}
-                            onChange={(e) => setItem(item.id, 'quantidade', Number(e.target.value))}
-                            className={`w-16 ${itemInputCls} text-center`} />
-                          <input type="number" min="0" step="0.01" value={item.valorUnitario || ''}
-                            onChange={(e) => setItem(item.id, 'valorUnitario', Number(e.target.value))}
-                            placeholder="R$ 0,00"
-                            className={`flex-1 ${itemInputCls}`} />
-                          <span className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                            {brl(item.quantidade * item.valorUnitario)}
-                          </span>
-                        </div>
+
+                        {/* Desktop: qtd */}
+                        <input type="number" min="1" value={item.quantidade}
+                          onChange={(e) => setItem(item.id, 'quantidade', Number(e.target.value))}
+                          className={`hidden md:block ${itemInputCls} text-center`} />
+
+                        {/* Desktop: valor unit */}
+                        <input type="number" min="0" step="0.01" value={item.valorUnitario || ''}
+                          onChange={(e) => setItem(item.id, 'valorUnitario', Number(e.target.value))}
+                          placeholder="0,00"
+                          className={`hidden md:block ${itemInputCls} text-right`} />
+
+                        {/* Desktop: total */}
+                        <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300 text-right pr-1">
+                          {brl(item.quantidade * item.valorUnitario)}
+                        </span>
+
+                        {/* Remover (sempre habilitado) */}
+                        <button type="button" onClick={() => removeItem(item.id)}
+                          title="Remover item"
+                          className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors">
+                          <Trash2 size={14} />
+                        </button>
                       </div>
 
-                      {/* Desktop: qtd */}
-                      <input type="number" min="1" value={item.quantidade}
-                        onChange={(e) => setItem(item.id, 'quantidade', Number(e.target.value))}
-                        className={`hidden md:block ${itemInputCls} text-center`} />
+                      {/* Mobile: qtd + valor + total */}
+                      <div className="flex gap-2 mt-2 md:hidden">
+                        <input type="number" min="1" value={item.quantidade}
+                          onChange={(e) => setItem(item.id, 'quantidade', Number(e.target.value))}
+                          className={`w-16 ${itemInputCls} text-center`} />
+                        <input type="number" min="0" step="0.01" value={item.valorUnitario || ''}
+                          onChange={(e) => setItem(item.id, 'valorUnitario', Number(e.target.value))}
+                          placeholder="R$ 0,00"
+                          className={`flex-1 ${itemInputCls}`} />
+                        <span className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                          {brl(item.quantidade * item.valorUnitario)}
+                        </span>
+                      </div>
 
-                      {/* Desktop: valor unit */}
-                      <input type="number" min="0" step="0.01" value={item.valorUnitario || ''}
-                        onChange={(e) => setItem(item.id, 'valorUnitario', Number(e.target.value))}
-                        placeholder="0,00"
-                        className={`hidden md:block ${itemInputCls} text-right`} />
-
-                      {/* Desktop: total */}
-                      <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300 text-right pr-1">
-                        {brl(item.quantidade * item.valorUnitario)}
-                      </span>
-
-                      {/* Remover */}
-                      <button type="button" onClick={() => removeItem(item.id)}
-                        disabled={itens.length === 1}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-gray-300 dark:text-gray-600 hover:text-red-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                        <Trash2 size={14} />
-                      </button>
+                      {/* Selo de vínculo — abaixo da linha, sem quebrar o alinhamento */}
+                      {item.produto_id && (
+                        <p className="flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400 mt-1.5">
+                          <Package size={10} />
+                          Produto vinculado{item.ncm ? ` · NCM ${item.ncm}` : ''}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
