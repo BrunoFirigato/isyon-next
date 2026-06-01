@@ -50,6 +50,13 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
     e.preventDefault()
     if (!form.nome.trim()) { setError('Nome é obrigatório'); return }
 
+    // Identificador fiscal obrigatório conforme o tipo
+    if (form.tipo === 'servico') {
+      if (!form.cod_servico.trim()) { setError('Serviço exige o Código de Serviço (LC116).'); return }
+    } else {
+      if (form.ncm.replace(/\D/g, '').length !== 8) { setError('Produto exige um NCM válido de 8 dígitos.'); return }
+    }
+
     setSaving(true)
     setError('')
 
@@ -215,27 +222,29 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
           <div>
             <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Dados fiscais</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <NcmSearch
-                value={form.ncm}
-                onChange={(codigo) => set('ncm', codigo)}
-                inputCls={smallInputCls}
-                labelCls={smallLabelCls}
-              />
-              {!isServico && (
-                <div>
-                  <label className={smallLabelCls}>CEST</label>
-                  <input
-                    type="text"
-                    value={form.cest}
-                    onChange={(e) => set('cest', e.target.value)}
-                    placeholder="Ex: 2800300"
-                    className={smallInputCls}
+              {!isServico ? (
+                <>
+                  <NcmSearch
+                    value={form.ncm}
+                    onChange={(codigo) => set('ncm', codigo)}
+                    inputCls={smallInputCls}
+                    labelCls={smallLabelCls}
+                    required
                   />
-                </div>
-              )}
-              {isServico && (
+                  <div>
+                    <label className={smallLabelCls}>CEST</label>
+                    <input
+                      type="text"
+                      value={form.cest}
+                      onChange={(e) => set('cest', e.target.value)}
+                      placeholder="Ex: 2800300"
+                      className={smallInputCls}
+                    />
+                  </div>
+                </>
+              ) : (
                 <div>
-                  <label className={smallLabelCls}>Cód. Serviço (LC116)</label>
+                  <label className={smallLabelCls}>Cód. Serviço (LC116) <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={form.cod_servico}

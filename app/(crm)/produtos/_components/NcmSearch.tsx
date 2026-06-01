@@ -10,13 +10,14 @@ interface Props {
   onChange: (codigo: string) => void
   inputCls: string
   labelCls: string
+  required?: boolean
 }
 
 /**
  * Campo de NCM com busca na tabela oficial (BrasilAPI) por código ou descrição.
  * Aceita digitação livre do código e sugere resultados conforme o texto.
  */
-export default function NcmSearch({ value, onChange, inputCls, labelCls }: Props) {
+export default function NcmSearch({ value, onChange, inputCls, labelCls, required }: Props) {
   const [query,   setQuery]   = useState(value)
   const [results, setResults] = useState<NcmResult[]>([])
   const [loading, setLoading] = useState(false)
@@ -82,7 +83,7 @@ export default function NcmSearch({ value, onChange, inputCls, labelCls }: Props
 
   return (
     <div className="relative" ref={boxRef}>
-      <label className={labelCls}>NCM</label>
+      <label className={labelCls}>NCM {required && <span className="text-red-500">*</span>}</label>
       <div className="relative">
         <input
           type="text"
