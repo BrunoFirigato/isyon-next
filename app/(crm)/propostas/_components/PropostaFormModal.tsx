@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Plus, Trash2, Lock } from 'lucide-react'
+import { X, Plus, Trash2, Lock, Package } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
   type Proposta, type ItemProposta, type ClienteRef,
@@ -38,8 +38,9 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
 
   // Status só é editável pelo fluxo (botões na lista). No modal, nasce sempre rascunho.
   const status = proposta?.status ?? 'rascunho'
-  // Filial travada quando herdada da oportunidade
-  const filialTravada = !!prefill?.empresaId
+  // Cliente e filial travados quando herdados da oportunidade
+  const clienteTravado = !!prefill?.clienteId
+  const filialTravada  = !!prefill?.empresaId
 
   const [titulo, setTitulo] = useState(proposta?.titulo ?? prefill?.titulo ?? '')
   const [clienteId, setClienteId] = useState(proposta?.cliente_id ?? prefill?.clienteId ?? '')
@@ -106,20 +107,24 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
     setItens((prev) => prev.filter((it) => it.id !== id))
   }
 
-  // Ao escolher um produto, preenche descrição, valor, NCM e unidade do item
-  function selecionarProduto(itemId: string, produtoId: string) {
-    const prod = produtos.find((p) => p.id === produtoId)
+  // Descrição com autocomplete: se o texto casar com um produto cadastrado,
+  // vincula automaticamente (NCM, unidade e valor). Senão, vira item livre.
+  function onDescricaoChange(itemId: string, value: string) {
+    const prod = produtos.find((p) => p.nome.trim().toLowerCase() === value.trim().toLowerCase())
     setItens((prev) => prev.map((it) => {
       if (it.id !== itemId) return it
-      if (!prod) return { ...it, produto_id: null, ncm: null, unidade: null }
-      return {
-        ...it,
-        produto_id:    prod.id,
-        descricao:     prod.nome,
-        valorUnitario: prod.preco ?? it.valorUnitario,
-        ncm:           prod.ncm,
-        unidade:       prod.unidade,
+      if (prod) {
+        return {
+          ...it,
+          descricao:     value,
+          produto_id:    prod.id,
+          ncm:           prod.ncm,
+          unidade:       prod.unidade,
+          // preenche o valor só se ainda estiver zerado (não sobrescreve o que o usuário digitou)
+          valorUnitario: it.valorUnitario || (prod.preco ?? 0),
+        }
       }
+      return { ...it, descricao: value, produto_id: null, ncm: null, unidade: null }
     }))
   }
 
@@ -208,8 +213,16 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
               </div>
 
               <div>
-                <label className={labelCls}>Cliente</label>
-                <select value={clienteId} onChange={(e) => setClienteId(e.target.value)} className={selectCls}>
+                <label className={`${labelCls} flex items-center gap-1`}>
+                  Cliente
+                  {clienteTravado && <Lock size={11} className="text-gray-400" />}
+                </label>
+                <select
+                  value={clienteId}
+                  onChange={(e) => setClienteId(e.target.value)}
+                  disabled={clienteTravado}
+                  className={`${selectCls} ${clienteTravado ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
                   <option value="">Selecione...</option>
                   {clientes.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -217,6 +230,9 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
                     </option>
                   ))}
                 </select>
+                {clienteTravado && (
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Herdado da oportunidade.</p>
+                )}
               </div>
 
               {filiais.length > 0 && (
@@ -273,6 +289,18 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
 
             {/* Itens */}
             <div>
+              {/* Catálogo de produtos para autocomplete da descrição */}
+              {produtos.length > 0 && (
+                <datalist id="produtos-datalist">
+                  {produtos.map((p) => (
+                    <option key={p.id} value={p.nome}>
+                      {p.tipo === 'servico' ? 'Serviço' : 'Produto'}
+                      {p.preco != null ? ` · ${brl(p.preco)}` : ''}
+                    </option>
+                  ))}
+                </datalist>
+              )}
+
               <div className="flex items-center justify-between mb-3">
                 <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                   Itens da proposta
@@ -297,26 +325,22 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
                   {itens.map((item, idx) => (
                     <div key={item.id}
                       className="grid grid-cols-[1fr_36px] md:grid-cols-[1fr_80px_120px_100px_36px] gap-2 items-center px-3 py-2">
-                      {/* Descrição */}
+                      {/* Descrição com autocomplete de produtos */}
                       <div>
-                        {produtos.length > 0 && (
-                          <select
-                            value={item.produto_id ?? ''}
-                            onChange={(e) => selecionarProduto(item.id, e.target.value)}
-                            className={`w-full ${itemInputCls} mb-1.5 text-gray-500 dark:text-gray-400`}
-                          >
-                            <option value="">— Item livre —</option>
-                            {produtos.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.nome}{p.ncm ? ` · NCM ${p.ncm}` : ''}
-                              </option>
-                            ))}
-                          </select>
+                        <input
+                          type="text"
+                          value={item.descricao}
+                          onChange={(e) => onDescricaoChange(item.id, e.target.value)}
+                          list={produtos.length > 0 ? 'produtos-datalist' : undefined}
+                          placeholder={`Buscar produto ou digitar item ${idx + 1}`}
+                          className={`w-full ${itemInputCls}`}
+                        />
+                        {item.produto_id && (
+                          <p className="flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400 mt-1">
+                            <Package size={10} />
+                            Produto vinculado{item.ncm ? ` · NCM ${item.ncm}` : ''}
+                          </p>
                         )}
-                        <input type="text" value={item.descricao}
-                          onChange={(e) => setItem(item.id, 'descricao', e.target.value)}
-                          placeholder={`Item ${idx + 1}`}
-                          className={`w-full ${itemInputCls}`} />
                         {/* Mobile: qtd + valor */}
                         <div className="flex gap-2 mt-1.5 md:hidden">
                           <input type="number" min="1" value={item.quantidade}
