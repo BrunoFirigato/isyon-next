@@ -2,6 +2,7 @@ export interface TabelaPreco {
   id: string
   nome: string
   ativo: boolean
+  margem: number | null
   criado_em: string
 }
 
@@ -12,11 +13,20 @@ export interface TabelaPrecoItem {
   preco: number | null
 }
 
+export interface TabelaMargemSegmento {
+  id: string
+  tabela_id: string
+  segmento: string
+  margem: number | null
+}
+
 export interface ProdutoRef {
   id: string
   nome: string
   codigo: string | null
+  custo: number | null
   preco: number | null
+  segmento: string | null
   tipo: string | null
 }
 

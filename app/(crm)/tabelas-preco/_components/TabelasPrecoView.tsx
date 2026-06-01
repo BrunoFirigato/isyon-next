@@ -1,23 +1,33 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Search, Tag, Save, X, Copy } from 'lucide-react'
+import { Plus, Trash2, Search, Tag, Save, X, Percent } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
-import { type TabelaPreco, type TabelaPrecoItem, type ProdutoRef, brl } from './types'
+import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
+import {
+  type TabelaPreco, type TabelaPrecoItem, type TabelaMargemSegmento, type ProdutoRef, brl,
+} from './types'
 
 interface Props {
-  tabelas:  TabelaPreco[]
-  produtos: ProdutoRef[]
-  itens:    TabelaPrecoItem[]
+  tabelas:    TabelaPreco[]
+  produtos:   ProdutoRef[]
+  itens:      TabelaPrecoItem[]
+  segMargens: TabelaMargemSegmento[]
 }
 
-export default function TabelasPrecoView({ tabelas, produtos, itens }: Props) {
-  const router   = useRouter()
-  const toast    = useToast()
-  const tenantId = useTenantId()
+function parseNum(v: string): number | null {
+  const n = parseFloat(v.replace(',', '.'))
+  return isNaN(n) ? null : n
+}
+
+export default function TabelasPrecoView({ tabelas, produtos, itens, segMargens }: Props) {
+  const router    = useRouter()
+  const toast     = useToast()
+  const tenantId  = useTenantId()
+  const segmentos = useSegmentos()
 
   const [selectedId, setSelectedId] = useState<string>(tabelas[0]?.id ?? '')
   const [busca,      setBusca]      = useState('')
@@ -26,110 +36,102 @@ export default function TabelasPrecoView({ tabelas, produtos, itens }: Props) {
   const [novoNome,   setNovoNome]   = useState('')
   const [deletando,  setDeletando]  = useState<TabelaPreco | null>(null)
 
-  // Mapa produto_id → preço (string) da tabela selecionada
-  const initialPrecos = useMemo(() => {
-    const map: Record<string, string> = {}
-    itens.filter(i => i.tabela_id === selectedId).forEach(i => {
-      if (i.preco != null) map[i.produto_id] = String(i.preco)
-    })
-    return map
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, itens])
+  // Estado editável da tabela selecionada
+  const tabelaSel = tabelas.find(t => t.id === selectedId)
+  const [margemGeral, setMargemGeral] = useState<string>(tabelaSel?.margem != null ? String(tabelaSel.margem) : '')
+  const [segs,     setSegs]     = useState<Record<string, string>>(() => buildSegs(selectedId))
+  const [overrides, setOverrides] = useState<Record<string, string>>(() => buildOverrides(selectedId))
 
-  const [precos, setPrecos] = useState<Record<string, string>>(initialPrecos)
+  function buildSegs(tid: string): Record<string, string> {
+    const m: Record<string, string> = {}
+    segMargens.filter(s => s.tabela_id === tid).forEach(s => { if (s.margem != null) m[s.segmento] = String(s.margem) })
+    return m
+  }
+  function buildOverrides(tid: string): Record<string, string> {
+    const m: Record<string, string> = {}
+    itens.filter(i => i.tabela_id === tid).forEach(i => { if (i.preco != null) m[i.produto_id] = String(i.preco) })
+    return m
+  }
 
-  // Recarrega os preços ao trocar de tabela
   function selecionar(id: string) {
     setSelectedId(id)
-    const map: Record<string, string> = {}
-    itens.filter(i => i.tabela_id === id).forEach(i => {
-      if (i.preco != null) map[i.produto_id] = String(i.preco)
-    })
-    setPrecos(map)
+    const t = tabelas.find(x => x.id === id)
+    setMargemGeral(t?.margem != null ? String(t.margem) : '')
+    setSegs(buildSegs(id))
+    setOverrides(buildOverrides(id))
     setBusca('')
+  }
+
+  // Preço calculado (live) seguindo a cascata, usando o estado editável
+  function precoCalc(p: ProdutoRef): { valor: number; fonte: string } {
+    const ov = overrides[p.id]?.trim()
+    if (ov) { const n = parseNum(ov); if (n != null) return { valor: n, fonte: 'override' } }
+    if (p.custo != null && p.custo > 0) {
+      const segM = parseNum(segs[p.segmento ?? ''] ?? '')
+      if (segM != null) return { valor: Math.round(p.custo * (1 + segM / 100) * 100) / 100, fonte: 'segmento' }
+      const gm = parseNum(margemGeral)
+      if (gm != null) return { valor: Math.round(p.custo * (1 + gm / 100) * 100) / 100, fonte: 'geral' }
+    }
+    return { valor: p.preco ?? 0, fonte: 'base' }
   }
 
   const produtosFiltrados = produtos.filter(p =>
     !busca.trim() || p.nome.toLowerCase().includes(busca.toLowerCase()) || p.codigo?.toLowerCase().includes(busca.toLowerCase())
   )
 
-  function setPreco(produtoId: string, valor: string) {
-    setPrecos(prev => ({ ...prev, [produtoId]: valor }))
-  }
-
-  // Preenche os preços vazios com o preço base do produto
-  function copiarBase() {
-    setPrecos(prev => {
-      const map = { ...prev }
-      produtos.forEach(p => {
-        if (!map[p.id] && p.preco != null) map[p.id] = String(p.preco)
-      })
-      return map
-    })
-  }
-
-  // ─── Criar tabela ────────────────────────────────────────────────────────
+  // ─── Criar / excluir tabela ──────────────────────────────────────────────
   async function criarTabela() {
     if (!novoNome.trim()) return
     const supabase = createClient()
-    const { data, error } = await supabase
-      .from('tabelas_preco')
-      .insert({ tenant_id: tenantId, nome: novoNome.trim(), ativo: true })
-      .select('id')
-      .single()
+    const { data, error } = await supabase.from('tabelas_preco')
+      .insert({ tenant_id: tenantId, nome: novoNome.trim(), ativo: true }).select('id').single()
     if (error) { toast('Erro ao criar tabela', 'error'); return }
-    toast('Tabela criada!')
-    setNovaOpen(false); setNovoNome('')
+    toast('Tabela criada!'); setNovaOpen(false); setNovoNome('')
     if (data) setSelectedId(data.id)
     router.refresh()
   }
-
-  // ─── Excluir tabela ──────────────────────────────────────────────────────
   async function excluirTabela() {
     if (!deletando) return
     const supabase = createClient()
     const { error } = await supabase.from('tabelas_preco').delete().eq('id', deletando.id)
     setDeletando(null)
     if (error) { toast('Erro ao excluir', 'error'); return }
-    toast('Tabela excluída', 'info')
-    router.refresh()
+    toast('Tabela excluída', 'info'); router.refresh()
   }
 
-  // ─── Salvar preços ───────────────────────────────────────────────────────
-  async function salvarPrecos() {
+  // ─── Salvar (margem geral + por segmento + overrides) ────────────────────
+  async function salvar() {
     if (!selectedId) return
     setSaving(true)
     const supabase = createClient()
 
-    const toUpsert: { tenant_id: string; tabela_id: string; produto_id: string; preco: number }[] = []
-    const toDeleteIds: string[] = []
-    const itensTabela = itens.filter(i => i.tabela_id === selectedId)
+    // 1. Margem geral da tabela
+    await supabase.from('tabelas_preco').update({ margem: parseNum(margemGeral) }).eq('id', selectedId)
 
-    for (const p of produtos) {
-      const raw = precos[p.id]?.trim()
-      const existente = itensTabela.find(i => i.produto_id === p.id)
-      if (raw) {
-        const num = parseFloat(raw.replace(',', '.'))
-        if (!isNaN(num)) toUpsert.push({ tenant_id: tenantId, tabela_id: selectedId, produto_id: p.id, preco: num })
-      } else if (existente) {
-        toDeleteIds.push(existente.id)
-      }
-    }
+    // 2. Margens por segmento (upsert não-vazias, deleta vazias existentes)
+    const segUpsert = Object.entries(segs)
+      .filter(([, v]) => v.trim() !== '')
+      .map(([segmento, v]) => ({ tenant_id: tenantId, tabela_id: selectedId, segmento, margem: parseNum(v) }))
+    if (segUpsert.length)
+      await supabase.from('tabela_margem_segmento').upsert(segUpsert, { onConflict: 'tabela_id,segmento' })
+    const segDelete = segMargens.filter(s => s.tabela_id === selectedId && !segs[s.segmento]?.trim()).map(s => s.id)
+    if (segDelete.length) await supabase.from('tabela_margem_segmento').delete().in('id', segDelete)
 
-    if (toUpsert.length) {
-      const { error } = await supabase.from('tabela_preco_itens').upsert(toUpsert, { onConflict: 'tabela_id,produto_id' })
-      if (error) { toast(`Erro ao salvar: ${error.message}`, 'error'); setSaving(false); return }
-    }
-    if (toDeleteIds.length) {
-      await supabase.from('tabela_preco_itens').delete().in('id', toDeleteIds)
-    }
+    // 3. Overrides por produto
+    const ovUpsert = Object.entries(overrides)
+      .filter(([, v]) => v.trim() !== '')
+      .map(([produto_id, v]) => ({ tenant_id: tenantId, tabela_id: selectedId, produto_id, preco: parseNum(v) }))
+    if (ovUpsert.length)
+      await supabase.from('tabela_preco_itens').upsert(ovUpsert, { onConflict: 'tabela_id,produto_id' })
+    const ovDelete = itens.filter(i => i.tabela_id === selectedId && !overrides[i.produto_id]?.trim()).map(i => i.id)
+    if (ovDelete.length) await supabase.from('tabela_preco_itens').delete().in('id', ovDelete)
 
     setSaving(false)
-    toast('Preços salvos!')
+    toast('Tabela salva!')
     router.refresh()
   }
 
-  const inputCls = 'w-28 border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-1.5 text-sm text-right dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const numInput = 'w-24 border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-1.5 text-sm text-right dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
 
   return (
     <>
@@ -151,9 +153,7 @@ export default function TabelasPrecoView({ tabelas, produtos, itens }: Props) {
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm py-16 text-center">
           <Tag size={32} className="mx-auto text-gray-200 dark:text-gray-600 mb-3" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma tabela de preço cadastrada.</p>
-          <button onClick={() => setNovaOpen(true)} className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium">
-            + Criar primeira tabela
-          </button>
+          <button onClick={() => setNovaOpen(true)} className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium">+ Criar primeira tabela</button>
         </div>
       ) : (
         <>
@@ -162,74 +162,89 @@ export default function TabelasPrecoView({ tabelas, produtos, itens }: Props) {
             {tabelas.map(t => (
               <button key={t.id} onClick={() => selecionar(t.id)}
                 className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  selectedId === t.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'
+                  selectedId === t.id ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'
                 }`}>
                 {t.nome}
                 {selectedId === t.id && (
-                  <span onClick={(e) => { e.stopPropagation(); setDeletando(t) }}
-                    className="ml-1 -mr-1 p-0.5 rounded hover:bg-white/20"><Trash2 size={12} /></span>
+                  <span onClick={(e) => { e.stopPropagation(); setDeletando(t) }} className="ml-1 -mr-1 p-0.5 rounded hover:bg-white/20"><Trash2 size={12} /></span>
                 )}
               </button>
             ))}
           </div>
 
-          {/* Busca + copiar base */}
-          <div className="flex gap-2 mb-3">
-            <div className="relative flex-1">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input value={busca} onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar produto..."
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
+          {/* Margens (geral + por segmento) */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Percent size={15} className="text-gray-400" />
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Margens da tabela</h2>
             </div>
-            <button onClick={copiarBase} type="button"
-              className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors whitespace-nowrap">
-              <Copy size={14} /> <span className="hidden sm:inline">Copiar preço base</span>
-            </button>
-          </div>
-
-          {/* Tabela de produtos */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-            <div className="grid grid-cols-[1fr_120px_130px] gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
-              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Produto</span>
-              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Preço base</span>
-              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Preço nesta tabela</span>
-            </div>
-            <div className="divide-y divide-gray-50 dark:divide-gray-700 max-h-[60vh] overflow-y-auto">
-              {produtosFiltrados.map(p => (
-                <div key={p.id} className="grid grid-cols-[1fr_120px_130px] gap-2 items-center px-4 py-2.5">
-                  <div className="min-w-0">
-                    <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{p.nome}</p>
-                    {p.codigo && <p className="text-[11px] text-gray-400 font-mono">{p.codigo}</p>}
-                  </div>
-                  <span className="text-sm text-gray-400 dark:text-gray-500 text-right">{brl(p.preco)}</span>
-                  <div className="flex justify-end">
-                    <input
-                      type="number" min="0" step="0.01"
-                      value={precos[p.id] ?? ''}
-                      onChange={(e) => setPreco(p.id, e.target.value)}
-                      placeholder={p.preco != null ? String(p.preco) : '0,00'}
-                      className={inputCls}
-                    />
-                  </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">Margem geral (%)</label>
+                <input type="number" value={margemGeral} onChange={(e) => setMargemGeral(e.target.value)}
+                  placeholder="ex: 50" className={`${numInput} w-full text-left`} />
+              </div>
+              {segmentos.map(seg => (
+                <div key={seg.value}>
+                  <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">Margem {seg.label} (%)</label>
+                  <input type="number" value={segs[seg.value] ?? ''} onChange={(e) => setSegs(p => ({ ...p, [seg.value]: e.target.value }))}
+                    placeholder="herda geral" className={`${numInput} w-full text-left`} />
                 </div>
               ))}
-              {produtosFiltrados.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-8">Nenhum produto encontrado.</p>
+            </div>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
+              Preço = custo × (1 + margem). Segmento sem margem herda a geral; produtos sem custo usam o preço base.
+            </p>
+          </div>
+
+          {/* Busca */}
+          <div className="relative mb-3">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar produto para ajuste manual..."
+              className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
+          </div>
+
+          {/* Produtos: preço calculado + override */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="grid grid-cols-[1fr_100px_110px_110px] gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
+              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Produto</span>
+              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Custo</span>
+              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Preço calc.</span>
+              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Override</span>
+            </div>
+            <div className="divide-y divide-gray-50 dark:divide-gray-700 max-h-[55vh] overflow-y-auto">
+              {produtosFiltrados.slice(0, 200).map(p => {
+                const calc = precoCalc(p)
+                return (
+                  <div key={p.id} className="grid grid-cols-[1fr_100px_110px_110px] gap-2 items-center px-4 py-2.5">
+                    <div className="min-w-0">
+                      <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{p.nome}</p>
+                      {p.segmento && <p className="text-[11px] text-gray-400">{segmentos.find(s => s.value === p.segmento)?.label ?? p.segmento}</p>}
+                    </div>
+                    <span className="text-sm text-gray-400 dark:text-gray-500 text-right">{brl(p.custo)}</span>
+                    <span className={`text-sm text-right font-medium ${calc.fonte === 'override' ? 'text-amber-600' : 'text-gray-900 dark:text-gray-100'}`}>
+                      {brl(calc.valor)}
+                    </span>
+                    <div className="flex justify-end">
+                      <input type="number" min="0" step="0.01" value={overrides[p.id] ?? ''}
+                        onChange={(e) => setOverrides(prev => ({ ...prev, [p.id]: e.target.value }))}
+                        placeholder="—" className={numInput} />
+                    </div>
+                  </div>
+                )
+              })}
+              {produtosFiltrados.length === 0 && <p className="text-sm text-gray-400 text-center py-8">Nenhum produto encontrado.</p>}
+              {produtosFiltrados.length > 200 && (
+                <p className="text-[11px] text-gray-400 text-center py-3">Mostrando 200 de {produtosFiltrados.length}. Refine a busca para ajustes específicos.</p>
               )}
             </div>
             <div className="flex justify-end px-4 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800">
-              <button onClick={salvarPrecos} disabled={saving}
+              <button onClick={salvar} disabled={saving}
                 className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-                <Save size={14} /> {saving ? 'Salvando...' : 'Salvar preços'}
+                <Save size={14} /> {saving ? 'Salvando...' : 'Salvar tabela'}
               </button>
             </div>
           </div>
-
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-            Produtos sem preço nesta tabela usam o <strong>preço base</strong> do cadastro.
-          </p>
         </>
       )}
 
@@ -260,9 +275,7 @@ export default function TabelasPrecoView({ tabelas, produtos, itens }: Props) {
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeletando(null)} />
           <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Excluir tabela?</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-              A tabela <strong>{deletando.nome}</strong> e todos os preços dela serão removidos. Esta ação não pode ser desfeita.
-            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">A tabela <strong>{deletando.nome}</strong> e suas margens/preços serão removidos.</p>
             <div className="flex gap-3">
               <button onClick={() => setDeletando(null)} className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
               <button onClick={excluirTabela} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-lg text-sm">Excluir</button>
