@@ -2,15 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Plus, Trash2 } from 'lucide-react'
+import { X, Plus, Trash2, Lock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
   type Proposta, type ItemProposta, type ClienteRef,
-  STATUS_PROPOSTA, brl, calcTotal, novoItem,
+  brl, calcTotal, novoItem,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
+
+interface ProdutoRef       { id: string; nome: string; preco: number | null; ncm: string | null; unidade: string | null; tipo: string | null }
+interface CondPagamentoRef { id: string; nome: string }
 
 export interface PrefillProposta {
   titulo?:     string
@@ -33,14 +36,19 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
   const segmentos = useSegmentos()
   const isEditing = !!proposta
 
+  // Status só é editável pelo fluxo (botões na lista). No modal, nasce sempre rascunho.
+  const status = proposta?.status ?? 'rascunho'
+  // Filial travada quando herdada da oportunidade
+  const filialTravada = !!prefill?.empresaId
+
   const [titulo, setTitulo] = useState(proposta?.titulo ?? prefill?.titulo ?? '')
   const [clienteId, setClienteId] = useState(proposta?.cliente_id ?? prefill?.clienteId ?? '')
   const [empresaId, setEmpresaId] = useState(proposta?.empresa_id ?? prefill?.empresaId ?? '')
   const [validade, setValidade] = useState(proposta?.validade?.slice(0, 10) ?? '')
   const [segmento, setSegmento] = useState(proposta?.segmento ?? prefill?.segmento ?? '')
-  // vendedor carregado da proposta (edição) ou da oportunidade (prefill) — não tem campo na UI
-  const [vendedorId] = useState(proposta?.vendedor_id ?? prefill?.vendedorId ?? '')
-  const [status, setStatus] = useState(proposta?.status ?? 'rascunho')
+  const [condPagamentoId, setCondPagamentoId] = useState(proposta?.cond_pagamento_id ?? '')
+  // vendedor: proposta (edição) → oportunidade (prefill) → usuário logado (auto)
+  const [vendedorId, setVendedorId] = useState(proposta?.vendedor_id ?? prefill?.vendedorId ?? '')
   const [obs, setObs] = useState(proposta?.obs ?? '')
   const [itens, setItens] = useState<ItemProposta[]>(
     proposta?.itens?.length ? proposta.itens : [novoItem()]
@@ -48,22 +56,40 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
 
   const [clientes, setClientes] = useState<ClienteRef[]>([])
   const [filiais,  setFiliais]  = useState<{ id: string; nome: string; sigla: string }[]>([])
+  const [produtos, setProdutos] = useState<ProdutoRef[]>([])
+  const [condPagamentos, setCondPagamentos] = useState<CondPagamentoRef[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     const supabase = createClient()
-    Promise.all([
-      supabase.from('clientes').select('id, nome, empresa').order('nome'),
-      supabase.from('empresas').select('id, nome, sigla').order('nome'),
-    ]).then(([{ data: cls }, { data: emps }]) => {
-      if (cls)  setClientes(cls)
+
+    async function init() {
+      const [{ data: cls }, { data: emps }, { data: prods }, { data: conds }, { data: { user } }] = await Promise.all([
+        supabase.from('clientes').select('id, nome, empresa').order('nome'),
+        supabase.from('empresas').select('id, nome, sigla').order('nome'),
+        supabase.from('produtos').select('id, nome, preco, ncm, unidade, tipo').eq('ativo', true).order('nome'),
+        supabase.from('cond_pagamentos').select('id, nome').eq('ativo', true).order('nome'),
+        supabase.auth.getUser(),
+      ])
+
+      if (cls)   setClientes(cls)
+      if (prods) setProdutos(prods)
+      if (conds) setCondPagamentos(conds)
       if (emps) {
         setFiliais(emps)
-        // Auto-seleciona se só houver uma filial e não veio empresa definida
         if (emps.length === 1 && !proposta?.empresa_id && !prefill?.empresaId) setEmpresaId(emps[0].id)
       }
-    })
+
+      // Auto-preenche vendedor pelo e-mail do usuário logado (proposta avulsa)
+      if (!proposta?.vendedor_id && !prefill?.vendedorId && user?.email) {
+        const { data: meu } = await supabase
+          .from('vendedores').select('id').eq('email', user.email).eq('status', 'ativo').limit(1).maybeSingle()
+        if (meu) setVendedorId(meu.id)
+      }
+    }
+
+    init()
   }, [])
 
   function setItem(id: string, field: keyof ItemProposta, value: string | number) {
@@ -78,6 +104,23 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
 
   function removeItem(id: string) {
     setItens((prev) => prev.filter((it) => it.id !== id))
+  }
+
+  // Ao escolher um produto, preenche descrição, valor, NCM e unidade do item
+  function selecionarProduto(itemId: string, produtoId: string) {
+    const prod = produtos.find((p) => p.id === produtoId)
+    setItens((prev) => prev.map((it) => {
+      if (it.id !== itemId) return it
+      if (!prod) return { ...it, produto_id: null, ncm: null, unidade: null }
+      return {
+        ...it,
+        produto_id:    prod.id,
+        descricao:     prod.nome,
+        valorUnitario: prod.preco ?? it.valorUnitario,
+        ncm:           prod.ncm,
+        unidade:       prod.unidade,
+      }
+    }))
   }
 
   const total = calcTotal(itens)
@@ -95,26 +138,34 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
     const itensLimpos = itens.map(({ id: _id, ...rest }) => rest)
 
     const payload = {
-      titulo:      titulo.trim(),
-      cliente_id:  clienteId  || null,
-      empresa_id:  empresaId  || null,
-      vendedor_id: vendedorId || null,
-      validade:    validade   || null,
-      segmento:    segmento   || null,
+      titulo:            titulo.trim(),
+      cliente_id:        clienteId  || null,
+      empresa_id:        empresaId  || null,
+      vendedor_id:       vendedorId || null,
+      cond_pagamento_id: condPagamentoId || null,
+      validade:          validade   || null,
+      segmento:          segmento   || null,
       status,
       obs:   obs.trim() || null,
       itens: itensLimpos,
       valor: total,
     }
 
-    const { error: err } = isEditing
-      ? await supabase.from('propostas').update(payload).eq('id', proposta!.id)
-      : await supabase.from('propostas').insert({ ...payload, tenant_id: tenantId })
+    if (isEditing) {
+      const { error: err } = await supabase.from('propostas').update(payload).eq('id', proposta!.id)
+      if (err) { setError(err.message); setSaving(false); return }
+    } else {
+      // Gera número sequencial PROP-XXXX
+      const { data: ultimas } = await supabase
+        .from('propostas').select('numero').eq('tenant_id', tenantId)
+        .ilike('numero', 'PROP-%').order('numero', { ascending: false }).limit(1)
+      const ultimoNum = ultimas?.[0]?.numero
+        ? parseInt(String(ultimas[0].numero).replace(/\D/g, ''), 10) || 0
+        : 0
+      const numero = `PROP-${String(ultimoNum + 1).padStart(4, '0')}`
 
-    if (err) {
-      setError(err.message)
-      setSaving(false)
-      return
+      const { error: err } = await supabase.from('propostas').insert({ ...payload, numero, tenant_id: tenantId })
+      if (err) { setError(err.message); setSaving(false); return }
     }
 
     toast(isEditing ? 'Proposta atualizada!' : 'Proposta criada!')
@@ -170,13 +221,24 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
 
               {filiais.length > 0 && (
                 <div>
-                  <label className={labelCls}>Filial emissora</label>
-                  <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)} className={selectCls}>
+                  <label className={`${labelCls} flex items-center gap-1`}>
+                    Filial emissora
+                    {filialTravada && <Lock size={11} className="text-gray-400" />}
+                  </label>
+                  <select
+                    value={empresaId}
+                    onChange={(e) => setEmpresaId(e.target.value)}
+                    disabled={filialTravada}
+                    className={`${selectCls} ${filialTravada ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  >
                     <option value="">Selecione...</option>
                     {filiais.map((f) => (
                       <option key={f.id} value={f.id}>{f.nome} ({f.sigla})</option>
                     ))}
                   </select>
+                  {filialTravada && (
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Herdada da oportunidade.</p>
+                  )}
                 </div>
               )}
 
@@ -199,10 +261,11 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
               )}
 
               <div>
-                <label className={labelCls}>Status</label>
-                <select value={status} onChange={(e) => setStatus(e.target.value)} className={selectCls}>
-                  {STATUS_PROPOSTA.filter((s) => s.value !== 'todos').map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
+                <label className={labelCls}>Condição de pagamento</label>
+                <select value={condPagamentoId} onChange={(e) => setCondPagamentoId(e.target.value)} className={selectCls}>
+                  <option value="">Selecione...</option>
+                  {condPagamentos.map((c) => (
+                    <option key={c.id} value={c.id}>{c.nome}</option>
                   ))}
                 </select>
               </div>
@@ -236,6 +299,20 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
                       className="grid grid-cols-[1fr_36px] md:grid-cols-[1fr_80px_120px_100px_36px] gap-2 items-center px-3 py-2">
                       {/* Descrição */}
                       <div>
+                        {produtos.length > 0 && (
+                          <select
+                            value={item.produto_id ?? ''}
+                            onChange={(e) => selecionarProduto(item.id, e.target.value)}
+                            className={`w-full ${itemInputCls} mb-1.5 text-gray-500 dark:text-gray-400`}
+                          >
+                            <option value="">— Item livre —</option>
+                            {produtos.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.nome}{p.ncm ? ` · NCM ${p.ncm}` : ''}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                         <input type="text" value={item.descricao}
                           onChange={(e) => setItem(item.id, 'descricao', e.target.value)}
                           placeholder={`Item ${idx + 1}`}

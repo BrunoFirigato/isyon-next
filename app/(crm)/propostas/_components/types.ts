@@ -3,6 +3,9 @@ export interface ItemProposta {
   descricao: string
   quantidade: number
   valorUnitario: number
+  produto_id?: string | null
+  ncm?: string | null
+  unidade?: string | null
 }
 
 export interface Proposta {
@@ -15,6 +18,7 @@ export interface Proposta {
   cliente_id: string | null
   vendedor_id: string | null
   empresa_id: string | null
+  cond_pagamento_id: string | null
   validade: string | null
   segmento: string | null
   itens: ItemProposta[] | null
