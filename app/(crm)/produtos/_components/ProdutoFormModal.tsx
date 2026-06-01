@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Produto, UNIDADES, ORIGENS } from './types'
 import NcmSearch from './NcmSearch'
+import ServicoSearch from './ServicoSearch'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
@@ -276,16 +277,13 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
                   </div>
                 </>
               ) : (
-                <div>
-                  <label className={smallLabelCls}>Cód. Serviço (LC116) <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    value={form.cod_servico}
-                    onChange={(e) => set('cod_servico', e.target.value)}
-                    placeholder="Ex: 01.01"
-                    className={smallInputCls}
-                  />
-                </div>
+                <ServicoSearch
+                  value={form.cod_servico}
+                  onChange={(codigo) => set('cod_servico', codigo)}
+                  inputCls={smallInputCls}
+                  labelCls={smallLabelCls}
+                  required
+                />
               )}
               <div>
                 <label className={smallLabelCls}>Origem</label>
