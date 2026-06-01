@@ -8,7 +8,9 @@ import type { Lead } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
-const ETAPAS = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação']
+// Na conversão, o lead nasce no início do funil — etapas avançadas
+// (Proposta, Negociação) são alcançadas depois, movendo pelo pipeline.
+const ETAPAS = ['Prospecção', 'Qualificação']
 
 interface VendedorRef  { id: string; nome: string }
 interface EmpresaRef   { id: string; nome: string; sigla: string }
@@ -80,6 +82,17 @@ export default function ConvertModal({ lead, onClose }: Props) {
 
   async function handleConvert(e: React.FormEvent) {
     e.preventDefault()
+
+    // Validações obrigatórias
+    if (empresas.length > 0 && !empresaId) {
+      setError('Selecione a empresa (filial) responsável.')
+      return
+    }
+    if (!vendedorId) {
+      setError('Selecione o vendedor responsável.')
+      return
+    }
+
     setSaving(true)
     setError('')
 
@@ -178,14 +191,14 @@ export default function ConvertModal({ lead, onClose }: Props) {
             {empresas.length > 0 && (
               <div>
                 <label className={labelCls}>
-                  Empresa
+                  Empresa <span className="text-red-500">*</span>
                   {empresas.length === 1 && (
                     <span className="ml-1.5 text-[10px] font-normal text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded-full">
                       auto
                     </span>
                   )}
                 </label>
-                <select value={empresaId} onChange={e => setEmpresaId(e.target.value)} className={selectCls}>
+                <select value={empresaId} onChange={e => setEmpresaId(e.target.value)} required className={selectCls}>
                   {empresas.length > 1 && <option value="">Selecione a empresa...</option>}
                   {empresas.map(e => (
                     <option key={e.id} value={e.id}>
@@ -214,7 +227,7 @@ export default function ConvertModal({ lead, onClose }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>
-                  Vendedor
+                  Vendedor <span className="text-red-500">*</span>
                   {autoPreenchido && (
                     <span className="ml-1.5 text-[10px] font-normal text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded-full">
                       auto
@@ -229,9 +242,10 @@ export default function ConvertModal({ lead, onClose }: Props) {
                     value={vendedorId}
                     onChange={e => { setVendedorId(e.target.value); setAutoPreenchido(false) }}
                     disabled={loadingVendedor}
+                    required
                     className={selectCls}
                   >
-                    <option value="">Sem vendedor</option>
+                    <option value="">Selecione...</option>
                     {vendedores.map(v => <option key={v.id} value={v.id}>{v.nome}</option>)}
                   </select>
                 </div>
