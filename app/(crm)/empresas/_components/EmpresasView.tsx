@@ -30,8 +30,8 @@ export default function EmpresasView({ empresas }: Props) {
     const supabase = createClient()
     const { error } = await supabase.from('empresas').delete().eq('id', id)
     setDeletingId(null)
-    if (error) { toast('Erro ao excluir empresa', 'error'); return }
-    toast('Empresa excluída', 'info')
+    if (error) { toast('Erro ao excluir filial', 'error'); return }
+    toast('Filial excluída', 'info')
     router.refresh()
   }
 
@@ -42,7 +42,7 @@ export default function EmpresasView({ empresas }: Props) {
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Filiais</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {empresas.length} filial{empresas.length !== 1 ? 's' : ''} cadastrada{empresas.length !== 1 ? 's' : ''}
+            {empresas.length} {empresas.length === 1 ? 'filial cadastrada' : 'filiais cadastradas'}
           </p>
         </div>
         <button

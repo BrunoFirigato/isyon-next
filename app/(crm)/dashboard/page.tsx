@@ -88,6 +88,7 @@ export default async function DashboardPage() {
     { data: comps },
     { data: pedidos },
     { count: totalLeads },
+    { count: leadsDoMes },
     { count: totalProdutos },
     { count: totalFiliais },
     { data: leads14 },
@@ -100,6 +101,7 @@ export default async function DashboardPage() {
     supabase.from('compromissos').select('id, titulo, tipo, data_hora, status').gte('data_hora', hoje0.toISOString()).lte('data_hora', hojeFim.toISOString()).order('data_hora'),
     supabase.from('pedidos').select('valor').gte('criado_em', inicio),
     supabase.from('leads').select('*', { count: 'exact', head: true }),
+    supabase.from('leads').select('*', { count: 'exact', head: true }).gte('criado_em', inicio),
     supabase.from('produtos').select('*', { count: 'exact', head: true }),
     supabase.from('empresas').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('criado_em').gte('criado_em', ha14),
@@ -254,7 +256,7 @@ export default async function DashboardPage() {
 
       {/* KPIs com sparkline */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiSpark label="Leads no mês" value={String(opDoMes.length === 0 ? (totalLeads ?? 0) : (totalLeads ?? 0))} icon={<Target size={16} />} serie={serieLeads} color="#3b82f6" />
+        <KpiSpark label="Leads no mês" value={String(leadsDoMes ?? 0)} icon={<Target size={16} />} serie={serieLeads} color="#3b82f6" />
         <KpiSpark label="Pipeline aberto" value={brl(valorPipeline)} sub={`${opAbertas.length} oport.`} icon={<TrendingUp size={16} />} serie={pipeline.map(p => p.valor)} color="#8b5cf6" />
         <KpiSpark label="Conversão mês" value={`${taxaConversao}%`} sub={`${opGanhasDoMes.length}/${opDoMes.length}`} icon={<CheckCircle2 size={16} />} serie={[taxaConversao]} color="#f59e0b" flat />
         <KpiSpark label="Receita no mês" value={brl(receitaMes)} icon={<DollarSign size={16} />} serie={serieReceita} color="#10b981" />
