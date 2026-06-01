@@ -13,6 +13,7 @@ interface Tenant {
   plano: string | null
   status: string | null
   criado_em: string
+  divisao_carteira: boolean | null
 }
 
 interface ConfigUsuario {
@@ -79,10 +80,15 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
   )
   const [savingConfig, setSavingConfig] = useState(false)
 
+  // Política do tenant (não é por usuário) — divisão de carteira por vendedor
+  const [divisaoCarteira, setDivisaoCarteira] = useState(tenant.divisao_carteira ?? false)
+
   async function salvarConfigs(e: React.FormEvent) {
     e.preventDefault()
     setSavingConfig(true)
     const supabase = createClient()
+
+    // Preferências numéricas — por usuário (config_usuario)
     for (const [chave, valor] of Object.entries(valores)) {
       const existing = configMap.get(chave)
       if (existing) {
@@ -91,6 +97,10 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
         await supabase.from('config_usuario').insert({ usuario_id: usuarioId, chave, valor })
       }
     }
+
+    // Política de carteira — do tenant (tenants)
+    await supabase.from('tenants').update({ divisao_carteira: divisaoCarteira }).eq('id', tenant.id)
+
     setSavingConfig(false)
     toast('Preferências salvas!')
     router.refresh()
@@ -349,6 +359,33 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                   </div>
                 ))}
               </div>
+
+              {/* Política de carteira (tenant) */}
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={divisaoCarteira}
+                    onClick={() => setDivisaoCarteira(v => !v)}
+                    className={`mt-0.5 relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                      divisaoCarteira ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      divisaoCarteira ? 'translate-x-4' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Divisão de carteira por vendedor</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                      Quando ativado, vendedores só atribuem oportunidades a si mesmos — o vendedor fica travado na conversão.
+                      Gestores e administradores continuam livres para escolher. Desligado, qualquer um atribui livremente.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
               <button type="submit" disabled={savingConfig}
                 className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
                 <Save size={14} />

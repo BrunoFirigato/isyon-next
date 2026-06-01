@@ -6,7 +6,7 @@ import { X, TrendingUp, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Lead } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
-import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 
 // Na conversão, o lead nasce no início do funil — etapas avançadas
 // (Proposta, Negociação) são alcançadas depois, movendo pelo pipeline.
@@ -23,7 +23,7 @@ interface Props {
 export default function ConvertModal({ lead, onClose }: Props) {
   const router   = useRouter()
   const toast    = useToast()
-  const tenantId = useTenantId()
+  const { tenantId, perfil, divisaoCarteira } = useTenantConfig()
 
   const [titulo,           setTitulo]          = useState(lead.empresa ? `${lead.empresa} — ${lead.nome}` : lead.nome)
   const [valor,            setValor]            = useState('')
@@ -241,14 +241,19 @@ export default function ConvertModal({ lead, onClose }: Props) {
                   <select
                     value={vendedorId}
                     onChange={e => { setVendedorId(e.target.value); setAutoPreenchido(false) }}
-                    disabled={loadingVendedor}
+                    disabled={loadingVendedor || (divisaoCarteira && perfil === 'vendedor' && autoPreenchido)}
                     required
-                    className={selectCls}
+                    className={`${selectCls} ${divisaoCarteira && perfil === 'vendedor' && autoPreenchido ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
                     <option value="">Selecione...</option>
                     {vendedores.map(v => <option key={v.id} value={v.id}>{v.nome}</option>)}
                   </select>
                 </div>
+                {divisaoCarteira && perfil === 'vendedor' && autoPreenchido && (
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+                    Divisão de carteira ativa — você só atribui a si mesmo.
+                  </p>
+                )}
               </div>
               <div>
                 <label className={labelCls}>Data prevista de fechamento</label>
