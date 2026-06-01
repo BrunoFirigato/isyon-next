@@ -25,8 +25,12 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
     nome:        produto?.nome ?? '',
     tipo:        produto?.tipo ?? 'produto',
     unidade:     produto?.unidade ?? 'un',
-    preco:       produto?.preco != null ? String(produto.preco) : '',
     custo:       produto?.custo != null ? String(produto.custo) : '',
+    // margem derivada de custo/preço quando ambos existem
+    margem:      (produto?.custo != null && produto.custo > 0 && produto?.preco != null)
+                   ? String(Math.round((produto.preco / produto.custo - 1) * 10000) / 100)
+                   : '',
+    preco:       produto?.preco != null ? String(produto.preco) : '',
     descricao:   produto?.descricao ?? '',
     ncm:         produto?.ncm ?? '',
     cod_servico: produto?.cod_servico ?? '',
@@ -44,6 +48,34 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
   function parseNum(v: string) {
     const n = parseFloat(v.replace(',', '.'))
     return isNaN(n) ? null : n
+  }
+
+  // ── Precificação (cálculo de mão dupla: custo × margem ↔ preço) ──────────────
+  function setCusto(v: string) {
+    setForm(f => {
+      const custo = parseNum(v), margem = parseNum(f.margem)
+      const next = { ...f, custo: v }
+      // mantém a margem e recalcula o preço
+      if (custo != null && custo > 0 && margem != null) next.preco = (custo * (1 + margem / 100)).toFixed(2)
+      return next
+    })
+  }
+  function setMargem(v: string) {
+    setForm(f => {
+      const custo = parseNum(f.custo), margem = parseNum(v)
+      const next = { ...f, margem: v }
+      if (custo != null && custo > 0 && margem != null) next.preco = (custo * (1 + margem / 100)).toFixed(2)
+      return next
+    })
+  }
+  function setPreco(v: string) {
+    setForm(f => {
+      const custo = parseNum(f.custo), preco = parseNum(v)
+      const next = { ...f, preco: v }
+      // recalcula a margem a partir do preço informado
+      if (custo != null && custo > 0 && preco != null) next.margem = (((preco / custo) - 1) * 100).toFixed(2)
+      return next
+    })
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -159,35 +191,36 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
             </div>
           </div>
 
-          {/* Preço + Custo + Unidade + Status */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div>
-              <label className={labelCls}>Preço (R$)</label>
-              <input
-                type="text"
-                value={form.preco}
-                onChange={(e) => set('preco', e.target.value)}
-                placeholder="0,00"
-                className={inputCls}
-              />
+          {/* Precificação: Custo → Margem → Preço de venda */}
+          <div>
+            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Precificação</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className={labelCls}>Custo (R$)</label>
+                <input type="text" value={form.custo} onChange={(e) => setCusto(e.target.value)}
+                  placeholder="0,00" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Margem (%)</label>
+                <input type="text" value={form.margem} onChange={(e) => setMargem(e.target.value)}
+                  placeholder="0" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Preço de venda (R$)</label>
+                <input type="text" value={form.preco} onChange={(e) => setPreco(e.target.value)}
+                  placeholder="0,00" className={`${inputCls} font-medium`} />
+              </div>
             </div>
-            <div>
-              <label className={labelCls}>Custo (R$)</label>
-              <input
-                type="text"
-                value={form.custo}
-                onChange={(e) => set('custo', e.target.value)}
-                placeholder="0,00"
-                className={inputCls}
-              />
-            </div>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">
+              Informe custo + margem para calcular o preço, ou digite o preço para ver a margem.
+            </p>
+          </div>
+
+          {/* Unidade + Status */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>Unidade</label>
-              <select
-                value={form.unidade}
-                onChange={(e) => set('unidade', e.target.value)}
-                className={selectCls}
-              >
+              <select value={form.unidade} onChange={(e) => set('unidade', e.target.value)} className={selectCls}>
                 {UNIDADES.map((u) => (
                   <option key={u} value={u}>{u}</option>
                 ))}
@@ -195,11 +228,7 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
             </div>
             <div>
               <label className={labelCls}>Status</label>
-              <select
-                value={form.ativo ? 'true' : 'false'}
-                onChange={(e) => set('ativo', e.target.value === 'true')}
-                className={selectCls}
-              >
+              <select value={form.ativo ? 'true' : 'false'} onChange={(e) => set('ativo', e.target.value === 'true')} className={selectCls}>
                 <option value="true">Ativo</option>
                 <option value="false">Inativo</option>
               </select>
