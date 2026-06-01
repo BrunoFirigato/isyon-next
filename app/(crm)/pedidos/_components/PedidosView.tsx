@@ -4,9 +4,10 @@ import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
-  CheckCircle, XCircle, PackageCheck,
+  CheckCircle, XCircle, PackageCheck, FileText,
 } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
+import EmitirNFeModal from './EmitirNFeModal'
 import { createClient } from '@/lib/supabase/client'
 import PedidoFormModal from './PedidoFormModal'
 import {
@@ -33,6 +34,7 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
   const [editingPedido, setEditingPedido] = useState<Pedido | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [nfePedido, setNfePedido] = useState<Pedido | null>(null)
 
   function clienteNome(id: string | null) {
     if (!id) return null
@@ -271,6 +273,17 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
                         <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">{p.obs}</p>
                       </div>
                     )}
+
+                    {/* Ações fiscais */}
+                    <div className="px-4 pb-4 pt-1 flex justify-end">
+                      <button
+                        onClick={() => setNfePedido(p)}
+                        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+                      >
+                        <FileText size={15} />
+                        Emitir NF-e
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -304,6 +317,13 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
         <PedidoFormModal
           pedido={editingPedido ?? undefined}
           onClose={() => { setFormOpen(false); setEditingPedido(null) }}
+        />
+      )}
+
+      {nfePedido && (
+        <EmitirNFeModal
+          pedido={nfePedido}
+          onClose={() => setNfePedido(null)}
         />
       )}
     </>
