@@ -6,7 +6,7 @@ import { X, Upload, Download, CheckCircle2, AlertCircle, Loader2, FileSpreadshee
 import { useToast } from './Toast'
 import type { ParsedRow } from '@/lib/excel/parse'
 
-type Modulo = 'clientes' | 'leads'
+type Modulo = 'clientes' | 'leads' | 'produtos'
 
 interface Props {
   modulo:    Modulo
@@ -16,6 +16,14 @@ interface Props {
 const LABELS: Record<Modulo, string> = {
   clientes: 'Clientes',
   leads:    'Leads',
+  produtos: 'Produtos',
+}
+
+// Colunas exibidas no preview, por módulo
+const PREVIEW_COLS: Record<Modulo, { key: string; label: string }[]> = {
+  clientes: [{ key: 'nome', label: 'Nome' }, { key: 'empresa', label: 'Empresa' }, { key: 'email', label: 'E-mail' }, { key: 'telefone', label: 'Telefone' }],
+  leads:    [{ key: 'nome', label: 'Nome' }, { key: 'empresa', label: 'Empresa' }, { key: 'email', label: 'E-mail' }, { key: 'telefone', label: 'Telefone' }],
+  produtos: [{ key: 'nome', label: 'Nome' }, { key: 'codigo', label: 'Código' }, { key: 'custo', label: 'Custo' }, { key: 'preco', label: 'Preço' }],
 }
 
 export default function ImportModal({ modulo, onClose }: Props) {
@@ -207,19 +215,19 @@ export default function ImportModal({ modulo, onClose }: Props) {
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                          <th className="px-3 py-2 text-left font-semibold text-gray-500 dark:text-gray-400">Nome</th>
-                          <th className="px-3 py-2 text-left font-semibold text-gray-500 dark:text-gray-400">Empresa</th>
-                          <th className="px-3 py-2 text-left font-semibold text-gray-500 dark:text-gray-400">E-mail</th>
-                          <th className="px-3 py-2 text-left font-semibold text-gray-500 dark:text-gray-400">Telefone</th>
+                          {PREVIEW_COLS[modulo].map(c => (
+                            <th key={c.key} className="px-3 py-2 text-left font-semibold text-gray-500 dark:text-gray-400">{c.label}</th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                         {validRows.slice(0, 5).map(r => (
                           <tr key={r.linha} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                            <td className="px-3 py-2 text-gray-900 dark:text-gray-100 font-medium">{r.dados.nome}</td>
-                            <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{r.dados.empresa || '—'}</td>
-                            <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{r.dados.email  || '—'}</td>
-                            <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{r.dados.telefone || '—'}</td>
+                            {PREVIEW_COLS[modulo].map((c, ci) => (
+                              <td key={c.key} className={`px-3 py-2 ${ci === 0 ? 'text-gray-900 dark:text-gray-100 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                                {r.dados[c.key] || '—'}
+                              </td>
+                            ))}
                           </tr>
                         ))}
                       </tbody>

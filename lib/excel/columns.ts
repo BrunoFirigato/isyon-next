@@ -60,6 +60,37 @@ export const EXEMPLO_LEAD = {
   obs:      'Demonstrou interesse no produto A',
 }
 
+// ── Produtos ──────────────────────────────────────────────────────────────────
+export const COLS_PRODUTOS: ColDef[] = [
+  { header: 'Nome *',       key: 'nome',        width: 36 },
+  { header: 'Código',       key: 'codigo',      width: 16 },
+  { header: 'Tipo',         key: 'tipo',        width: 12 }, // produto | servico
+  { header: 'Unidade',      key: 'unidade',     width: 10 },
+  { header: 'Custo',        key: 'custo',       width: 12 },
+  { header: 'Preço',        key: 'preco',       width: 12 },
+  { header: 'NCM',          key: 'ncm',         width: 12 },
+  { header: 'CEST',         key: 'cest',        width: 12 },
+  { header: 'Cód. Serviço', key: 'cod_servico', width: 14 },
+  { header: 'Origem',       key: 'origem',      width: 10 }, // 0..8
+  { header: 'Segmento',     key: 'segmento',    width: 16 },
+  { header: 'Descrição',    key: 'descricao',   width: 40 },
+]
+
+export const EXEMPLO_PRODUTO = {
+  nome:        'Notebook Dell Latitude',
+  codigo:      'NB001',
+  tipo:        'produto',
+  unidade:     'un',
+  custo:       '3000.00',
+  preco:       '4500.00',
+  ncm:         '84713012',
+  cest:        '',
+  cod_servico: '',
+  origem:      '0',
+  segmento:    '',
+  descricao:   'Notebook i7 16GB',
+}
+
 // ── Oportunidades ─────────────────────────────────────────────────────────────
 export const COLS_OPORTUNIDADES: ColDef[] = [
   { header: 'Número',   key: 'numero',     width: 14 },

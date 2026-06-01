@@ -2,9 +2,11 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, Trash2, Package, Wrench } from 'lucide-react'
+import { Plus, Search, X, Pencil, Trash2, Package, Wrench, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ProdutoFormModal from './ProdutoFormModal'
+import ExportButton from '@/app/(crm)/_components/ExportButton'
+import ImportModal  from '@/app/(crm)/_components/ImportModal'
 import {
   type Produto, TIPOS, tipoStyle, brl, formatDate,
 } from './types'
@@ -25,6 +27,7 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
 
   const [search, setSearch] = useState(currentQ)
   const [formOpen, setFormOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [editingProduto, setEditingProduto] = useState<Produto | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -73,14 +76,24 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
             {currentTipo !== 'todos' && ` · ${currentTipo === 'servico' ? 'Serviços' : 'Produtos'}`}
           </p>
         </div>
-        <button
-          onClick={() => { setEditingProduto(null); setFormOpen(true) }}
-          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
-        >
-          <Plus size={16} />
-          <span className="hidden sm:inline">Novo produto</span>
-          <span className="sm:hidden">Novo</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportButton href={`/api/exportar/produtos?tipo=${currentTipo}&q=${encodeURIComponent(currentQ)}`} label="Exportar" filename="produtos.xlsx" />
+          <button
+            onClick={() => setImportOpen(true)}
+            className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors"
+          >
+            <Upload size={14} />
+            <span className="hidden sm:inline">Importar</span>
+          </button>
+          <button
+            onClick={() => { setEditingProduto(null); setFormOpen(true) }}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+          >
+            <Plus size={16} />
+            <span className="hidden sm:inline">Novo produto</span>
+            <span className="sm:hidden">Novo</span>
+          </button>
+        </div>
       </div>
 
       {/* Filtros: tipo */}
@@ -306,6 +319,10 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
           produto={editingProduto ?? undefined}
           onClose={() => { setFormOpen(false); setEditingProduto(null) }}
         />
+      )}
+
+      {importOpen && (
+        <ImportModal modulo="produtos" onClose={() => setImportOpen(false)} />
       )}
     </>
   )
