@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Plus, Trash2, Search, Tag, Save, X, Percent } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
@@ -233,7 +234,19 @@ export default function TabelasPrecoView({ tabelas, produtos, itens, segMargens 
                   </div>
                 )
               })}
-              {produtosFiltrados.length === 0 && <p className="text-sm text-gray-400 text-center py-8">Nenhum produto encontrado.</p>}
+              {produtos.length === 0 ? (
+                <div className="text-center py-10 px-4">
+                  <Tag size={28} className="mx-auto text-gray-200 dark:text-gray-600 mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Nenhum produto cadastrado.</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    Cadastre ou importe produtos em{' '}
+                    <Link href="/produtos" className="text-blue-600 hover:underline font-medium">Produtos</Link>
+                    {' '}— eles aparecem aqui automaticamente para definir os preços.
+                  </p>
+                </div>
+              ) : produtosFiltrados.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-8">Nenhum produto encontrado para a busca.</p>
+              ) : null}
               {produtosFiltrados.length > 200 && (
                 <p className="text-[11px] text-gray-400 text-center py-3">Mostrando 200 de {produtosFiltrados.length}. Refine a busca para ajustes específicos.</p>
               )}
