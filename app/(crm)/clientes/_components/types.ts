@@ -4,6 +4,7 @@ export interface Cliente {
   empresa: string | null
   email: string | null
   telefone: string | null
+  tipo_pessoa: string | null     // 'fisica' | 'juridica'
   cpf_cnpj: string | null
   inscricao_estadual: string | null
   indicador_ie: string | null   // '1' contribuinte | '2' isento | '9' não contribuinte

@@ -19,7 +19,7 @@ export default async function ClientesPage({ searchParams }: Props) {
   let query = supabase
     .from('clientes')
     .select(
-      'id, nome, empresa, email, telefone, cpf_cnpj, inscricao_estadual, indicador_ie, cep, rua, numero, complemento, bairro, cidade, estado, tipo, segmento, status, valor_total, origem, lead_id, vendedor_maq_id, vendedor_pec_id, parceiro_id, criado_em, atualizado_em'
+      'id, nome, empresa, email, telefone, tipo_pessoa, cpf_cnpj, inscricao_estadual, indicador_ie, cep, rua, numero, complemento, bairro, cidade, estado, tipo, segmento, status, valor_total, origem, lead_id, vendedor_maq_id, vendedor_pec_id, parceiro_id, criado_em, atualizado_em'
     )
     .order('nome', { ascending: true })
 

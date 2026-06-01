@@ -20,6 +20,7 @@ type FormData = {
   empresa: string
   email: string
   telefone: string
+  tipo_pessoa: string
   cpf_cnpj: string
   inscricao_estadual: string
   indicador_ie: string
@@ -56,6 +57,10 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
     empresa:     cliente?.empresa     ?? '',
     email:       cliente?.email       ?? '',
     telefone:    cliente?.telefone    ?? '',
+    // Deriva do documento se não houver valor salvo; padrão jurídica (CRM B2B)
+    tipo_pessoa: cliente?.tipo_pessoa ?? (
+      (cliente?.cpf_cnpj?.replace(/\D/g, '').length === 11) ? 'fisica' : 'juridica'
+    ),
     cpf_cnpj:    cliente?.cpf_cnpj    ?? '',
     inscricao_estadual: cliente?.inscricao_estadual ?? '',
     indicador_ie:       cliente?.indicador_ie       ?? '9',  // padrão: não contribuinte
@@ -94,6 +99,16 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
 
   function set(field: keyof FormData, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
+  }
+
+  // Troca PF/PJ — pessoa física é sempre consumidor final (sem IE)
+  function setTipoPessoa(tp: 'fisica' | 'juridica') {
+    setForm((f) => ({
+      ...f,
+      tipo_pessoa: tp,
+      ...(tp === 'fisica' ? { indicador_ie: '9', inscricao_estadual: '' } : {}),
+    }))
+    setCnpjStatus(null)
   }
 
   async function handleCpfCnpjChange(value: string) {
@@ -165,6 +180,7 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
       empresa:         form.empresa.trim()        || null,
       email:           form.email.trim()          || null,
       telefone:        form.telefone.trim()        || null,
+      tipo_pessoa:     form.tipo_pessoa,
       cpf_cnpj:        form.cpf_cnpj.trim()        || null,
       inscricao_estadual: form.indicador_ie === '1' ? (form.inscricao_estadual.trim() || null) : null,
       indicador_ie:    form.indicador_ie,
@@ -236,53 +252,81 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
             {tab === 'dados' && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Tipo de pessoa */}
+                  <div className="md:col-span-2">
+                    <label className={labelCls}>Tipo de pessoa</label>
+                    <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 gap-1">
+                      {(['juridica', 'fisica'] as const).map((tp) => (
+                        <button
+                          key={tp}
+                          type="button"
+                          onClick={() => setTipoPessoa(tp)}
+                          className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                            form.tipo_pessoa === tp
+                              ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-gray-100'
+                              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                          }`}
+                        >
+                          {tp === 'juridica' ? 'Jurídica (CNPJ)' : 'Física (CPF)'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="md:col-span-2">
                     <label className={labelCls}>
-                      Nome <span className="text-red-500">*</span>
+                      {form.tipo_pessoa === 'fisica' ? 'Nome' : 'Razão social / Nome'} <span className="text-red-500">*</span>
                     </label>
                     <input type="text" value={form.nome} onChange={(e) => set('nome', e.target.value)}
-                      required placeholder="Nome completo ou razão social"
+                      required placeholder={form.tipo_pessoa === 'fisica' ? 'Nome completo' : 'Razão social'}
                       className={inputCls} />
                   </div>
 
-                  <div>
-                    <label className={labelCls}>Empresa</label>
-                    <input type="text" value={form.empresa} onChange={(e) => set('empresa', e.target.value)}
-                      placeholder="Nome da empresa" className={inputCls} />
-                  </div>
+                  {form.tipo_pessoa === 'juridica' && (
+                    <div>
+                      <label className={labelCls}>Nome fantasia</label>
+                      <input type="text" value={form.empresa} onChange={(e) => set('empresa', e.target.value)}
+                        placeholder="Nome fantasia" className={inputCls} />
+                    </div>
+                  )}
 
                   <div>
-                    <label className={labelCls}>CPF / CNPJ</label>
+                    <label className={labelCls}>{form.tipo_pessoa === 'fisica' ? 'CPF' : 'CNPJ'}</label>
                     <div className="relative">
                       <input type="text" value={form.cpf_cnpj}
                         onChange={(e) => handleCpfCnpjChange(e.target.value)}
-                        placeholder="000.000.000-00 ou CNPJ"
+                        placeholder={form.tipo_pessoa === 'fisica' ? '000.000.000-00' : '00.000.000/0000-00'}
                         className={`${inputCls} pr-9`} />
                       {buscandoCnpj && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" />}
                       {!buscandoCnpj && cnpjStatus === 'success' && <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />}
                       {!buscandoCnpj && cnpjStatus === 'notfound' && <AlertCircle size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500" />}
                     </div>
-                    {buscandoCnpj && <p className="text-xs text-blue-500 mt-1">Buscando na Receita Federal...</p>}
-                    {!buscandoCnpj && cnpjStatus === 'success' && <p className="text-xs text-green-600 mt-1">Dados preenchidos automaticamente ✓</p>}
-                    {!buscandoCnpj && cnpjStatus === 'notfound' && <p className="text-xs text-amber-600 mt-1">CNPJ não encontrado na Receita Federal</p>}
+                    {form.tipo_pessoa === 'juridica' && buscandoCnpj && <p className="text-xs text-blue-500 mt-1">Buscando na Receita Federal...</p>}
+                    {form.tipo_pessoa === 'juridica' && !buscandoCnpj && cnpjStatus === 'success' && <p className="text-xs text-green-600 mt-1">Dados preenchidos automaticamente ✓</p>}
+                    {form.tipo_pessoa === 'juridica' && !buscandoCnpj && cnpjStatus === 'notfound' && <p className="text-xs text-amber-600 mt-1">CNPJ não encontrado na Receita Federal</p>}
                   </div>
 
-                  <div>
-                    <label className={labelCls}>Contribuinte de ICMS <span className="text-gray-400 dark:text-gray-500 font-normal">(NF-e)</span></label>
-                    <select value={form.indicador_ie} onChange={(e) => set('indicador_ie', e.target.value)} className={selectCls}>
-                      <option value="9">Não contribuinte (consumidor final)</option>
-                      <option value="1">Contribuinte de ICMS</option>
-                      <option value="2">Contribuinte isento de Inscrição</option>
-                    </select>
-                  </div>
+                  {/* Dados fiscais — só para pessoa jurídica */}
+                  {form.tipo_pessoa === 'juridica' && (
+                    <>
+                      <div>
+                        <label className={labelCls}>Contribuinte de ICMS <span className="text-gray-400 dark:text-gray-500 font-normal">(NF-e)</span></label>
+                        <select value={form.indicador_ie} onChange={(e) => set('indicador_ie', e.target.value)} className={selectCls}>
+                          <option value="9">Não contribuinte (consumidor final)</option>
+                          <option value="1">Contribuinte de ICMS</option>
+                          <option value="2">Contribuinte isento de Inscrição</option>
+                        </select>
+                      </div>
 
-                  {form.indicador_ie === '1' && (
-                    <div>
-                      <label className={labelCls}>Inscrição Estadual <span className="text-red-500">*</span></label>
-                      <input type="text" value={form.inscricao_estadual}
-                        onChange={(e) => set('inscricao_estadual', e.target.value)}
-                        placeholder="000.000.000.000" className={inputCls} />
-                    </div>
+                      {form.indicador_ie === '1' && (
+                        <div>
+                          <label className={labelCls}>Inscrição Estadual <span className="text-red-500">*</span></label>
+                          <input type="text" value={form.inscricao_estadual}
+                            onChange={(e) => set('inscricao_estadual', e.target.value)}
+                            placeholder="000.000.000.000" className={inputCls} />
+                        </div>
+                      )}
+                    </>
                   )}
 
                   <div>
