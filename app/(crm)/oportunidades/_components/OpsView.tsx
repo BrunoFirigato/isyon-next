@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Plus, Pencil, Trophy, XCircle, Trash2, ChevronRight,
+  Plus, Pencil, Trophy, XCircle, Trash2, ChevronRight, FileText,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import OpFormModal from './OpFormModal'
 import LostModal from './LostModal'
+import PropostaFormModal from '@/app/(crm)/propostas/_components/PropostaFormModal'
 import {
   type Oportunidade, ETAPAS, brl, formatDate,
   etapaCanonica, proximaEtapa,
@@ -33,6 +34,7 @@ export default function OpsView({ ops }: Props) {
   const [editingOp, setEditingOp] = useState<Oportunidade | null>(null)
   const [defaultEtapa, setDefaultEtapa] = useState<string>('Prospecção')
   const [lostOp, setLostOp] = useState<Oportunidade | null>(null)
+  const [propostaOp, setPropostaOp] = useState<Oportunidade | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const abertas = ops.filter((o) => o.status === 'aberto')
@@ -106,6 +108,13 @@ export default function OpsView({ ops }: Props) {
               {proxima} <ChevronRight size={12} />
             </button>
           )}
+          <button
+            onClick={() => setPropostaOp(op)}
+            title="Criar proposta a partir desta oportunidade"
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-600 text-xs font-medium transition-colors"
+          >
+            <FileText size={12} /> Proposta
+          </button>
           <div className="ml-auto flex gap-1">
             <button onClick={() => handleGanho(op)} title="Marcar ganho"
               className="p-1.5 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors">
@@ -330,6 +339,19 @@ export default function OpsView({ ops }: Props) {
 
       {lostOp && (
         <LostModal op={lostOp} onClose={() => setLostOp(null)} />
+      )}
+
+      {propostaOp && (
+        <PropostaFormModal
+          prefill={{
+            titulo:     propostaOp.titulo,
+            clienteId:  propostaOp.cliente_id  ?? undefined,
+            empresaId:  propostaOp.empresa_id  ?? undefined,
+            segmento:   propostaOp.segmento    ?? undefined,
+            vendedorId: propostaOp.vendedor_id ?? undefined,
+          }}
+          onClose={() => setPropostaOp(null)}
+        />
       )}
     </>
   )

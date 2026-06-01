@@ -12,23 +12,34 @@ import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 
+export interface PrefillProposta {
+  titulo?:     string
+  clienteId?:  string
+  empresaId?:  string
+  segmento?:   string
+  vendedorId?: string
+}
+
 interface Props {
   proposta?: Proposta
+  prefill?:  PrefillProposta
   onClose: () => void
 }
 
-export default function PropostaFormModal({ proposta, onClose }: Props) {
+export default function PropostaFormModal({ proposta, prefill, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
   const tenantId = useTenantId()
   const segmentos = useSegmentos()
   const isEditing = !!proposta
 
-  const [titulo, setTitulo] = useState(proposta?.titulo ?? '')
-  const [clienteId, setClienteId] = useState(proposta?.cliente_id ?? '')
-  const [empresaId, setEmpresaId] = useState(proposta?.empresa_id ?? '')
+  const [titulo, setTitulo] = useState(proposta?.titulo ?? prefill?.titulo ?? '')
+  const [clienteId, setClienteId] = useState(proposta?.cliente_id ?? prefill?.clienteId ?? '')
+  const [empresaId, setEmpresaId] = useState(proposta?.empresa_id ?? prefill?.empresaId ?? '')
   const [validade, setValidade] = useState(proposta?.validade?.slice(0, 10) ?? '')
-  const [segmento, setSegmento] = useState(proposta?.segmento ?? '')
+  const [segmento, setSegmento] = useState(proposta?.segmento ?? prefill?.segmento ?? '')
+  // vendedor carregado da proposta (edição) ou da oportunidade (prefill) — não tem campo na UI
+  const [vendedorId] = useState(proposta?.vendedor_id ?? prefill?.vendedorId ?? '')
   const [status, setStatus] = useState(proposta?.status ?? 'rascunho')
   const [obs, setObs] = useState(proposta?.obs ?? '')
   const [itens, setItens] = useState<ItemProposta[]>(
@@ -49,8 +60,8 @@ export default function PropostaFormModal({ proposta, onClose }: Props) {
       if (cls)  setClientes(cls)
       if (emps) {
         setFiliais(emps)
-        // Auto-seleciona se só houver uma filial e não estiver editando
-        if (emps.length === 1 && !proposta?.empresa_id) setEmpresaId(emps[0].id)
+        // Auto-seleciona se só houver uma filial e não veio empresa definida
+        if (emps.length === 1 && !proposta?.empresa_id && !prefill?.empresaId) setEmpresaId(emps[0].id)
       }
     })
   }, [])
@@ -84,11 +95,12 @@ export default function PropostaFormModal({ proposta, onClose }: Props) {
     const itensLimpos = itens.map(({ id: _id, ...rest }) => rest)
 
     const payload = {
-      titulo:     titulo.trim(),
-      cliente_id: clienteId  || null,
-      empresa_id: empresaId  || null,
-      validade:   validade   || null,
-      segmento:   segmento   || null,
+      titulo:      titulo.trim(),
+      cliente_id:  clienteId  || null,
+      empresa_id:  empresaId  || null,
+      vendedor_id: vendedorId || null,
+      validade:    validade   || null,
+      segmento:    segmento   || null,
       status,
       obs:   obs.trim() || null,
       itens: itensLimpos,
