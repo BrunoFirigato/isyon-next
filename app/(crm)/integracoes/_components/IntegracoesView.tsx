@@ -327,17 +327,9 @@ function EmailCard({
           <Badge status={isConfigured ? 'connected' : plataformaConfigurada ? 'connected' : 'disconnected'} />
         </div>
 
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
           Envio de campanhas e e-mails de contato.
         </p>
-
-        {!isConfigured && (
-          <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg px-3 py-2 mb-3">
-            {plataformaConfigurada
-              ? 'Usando a chave padrão da plataforma. Configure sua própria chave para enviar pelo seu domínio.'
-              : 'Sem chave configurada. Configure abaixo ou contate o suporte.'}
-          </p>
-        )}
 
         <button
           onClick={() => { setOpen(o => !o); setTestResult(null) }}
@@ -353,6 +345,15 @@ function EmailCard({
           {/* Seção conexão */}
           <div className="px-5 py-4 space-y-3">
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Conexão</p>
+
+            {!isConfigured && (
+              <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg px-3 py-2">
+                {plataformaConfigurada
+                  ? 'Usando a chave padrão da plataforma. Configure sua própria chave para enviar pelo seu domínio.'
+                  : 'Sem chave configurada. Configure abaixo ou contate o suporte.'}
+              </p>
+            )}
+
             <div>
               <label className={labelCls}>API Key do Resend</label>
               <div className="relative">
@@ -581,36 +582,45 @@ export default function IntegracoesView({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
-        <WhatsAppCard tenantId={tenantId} initial={evolution} initialTemplate={waTemplate} />
-        <EmailCard
-          tenantId={tenantId}
-          plataformaConfigurada={emailConfigurado}
-          initialApiKey={resendApiKey}
-          initialFromEmail={resendFromEmail}
-          initialAssunto={emailAssunto}
-          initialCorpo={emailCorpo}
-        />
-        <NFeProviderCard
-          key="brasilnfe"
-          tenantId={tenantId}
-          nome="BrasilNFe"
-          descricao="Emissão de NF-e via BrasilNFe. Configure o token do seu painel em brasilnfe.com.br."
-          bgColor="bg-green-50 dark:bg-green-900/20"
-          tokenField="token_brasilnfe"
-          testEndpoint="/api/nfe/test/brasilnfe"
-          initialToken={tokenBrasilNFe}
-        />
-        <NFeProviderCard
-          key="focusnfe"
-          tenantId={tenantId}
-          nome="Focus NFe"
-          descricao="Emissão de NF-e via Focus NFe. Configure o token do seu painel em focusnfe.com.br."
-          bgColor="bg-blue-50 dark:bg-blue-900/20"
-          tokenField="token_focusnfe"
-          testEndpoint="/api/nfe/test/focusnfe"
-          initialToken={tokenFocusNFe}
-        />
+      {/* columns = masonry: cada coluna cresce independente, sem afetar as outras */}
+      <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
+        <div className="break-inside-avoid mb-4">
+          <WhatsAppCard tenantId={tenantId} initial={evolution} initialTemplate={waTemplate} />
+        </div>
+        <div className="break-inside-avoid mb-4">
+          <EmailCard
+            tenantId={tenantId}
+            plataformaConfigurada={emailConfigurado}
+            initialApiKey={resendApiKey}
+            initialFromEmail={resendFromEmail}
+            initialAssunto={emailAssunto}
+            initialCorpo={emailCorpo}
+          />
+        </div>
+        <div className="break-inside-avoid mb-4">
+          <NFeProviderCard
+            key="brasilnfe"
+            tenantId={tenantId}
+            nome="BrasilNFe"
+            descricao="Emissão de NF-e via BrasilNFe. Configure o token do seu painel em brasilnfe.com.br."
+            bgColor="bg-green-50 dark:bg-green-900/20"
+            tokenField="token_brasilnfe"
+            testEndpoint="/api/nfe/test/brasilnfe"
+            initialToken={tokenBrasilNFe}
+          />
+        </div>
+        <div className="break-inside-avoid mb-4">
+          <NFeProviderCard
+            key="focusnfe"
+            tenantId={tenantId}
+            nome="Focus NFe"
+            descricao="Emissão de NF-e via Focus NFe. Configure o token do seu painel em focusnfe.com.br."
+            bgColor="bg-blue-50 dark:bg-blue-900/20"
+            tokenField="token_focusnfe"
+            testEndpoint="/api/nfe/test/focusnfe"
+            initialToken={tokenFocusNFe}
+          />
+        </div>
       </div>
     </>
   )
