@@ -12,6 +12,7 @@ export interface Produto {
   cod_servico: string | null
   cest: string | null
   origem: number | null
+  segmento: string | null
   ativo: boolean
   criado_em: string
   atualizado_em: string | null

@@ -8,6 +8,7 @@ import { type Produto, UNIDADES, ORIGENS } from './types'
 import NcmSearch from './NcmSearch'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 
 interface Props {
   produto?: Produto
@@ -18,6 +19,7 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
   const tenantId = useTenantId()
+  const segmentos = useSegmentos()
   const isEditing = !!produto
 
   const [form, setForm] = useState({
@@ -36,6 +38,7 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
     cod_servico: produto?.cod_servico ?? '',
     cest:        produto?.cest ?? '',
     origem:      produto?.origem != null ? String(produto.origem) : '0',
+    segmento:    produto?.segmento ?? '',
     ativo:       produto?.ativo ?? true,
   })
   const [saving, setSaving] = useState(false)
@@ -105,6 +108,7 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
       cod_servico: form.cod_servico.trim() || null,
       cest:        form.cest.trim() || null,
       origem:      form.origem !== '' ? parseInt(form.origem) : 0,
+      segmento:    form.segmento || null,
       ativo:       form.ativo,
     }
 
@@ -283,7 +287,7 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
                   />
                 </div>
               )}
-              <div className={isServico ? 'col-span-1' : 'col-span-2 sm:col-span-1'}>
+              <div>
                 <label className={smallLabelCls}>Origem</label>
                 <select
                   value={form.origem}
@@ -295,6 +299,21 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
                   ))}
                 </select>
               </div>
+              {segmentos.length > 0 && (
+                <div>
+                  <label className={smallLabelCls}>Segmento <span className="text-gray-400 dark:text-gray-500 font-normal">(margem)</span></label>
+                  <select
+                    value={form.segmento}
+                    onChange={(e) => set('segmento', e.target.value)}
+                    className={smallSelectCls}
+                  >
+                    <option value="">—</option>
+                    {segmentos.map((s) => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
 

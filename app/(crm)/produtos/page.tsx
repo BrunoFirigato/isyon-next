@@ -11,7 +11,7 @@ export default async function ProdutosPage({ searchParams }: Props) {
 
   let query = supabase
     .from('produtos')
-    .select('id, tenant_id, codigo, nome, tipo, unidade, preco, custo, descricao, ncm, cod_servico, cest, origem, ativo, criado_em, atualizado_em')
+    .select('id, tenant_id, codigo, nome, tipo, unidade, preco, custo, descricao, ncm, cod_servico, cest, origem, segmento, ativo, criado_em, atualizado_em')
     .order('nome')
 
   if (tipo && tipo !== 'todos') query = query.eq('tipo', tipo)
