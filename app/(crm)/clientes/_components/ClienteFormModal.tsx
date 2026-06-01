@@ -147,6 +147,10 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
+    if (!form.telefone.trim() && !form.email.trim()) {
+      setError('Informe ao menos um contato — telefone ou e-mail.')
+      return
+    }
     if (form.indicador_ie === '1' && !form.inscricao_estadual.trim()) {
       setError('Contribuinte de ICMS exige a Inscrição Estadual.')
       return

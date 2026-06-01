@@ -37,6 +37,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Máximo de ${MAX_ROWS} linhas por importação.` }, { status: 400 })
   }
 
+  // Regra "ao menos um contato": telefone OU e-mail
+  for (const row of rows) {
+    if (!row.dados.telefone?.trim() && !row.dados.email?.trim()) {
+      row.erros.push('Informe ao menos um contato (telefone ou e-mail)')
+      row.valido = false
+    }
+  }
+
   const validos   = rows.filter(r => r.valido).length
   const invalidos = rows.filter(r => !r.valido).length
 
