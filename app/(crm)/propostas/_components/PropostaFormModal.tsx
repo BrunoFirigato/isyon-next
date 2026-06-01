@@ -11,10 +11,12 @@ import {
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
+import { precoNaTabela, type TabelaInfo, type SegMargem, type Override } from '@/lib/preco'
 
-interface ProdutoRef       { id: string; nome: string; preco: number | null; ncm: string | null; unidade: string | null; tipo: string | null }
+interface ProdutoRef       { id: string; nome: string; preco: number | null; custo: number | null; ncm: string | null; unidade: string | null; segmento: string | null; tipo: string | null }
 interface CondPagamentoRef { id: string; nome: string }
 interface VendedorRef      { id: string; nome: string }
+interface TabelaRef        { id: string; nome: string }
 
 export interface PrefillProposta {
   titulo?:           string
@@ -54,6 +56,7 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
   const [validade, setValidade] = useState(proposta?.validade?.slice(0, 10) ?? '')
   const [segmento, setSegmento] = useState(proposta?.segmento ?? prefill?.segmento ?? '')
   const [condPagamentoId, setCondPagamentoId] = useState(proposta?.cond_pagamento_id ?? '')
+  const [tabelaPrecoId, setTabelaPrecoId] = useState(proposta?.tabela_preco_id ?? '')
   // vendedor: proposta (edição) → oportunidade (prefill) → usuário logado (auto)
   const [vendedorId, setVendedorId] = useState(proposta?.vendedor_id ?? prefill?.vendedorId ?? '')
   const [obs, setObs] = useState(proposta?.obs ?? '')
@@ -66,6 +69,11 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
   const [produtos, setProdutos] = useState<ProdutoRef[]>([])
   const [condPagamentos, setCondPagamentos] = useState<CondPagamentoRef[]>([])
   const [vendedores, setVendedores] = useState<VendedorRef[]>([])
+  // Dados de precificação (tabelas + cascata)
+  const [tabelas,   setTabelas]   = useState<TabelaRef[]>([])
+  const [tabelasInfo, setTabelasInfo] = useState<TabelaInfo[]>([])
+  const [segMargens, setSegMargens]   = useState<SegMargem[]>([])
+  const [overrides,  setOverrides]    = useState<Override[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -73,12 +81,16 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
     const supabase = createClient()
 
     async function init() {
-      const [{ data: cls }, { data: emps }, { data: prods }, { data: conds }, { data: vends }, { data: { user } }] = await Promise.all([
+      const [{ data: cls }, { data: emps }, { data: prods }, { data: conds }, { data: vends },
+              { data: tabs }, { data: tms }, { data: tpi }, { data: { user } }] = await Promise.all([
         supabase.from('clientes').select('id, nome, empresa').order('nome'),
         supabase.from('empresas').select('id, nome, sigla').order('nome'),
-        supabase.from('produtos').select('id, nome, preco, ncm, unidade, tipo').eq('ativo', true).order('nome'),
+        supabase.from('produtos').select('id, nome, preco, custo, ncm, unidade, segmento, tipo').not('ativo', 'is', false).order('nome'),
         supabase.from('cond_pagamentos').select('id, nome').eq('ativo', true).order('nome'),
         supabase.from('vendedores').select('id, nome').eq('status', 'ativo').order('nome'),
+        supabase.from('tabelas_preco').select('id, nome, margem').not('ativo', 'is', false).order('nome'),
+        supabase.from('tabela_margem_segmento').select('tabela_id, segmento, margem'),
+        supabase.from('tabela_preco_itens').select('tabela_id, produto_id, preco'),
         supabase.auth.getUser(),
       ])
 
@@ -86,6 +98,9 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
       if (prods) setProdutos(prods)
       if (conds) setCondPagamentos(conds)
       if (vends) setVendedores(vends)
+      if (tabs)  { setTabelas(tabs.map(t => ({ id: t.id, nome: t.nome }))); setTabelasInfo(tabs.map(t => ({ id: t.id, margem: t.margem }))) }
+      if (tms)   setSegMargens(tms)
+      if (tpi)   setOverrides(tpi)
       if (emps) {
         setFiliais(emps)
         if (emps.length === 1 && !proposta?.empresa_id && !prefill?.empresaId) setEmpresaId(emps[0].id)
@@ -123,8 +138,17 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
     })
   }
 
+  // Preço do produto na tabela selecionada (cascata); sem tabela, usa o preço base.
+  function precoComTabela(prod: ProdutoRef, tabId: string): number {
+    if (!tabId) return prod.preco ?? 0
+    return precoNaTabela(
+      { id: prod.id, custo: prod.custo, preco: prod.preco, segmento: prod.segmento },
+      tabId, tabelasInfo, segMargens, overrides,
+    )
+  }
+
   // Descrição com autocomplete: se o texto casar com um produto cadastrado,
-  // vincula automaticamente (NCM, unidade e valor). Senão, vira item livre.
+  // vincula automaticamente (NCM, unidade e preço da tabela). Senão, vira item livre.
   function onDescricaoChange(itemId: string, value: string) {
     const prod = produtos.find((p) => p.nome.trim().toLowerCase() === value.trim().toLowerCase())
     setItens((prev) => prev.map((it) => {
@@ -137,10 +161,21 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
           ncm:           prod.ncm,
           unidade:       prod.unidade,
           // preenche o valor só se ainda estiver zerado (não sobrescreve o que o usuário digitou)
-          valorUnitario: it.valorUnitario || (prod.preco ?? 0),
+          valorUnitario: it.valorUnitario || precoComTabela(prod, tabelaPrecoId),
         }
       }
       return { ...it, descricao: value, produto_id: null, ncm: null, unidade: null }
+    }))
+  }
+
+  // Ao trocar a tabela, recalcula o preço dos itens vinculados a produto
+  function onTabelaChange(novaTabelaId: string) {
+    setTabelaPrecoId(novaTabelaId)
+    setItens((prev) => prev.map((it) => {
+      if (!it.produto_id) return it
+      const prod = produtos.find((p) => p.id === it.produto_id)
+      if (!prod) return it
+      return { ...it, valorUnitario: precoComTabela(prod, novaTabelaId) }
     }))
   }
 
@@ -164,6 +199,7 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
       empresa_id:        empresaId  || null,
       vendedor_id:       vendedorId || null,
       cond_pagamento_id: condPagamentoId || null,
+      tabela_preco_id:   tabelaPrecoId || null,
       oportunidade_id:   oportunidadeId,
       validade:          validade   || null,
       segmento:          segmento   || null,
@@ -311,6 +347,18 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
                   ))}
                 </select>
               </div>
+
+              {tabelas.length > 0 && (
+                <div>
+                  <label className={labelCls}>Tabela de preço</label>
+                  <select value={tabelaPrecoId} onChange={(e) => onTabelaChange(e.target.value)} className={selectCls}>
+                    <option value="">Preço base</option>
+                    {tabelas.map((t) => (
+                      <option key={t.id} value={t.id}>{t.nome}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className={`${labelCls} flex items-center gap-1`}>
