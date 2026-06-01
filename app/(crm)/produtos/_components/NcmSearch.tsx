@@ -28,19 +28,22 @@ export default function NcmSearch({ value, onChange, inputCls, labelCls }: Props
   // Sincroniza quando o valor muda externamente (ex: ao abrir para editar)
   useEffect(() => { setQuery(value) }, [value])
 
-  // Ao montar com um código já preenchido, busca a descrição
+  // Ao montar com um código já preenchido, busca a descrição (via search, robusto ao formato)
   useEffect(() => {
     const code = value.replace(/\D/g, '')
     if (code.length !== 8) return
     lastPicked.current = code
-    fetch(`https://brasilapi.com.br/api/ncm/v1/${code}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.descricao) setDesc(d.descricao) })
+    fetch(`https://brasilapi.com.br/api/ncm/v1?search=${code}`)
+      .then(r => r.ok ? r.json() : [])
+      .then((d: NcmResult[]) => {
+        const match = Array.isArray(d) ? d.find(x => x.codigo.replace(/\D/g, '') === code) : null
+        if (match?.descricao) setDesc(match.descricao)
+      })
       .catch(() => {})
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Busca com debounce
+  // Busca com debounce — só códigos completos (8 dígitos) valem para NF-e
   useEffect(() => {
     const term = query.trim()
     if (term.length < 2 || term === lastPicked.current) { setResults([]); setLoading(false); return }
@@ -49,7 +52,10 @@ export default function NcmSearch({ value, onChange, inputCls, labelCls }: Props
       try {
         const res  = await fetch(`https://brasilapi.com.br/api/ncm/v1?search=${encodeURIComponent(term)}`)
         const data = await res.json()
-        setResults(Array.isArray(data) ? data.slice(0, 25) : [])
+        const completos = Array.isArray(data)
+          ? data.filter((r: NcmResult) => r.codigo.replace(/\D/g, '').length === 8)
+          : []
+        setResults(completos.slice(0, 25))
       } catch { setResults([]) }
       setLoading(false)
     }, 350)
@@ -66,10 +72,11 @@ export default function NcmSearch({ value, onChange, inputCls, labelCls }: Props
   }, [])
 
   function pick(r: NcmResult) {
-    lastPicked.current = r.codigo
-    setQuery(r.codigo)
+    const code = r.codigo.replace(/\D/g, '')   // armazena só os 8 dígitos
+    lastPicked.current = code
+    setQuery(code)
     setDesc(r.descricao)
-    onChange(r.codigo)
+    onChange(code)
     setOpen(false)
   }
 
