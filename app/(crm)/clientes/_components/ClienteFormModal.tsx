@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Search, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { type Cliente, type VendedorRef, type ParceiroRef, STATUS_CLIENTE, ESTADOS_BR, TIPOS, tipoLabel } from './types'
+import { type Cliente, type VendedorRef, type ParceiroRef, STATUS_CLIENTE, ESTADOS_BR } from './types'
 import { fetchCnpj } from '@/lib/cnpj'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 import { useToast } from '@/app/(crm)/_components/Toast'
@@ -166,6 +166,10 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
       setError('Informe ao menos um contato — telefone ou e-mail.')
       return
     }
+    if (form.tipo === 'revenda' && !form.parceiro_id) {
+      setError('Cliente via parceiro comercial exige selecionar o parceiro.')
+      return
+    }
     if (form.indicador_ie === '1' && !form.inscricao_estadual.trim()) {
       setError('Contribuinte de ICMS exige a Inscrição Estadual.')
       return
@@ -187,7 +191,8 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
       tipo:            form.tipo,
       segmento:        form.segmento               || null,
       status:          form.status,
-      origem:          form.origem                 || null,
+      // Contextual: direto guarda origem; via parceiro guarda o parceiro
+      origem:          form.tipo === 'direto'  ? (form.origem || null)      : null,
       cep:             form.cep.replace(/\D/g, '') || null,
       rua:             form.rua.trim()             || null,
       numero:          form.numero.trim()          || null,
@@ -197,7 +202,7 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
       estado:          form.estado                 || null,
       vendedor_maq_id: form.vendedor0              || null,
       vendedor_pec_id: form.vendedor1              || null,
-      parceiro_id:     form.parceiro_id            || null,
+      parceiro_id:     form.tipo === 'revenda' ? (form.parceiro_id || null) : null,
     }
 
     const { error: err } = isEditing
@@ -342,11 +347,10 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                   </div>
 
                   <div>
-                    <label className={labelCls}>Tipo</label>
+                    <label className={labelCls}>Canal de aquisição</label>
                     <select value={form.tipo} onChange={(e) => set('tipo', e.target.value)} className={selectCls}>
-                      {TIPOS.filter(t => t.value !== 'todos').map((t) => (
-                        <option key={t.value} value={t.value}>{tipoLabel(t.value)}</option>
-                      ))}
+                      <option value="direto">Direto (própria empresa)</option>
+                      <option value="revenda">Via parceiro comercial</option>
                     </select>
                   </div>
 
@@ -371,15 +375,33 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                     </select>
                   </div>
 
-                  <div>
-                    <label className={labelCls}>Origem</label>
-                    <select value={form.origem} onChange={(e) => set('origem', e.target.value)} className={selectCls}>
-                      <option value="">Selecione...</option>
-                      {ORIGEM_OPTIONS.map((o) => (
-                        <option key={o} value={o}>{o}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Direto → Origem (prospecção da empresa) */}
+                  {form.tipo === 'direto' && (
+                    <div>
+                      <label className={labelCls}>Origem</label>
+                      <select value={form.origem} onChange={(e) => set('origem', e.target.value)} className={selectCls}>
+                        <option value="">Selecione...</option>
+                        {ORIGEM_OPTIONS.map((o) => (
+                          <option key={o} value={o}>{o}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Via parceiro → Parceiro comercial (a origem é o parceiro) */}
+                  {form.tipo === 'revenda' && (
+                    <div>
+                      <label className={labelCls}>
+                        Parceiro comercial <span className="text-red-500">*</span>
+                      </label>
+                      <select value={form.parceiro_id} onChange={(e) => set('parceiro_id', e.target.value)} className={selectCls}>
+                        <option value="">Selecione...</option>
+                        {parceiros.map((p) => (
+                          <option key={p.id} value={p.id}>{p.nome}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   {/* Vendedor(es) — dinâmico por segmento */}
                   {segmentos.length === 0 ? (
@@ -412,18 +434,6 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                     ))
                   )}
 
-                  {/* Parceiro comercial — só para tipo Revenda */}
-                  {form.tipo === 'revenda' && (
-                    <div className="md:col-span-2">
-                      <label className={labelCls}>Parceiro comercial</label>
-                      <select value={form.parceiro_id} onChange={(e) => set('parceiro_id', e.target.value)} className={selectCls}>
-                        <option value="">Selecione...</option>
-                        {parceiros.map((p) => (
-                          <option key={p.id} value={p.id}>{p.nome}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
                 </div>
               </>
             )}

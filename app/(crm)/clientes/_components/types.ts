@@ -39,10 +39,11 @@ export interface ParceiroRef {
 }
 
 // tipo = canal comercial (não muda no tempo)
+// Canal de aquisição do cliente: direto (própria empresa) x via parceiro comercial
 export const TIPOS = [
   { value: 'todos',   label: 'Todos' },
-  { value: 'direto',  label: 'Direto',  bg: 'bg-blue-100',   text: 'text-blue-700'   },
-  { value: 'revenda', label: 'Revenda', bg: 'bg-indigo-100', text: 'text-indigo-700' },
+  { value: 'direto',  label: 'Direto',       bg: 'bg-blue-100',   text: 'text-blue-700'   },
+  { value: 'revenda', label: 'Via parceiro', bg: 'bg-indigo-100', text: 'text-indigo-700' },
 ] as const
 
 // status = fase no fluxo comercial (evolui no tempo)
