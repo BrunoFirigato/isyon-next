@@ -17,11 +17,13 @@ interface CondPagamentoRef { id: string; nome: string }
 interface VendedorRef      { id: string; nome: string }
 
 export interface PrefillProposta {
-  titulo?:     string
-  clienteId?:  string
-  empresaId?:  string
-  segmento?:   string
-  vendedorId?: string
+  titulo?:           string
+  clienteId?:        string
+  empresaId?:        string
+  segmento?:         string
+  vendedorId?:       string
+  oportunidadeId?:   string
+  oportunidadeEtapa?: string
 }
 
 interface Props {
@@ -39,9 +41,12 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
 
   // Status só é editável pelo fluxo (botões na lista). No modal, nasce sempre rascunho.
   const status = proposta?.status ?? 'rascunho'
-  // Cliente e filial travados quando herdados da oportunidade
-  const clienteTravado = !!prefill?.clienteId
-  const filialTravada  = !!prefill?.empresaId
+  // Vínculo com oportunidade: ao criar (prefill) ou ao editar uma proposta já vinculada
+  const oportunidadeId = proposta?.oportunidade_id ?? prefill?.oportunidadeId ?? null
+  const vinculadaOp    = !!oportunidadeId
+  // Cliente e filial travados quando a proposta é de uma oportunidade (criação ou edição)
+  const clienteTravado = vinculadaOp
+  const filialTravada  = vinculadaOp
 
   const [titulo, setTitulo] = useState(proposta?.titulo ?? prefill?.titulo ?? '')
   const [clienteId, setClienteId] = useState(proposta?.cliente_id ?? prefill?.clienteId ?? '')
@@ -97,8 +102,8 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
     init()
   }, [])
 
-  // Vendedor travado: herdado da oportunidade ou sob divisão de carteira (perfil vendedor)
-  const vendedorTravado = !!prefill?.vendedorId || (divisaoCarteira && perfil === 'vendedor')
+  // Vendedor travado: vinculada à oportunidade ou sob divisão de carteira (perfil vendedor)
+  const vendedorTravado = vinculadaOp || (divisaoCarteira && perfil === 'vendedor')
 
   function setItem(id: string, field: keyof ItemProposta, value: string | number) {
     setItens((prev) =>
@@ -159,6 +164,7 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
       empresa_id:        empresaId  || null,
       vendedor_id:       vendedorId || null,
       cond_pagamento_id: condPagamentoId || null,
+      oportunidade_id:   oportunidadeId,
       validade:          validade   || null,
       segmento:          segmento   || null,
       status,
@@ -182,6 +188,15 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
 
       const { error: err } = await supabase.from('propostas').insert({ ...payload, numero, tenant_id: tenantId })
       if (err) { setError(err.message); setSaving(false); return }
+
+      // Avança a oportunidade para a etapa "Proposta" (só se ainda estiver antes dela)
+      if (prefill?.oportunidadeId) {
+        const ORDEM = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação']
+        const atualIdx = ORDEM.indexOf(prefill.oportunidadeEtapa ?? '')
+        if (atualIdx < ORDEM.indexOf('Proposta')) {
+          await supabase.from('oportunidades').update({ etapa: 'Proposta' }).eq('id', prefill.oportunidadeId)
+        }
+      }
     }
 
     toast(isEditing ? 'Proposta atualizada!' : 'Proposta criada!')
@@ -313,7 +328,7 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
                     <option key={v.id} value={v.id}>{v.nome}</option>
                   ))}
                 </select>
-                {prefill?.vendedorId && (
+                {vinculadaOp && (
                   <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Herdado da oportunidade.</p>
                 )}
               </div>

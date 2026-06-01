@@ -19,6 +19,7 @@ export interface Proposta {
   vendedor_id: string | null
   empresa_id: string | null
   cond_pagamento_id: string | null
+  oportunidade_id: string | null
   validade: string | null
   segmento: string | null
   itens: ItemProposta[] | null

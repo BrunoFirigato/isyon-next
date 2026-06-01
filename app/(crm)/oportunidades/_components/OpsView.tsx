@@ -344,11 +344,13 @@ export default function OpsView({ ops }: Props) {
       {propostaOp && (
         <PropostaFormModal
           prefill={{
-            titulo:     propostaOp.titulo,
-            clienteId:  propostaOp.cliente_id  ?? undefined,
-            empresaId:  propostaOp.empresa_id  ?? undefined,
-            segmento:   propostaOp.segmento    ?? undefined,
-            vendedorId: propostaOp.vendedor_id ?? undefined,
+            titulo:            propostaOp.titulo,
+            clienteId:         propostaOp.cliente_id  ?? undefined,
+            empresaId:         propostaOp.empresa_id  ?? undefined,
+            segmento:          propostaOp.segmento    ?? undefined,
+            vendedorId:        propostaOp.vendedor_id ?? undefined,
+            oportunidadeId:    propostaOp.id,
+            oportunidadeEtapa: propostaOp.etapa ?? undefined,
           }}
           onClose={() => setPropostaOp(null)}
         />
