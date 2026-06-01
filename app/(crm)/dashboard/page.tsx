@@ -5,6 +5,7 @@ import {
   ChevronRight, CheckCircle2, Clock, ArrowRight, Plus,
   Building2, Package, Rocket, Lightbulb, BarChart3,
 } from 'lucide-react'
+import DispensarOnboarding from './_components/DispensarOnboarding'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function brl(value: number) {
@@ -126,6 +127,8 @@ export default async function DashboardPage() {
   ]
   const setupCompleto = passos.every(p => p.ok)
   const passosFeitos = passos.filter(p => p.ok).length
+  const onboardingDispensado = cfg['onboarding_dispensado'] === 'true'
+  const mostrarOnboarding = !setupCompleto && !onboardingDispensado
 
   // Pendências
   const limiteParada = Date.now() - diasOpParada * 864e5
@@ -204,7 +207,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Primeiros passos (onboarding) */}
-      {!setupCompleto && (
+      {mostrarOnboarding && (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-blue-100 dark:border-blue-900/40 shadow-sm overflow-hidden">
           <div className="flex items-center gap-2.5 px-5 py-4 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/20">
             <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"><Rocket size={18} /></div>
@@ -213,6 +216,7 @@ export default async function DashboardPage() {
               <p className="text-xs text-gray-500 dark:text-gray-400">{passosFeitos} de {passos.length} concluídos — deixe seu sistema pronto pra vender</p>
             </div>
             <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{Math.round((passosFeitos / passos.length) * 100)}%</span>
+            <DispensarOnboarding usuarioId={usuario?.id ?? ''} />
           </div>
           <div className="divide-y divide-gray-50 dark:divide-gray-700">
             {passos.map((p, i) => (
