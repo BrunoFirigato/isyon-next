@@ -9,6 +9,10 @@ import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 
+// Etapas válidas ao CRIAR: oportunidade nova nasce no início do funil.
+// Proposta/Negociação são alcançadas movendo o card (ou criando uma proposta).
+const ETAPAS_INICIAIS = ['Prospecção', 'Qualificação']
+
 interface Props {
   op?: Oportunidade
   defaultEtapa?: string
@@ -22,9 +26,13 @@ export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
   const segmentos = useSegmentos()
   const isEditing = !!op
 
+  // Ao criar, a etapa default é clampada para uma etapa inicial válida.
+  const etapaInicial = op?.etapa
+    ?? (defaultEtapa && ETAPAS_INICIAIS.includes(defaultEtapa) ? defaultEtapa : 'Prospecção')
+
   const [form, setForm] = useState({
     titulo: op?.titulo ?? '',
-    etapa: op?.etapa ?? defaultEtapa ?? 'Prospecção',
+    etapa: etapaInicial,
     valor: op?.valor != null ? String(op.valor) : '',
     segmento: op?.segmento ?? '',
   })
@@ -107,7 +115,8 @@ export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
                 onChange={(e) => set('etapa', e.target.value)}
                 className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {ETAPAS.map((et) => (
+                {/* Ao criar: só etapas iniciais. Ao editar: todas (permite correção manual). */}
+                {(isEditing ? ETAPAS : ETAPAS_INICIAIS).map((et) => (
                   <option key={et} value={et}>{et}</option>
                 ))}
               </select>

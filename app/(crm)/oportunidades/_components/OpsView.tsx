@@ -240,12 +240,16 @@ export default function OpsView({ ops }: Props) {
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="text-xs text-gray-500 dark:text-gray-400">{brl(total)}</span>
-                      <button
-                        onClick={() => openCreate(etapa)}
-                        className="ml-1 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                      >
-                        <Plus size={14} />
-                      </button>
+                      {/* Criação só nas etapas iniciais — oportunidade nova nasce no começo do funil */}
+                      {['Prospecção', 'Qualificação'].includes(etapa) && (
+                        <button
+                          onClick={() => openCreate(etapa)}
+                          title="Nova oportunidade"
+                          className="ml-1 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -291,12 +295,14 @@ export default function OpsView({ ops }: Props) {
               return cards.length === 0 ? (
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 py-12 text-center">
                   <p className="text-sm text-gray-400 dark:text-gray-500 mb-3">Nenhuma oportunidade nesta etapa.</p>
-                  <button
-                    onClick={() => openCreate(mobileEtapa)}
-                    className="text-sm text-blue-600 hover:underline"
-                  >
-                    + Adicionar
-                  </button>
+                  {['Prospecção', 'Qualificação'].includes(mobileEtapa) && (
+                    <button
+                      onClick={() => openCreate(mobileEtapa)}
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      + Adicionar
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
