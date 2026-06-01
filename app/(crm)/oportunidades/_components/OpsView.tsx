@@ -10,6 +10,8 @@ import ExportButton from '@/app/(crm)/_components/ExportButton'
 import OpFormModal from './OpFormModal'
 import LostModal from './LostModal'
 import PropostaFormModal from '@/app/(crm)/propostas/_components/PropostaFormModal'
+import ClienteFormModal from '@/app/(crm)/clientes/_components/ClienteFormModal'
+import type { Cliente } from '@/app/(crm)/clientes/_components/types'
 import {
   type Oportunidade, ETAPAS, brl, formatDate,
   etapaCanonica, proximaEtapa,
@@ -35,6 +37,7 @@ export default function OpsView({ ops }: Props) {
   const [defaultEtapa, setDefaultEtapa] = useState<string>('Prospecção')
   const [lostOp, setLostOp] = useState<Oportunidade | null>(null)
   const [propostaOp, setPropostaOp] = useState<Oportunidade | null>(null)
+  const [completarCliente, setCompletarCliente] = useState<Cliente | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const abertas = ops.filter((o) => o.status === 'aberto')
@@ -55,6 +58,21 @@ export default function OpsView({ ops }: Props) {
   async function handleGanho(op: Oportunidade) {
     const supabase = createClient()
     await supabase.from('oportunidades').update({ status: 'ganho' }).eq('id', op.id)
+
+    // Promove o prospect a cliente ativo e abre o cadastro para completar dados fiscais
+    if (op.cliente_id) {
+      await supabase.from('clientes').update({ status: 'ativo' })
+        .eq('id', op.cliente_id).eq('status', 'prospect')
+
+      const { data: cli } = await supabase.from('clientes').select('*').eq('id', op.cliente_id).maybeSingle()
+      if (cli) {
+        setCompletarCliente(cli as Cliente)
+        toast('🏆 Oportunidade ganha! Complete o cadastro fiscal do cliente para emitir a NF-e.')
+        router.refresh()
+        return
+      }
+    }
+
     toast('🏆 Oportunidade marcada como ganha!')
     router.refresh()
   }
@@ -359,6 +377,13 @@ export default function OpsView({ ops }: Props) {
             oportunidadeEtapa: propostaOp.etapa ?? undefined,
           }}
           onClose={() => setPropostaOp(null)}
+        />
+      )}
+
+      {completarCliente && (
+        <ClienteFormModal
+          cliente={completarCliente}
+          onClose={() => { setCompletarCliente(null); router.refresh() }}
         />
       )}
     </>

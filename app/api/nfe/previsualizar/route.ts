@@ -64,6 +64,13 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
   if (!cliente) return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 })
 
+  // Rede de segurança: cliente precisa de CNPJ/CPF + endereço completo para a NF-e
+  if (!cliente.cpf_cnpj?.trim())
+    return NextResponse.json({ error: 'Cliente sem CPF/CNPJ. Complete o cadastro do cliente antes de emitir.' }, { status: 400 })
+  const faltaEndereco = !cliente.cep?.trim() || !cliente.rua?.trim() || !cliente.cidade?.trim() || !cliente.estado?.trim()
+  if (faltaEndereco)
+    return NextResponse.json({ error: 'Endereço do cliente incompleto. Preencha CEP, logradouro, cidade e UF no cadastro do cliente.' }, { status: 400 })
+
   const payload = buildBrasilNFePayload(filial, cliente, body.itens, {
     numero:          body.numero,
     serie:           body.serie,
