@@ -9,10 +9,14 @@ function soDigitos(v: string | null | undefined): string {
   return (v ?? '').replace(/\D/g, '')
 }
 
-/** Indicador de IE do destinatário: 1=contribuinte, 9=não contribuinte. */
-function indicadorIe(cpfCnpj: string): number {
-  // CNPJ (14 dígitos) presume contribuinte; CPF presume consumidor final
-  return soDigitos(cpfCnpj).length === 14 ? 1 : 9
+/**
+ * Indicador de IE do destinatário:
+ * 1 = contribuinte ICMS, 2 = isento, 9 = não contribuinte.
+ * Usa o valor cadastrado; se ausente, assume 9 (não contribuinte/consumidor final).
+ */
+function indicadorIe(indicadorCadastrado: string | null): number {
+  const v = Number(indicadorCadastrado)
+  return v === 1 || v === 2 ? v : 9
 }
 
 export function buildBrasilNFePayload(
@@ -27,6 +31,7 @@ export function buildBrasilNFePayload(
   const aliqCofins = filial.aliq_cofins ?? 0
 
   const cpfCnpjCli = soDigitos(cliente.cpf_cnpj)
+  const indIe = indicadorIe(cliente.indicador_ie)
 
   const produtos = itens.map((it, idx) => {
     const valorTotal = Math.round(it.quantidade * it.valorUnitario * 100) / 100
@@ -70,12 +75,13 @@ export function buildBrasilNFePayload(
     Numero:           Number(dados.numero) || 1,
     DataEmissao:      `${dados.data}T12:00:00Z`,
     Observacao:       dados.dadosAdicionais || '',
-    ConsumidorFinal:  indicadorIe(cpfCnpjCli) === 9,
+    ConsumidorFinal:  indIe === 9,
     Cliente: {
       CpfCnpj:     cpfCnpjCli,
       NmCliente:   cliente.nome || 'Consumidor',
-      IndicadorIe: indicadorIe(cpfCnpjCli),
-      Ie:          indicadorIe(cpfCnpjCli) === 9 ? 'ISENTO' : '',
+      IndicadorIe: indIe,
+      // IE só vai quando contribuinte (1); isento/não contribuinte = ISENTO
+      Ie:          indIe === 1 ? (soDigitos(cliente.inscricao_estadual) || 'ISENTO') : 'ISENTO',
       Endereco: {
         Cep:         soDigitos(cliente.cep),
         Logradouro:  cliente.rua || '',

@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   // Cliente (endereço)
   const { data: cliente } = await admin
     .from('clientes')
-    .select('nome, cpf_cnpj, email, telefone, cep, rua, numero, complemento, bairro, cidade, estado')
+    .select('nome, cpf_cnpj, inscricao_estadual, indicador_ie, email, telefone, cep, rua, numero, complemento, bairro, cidade, estado')
     .eq('id', pedido.cliente_id)
     .maybeSingle()
   if (!cliente) return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 })
@@ -70,6 +70,8 @@ export async function POST(req: NextRequest) {
   const faltaEndereco = !cliente.cep?.trim() || !cliente.rua?.trim() || !cliente.cidade?.trim() || !cliente.estado?.trim()
   if (faltaEndereco)
     return NextResponse.json({ error: 'Endereço do cliente incompleto. Preencha CEP, logradouro, cidade e UF no cadastro do cliente.' }, { status: 400 })
+  if (cliente.indicador_ie === '1' && !cliente.inscricao_estadual?.trim())
+    return NextResponse.json({ error: 'Cliente é contribuinte de ICMS mas está sem Inscrição Estadual. Complete o cadastro.' }, { status: 400 })
 
   const payload = buildBrasilNFePayload(filial, cliente, body.itens, {
     numero:          body.numero,

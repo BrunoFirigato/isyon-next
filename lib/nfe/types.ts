@@ -17,10 +17,12 @@ export interface FilialFiscal {
 }
 
 export interface ClienteFiscal {
-  nome:        string | null
-  cpf_cnpj:    string | null
-  email:       string | null
-  telefone:    string | null
+  nome:               string | null
+  cpf_cnpj:           string | null
+  inscricao_estadual: string | null
+  indicador_ie:       string | null
+  email:              string | null
+  telefone:           string | null
   cep:         string | null
   rua:         string | null
   numero:      string | null

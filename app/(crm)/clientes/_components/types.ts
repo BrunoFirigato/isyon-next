@@ -5,6 +5,8 @@ export interface Cliente {
   email: string | null
   telefone: string | null
   cpf_cnpj: string | null
+  inscricao_estadual: string | null
+  indicador_ie: string | null   // '1' contribuinte | '2' isento | '9' não contribuinte
   cep: string | null
   rua: string | null
   numero: string | null

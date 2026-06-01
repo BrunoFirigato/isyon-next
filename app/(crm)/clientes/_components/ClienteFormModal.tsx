@@ -21,6 +21,8 @@ type FormData = {
   email: string
   telefone: string
   cpf_cnpj: string
+  inscricao_estadual: string
+  indicador_ie: string
   tipo: string
   segmento: string
   status: string
@@ -55,6 +57,8 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
     email:       cliente?.email       ?? '',
     telefone:    cliente?.telefone    ?? '',
     cpf_cnpj:    cliente?.cpf_cnpj    ?? '',
+    inscricao_estadual: cliente?.inscricao_estadual ?? '',
+    indicador_ie:       cliente?.indicador_ie       ?? '9',  // padrão: não contribuinte
     tipo:        cliente?.tipo        ?? 'direto',
     segmento:    cliente?.segmento    ?? '',
     status:      cliente?.status      ?? 'prospect',
@@ -142,6 +146,12 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    if (form.indicador_ie === '1' && !form.inscricao_estadual.trim()) {
+      setError('Contribuinte de ICMS exige a Inscrição Estadual.')
+      return
+    }
+
     setSaving(true)
     setError('')
 
@@ -152,6 +162,8 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
       email:           form.email.trim()          || null,
       telefone:        form.telefone.trim()        || null,
       cpf_cnpj:        form.cpf_cnpj.trim()        || null,
+      inscricao_estadual: form.indicador_ie === '1' ? (form.inscricao_estadual.trim() || null) : null,
+      indicador_ie:    form.indicador_ie,
       tipo:            form.tipo,
       segmento:        form.segmento               || null,
       status:          form.status,
@@ -250,6 +262,24 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                     {!buscandoCnpj && cnpjStatus === 'success' && <p className="text-xs text-green-600 mt-1">Dados preenchidos automaticamente ✓</p>}
                     {!buscandoCnpj && cnpjStatus === 'notfound' && <p className="text-xs text-amber-600 mt-1">CNPJ não encontrado na Receita Federal</p>}
                   </div>
+
+                  <div>
+                    <label className={labelCls}>Contribuinte de ICMS <span className="text-gray-400 dark:text-gray-500 font-normal">(NF-e)</span></label>
+                    <select value={form.indicador_ie} onChange={(e) => set('indicador_ie', e.target.value)} className={selectCls}>
+                      <option value="9">Não contribuinte (consumidor final)</option>
+                      <option value="1">Contribuinte de ICMS</option>
+                      <option value="2">Contribuinte isento de Inscrição</option>
+                    </select>
+                  </div>
+
+                  {form.indicador_ie === '1' && (
+                    <div>
+                      <label className={labelCls}>Inscrição Estadual <span className="text-red-500">*</span></label>
+                      <input type="text" value={form.inscricao_estadual}
+                        onChange={(e) => set('inscricao_estadual', e.target.value)}
+                        placeholder="000.000.000.000" className={inputCls} />
+                    </div>
+                  )}
 
                   <div>
                     <label className={labelCls}>E-mail</label>
