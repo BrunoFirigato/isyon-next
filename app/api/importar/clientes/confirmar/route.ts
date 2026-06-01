@@ -20,24 +20,32 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient()
 
-  const payload = validas.map(r => ({
-    tenant_id:   usuario.tenant_id,
-    nome:        r.dados.nome?.trim(),
-    empresa:     r.dados.empresa?.trim()     || null,
-    email:       r.dados.email?.trim()       || null,
-    telefone:    r.dados.telefone?.trim()    || null,
-    cpf_cnpj:    r.dados.cpf_cnpj?.replace(/\D/g, '') || null,
-    status:      r.dados.status?.trim()      || 'ativo',
-    segmento:    r.dados.segmento?.trim()    || null,
-    origem:      r.dados.origem?.trim()      || null,
-    cep:         r.dados.cep?.replace(/\D/g, '') || null,
-    rua:         r.dados.rua?.trim()         || null,
-    numero:      r.dados.numero?.trim()      || null,
-    complemento: r.dados.complemento?.trim() || null,
-    bairro:      r.dados.bairro?.trim()      || null,
-    cidade:      r.dados.cidade?.trim()      || null,
-    estado:      r.dados.estado?.trim()      || null,
-  }))
+  const payload = validas.map(r => {
+    const doc = r.dados.cpf_cnpj?.replace(/\D/g, '') || ''
+    // Deriva o tipo de pessoa do documento; sem documento, assume jurídica (B2B)
+    const tipoPessoa = doc.length === 11 ? 'fisica' : 'juridica'
+
+    return {
+      tenant_id:    usuario.tenant_id,
+      nome:         r.dados.nome?.trim(),
+      empresa:      r.dados.empresa?.trim()     || null,
+      email:        r.dados.email?.trim()       || null,
+      telefone:     r.dados.telefone?.trim()    || null,
+      tipo_pessoa:  tipoPessoa,
+      cpf_cnpj:     doc || null,
+      indicador_ie: '9',  // não contribuinte por padrão; ajustado antes da emissão
+      status:       r.dados.status?.trim()      || 'ativo',
+      segmento:     r.dados.segmento?.trim()    || null,
+      origem:       r.dados.origem?.trim()      || null,
+      cep:          r.dados.cep?.replace(/\D/g, '') || null,
+      rua:          r.dados.rua?.trim()         || null,
+      numero:       r.dados.numero?.trim()      || null,
+      complemento:  r.dados.complemento?.trim() || null,
+      bairro:       r.dados.bairro?.trim()      || null,
+      cidade:       r.dados.cidade?.trim()      || null,
+      estado:       r.dados.estado?.trim()      || null,
+    }
+  })
 
   // Inserir em lotes de 100
   const BATCH = 100
