@@ -16,11 +16,23 @@ export default async function ConfiguracoesPage() {
   const tenantId = usuario?.tenant_id
   if (!tenantId) redirect('/dashboard')
 
-  const { data: tenantData } = await supabase
+  let { data: tenantData, error: tenantErr } = await supabase
     .from('tenants')
     .select('id, nome, plano, status, criado_em, segmentos, divisao_carteira')
     .eq('id', tenantId)
     .maybeSingle()
+
+  // Fallback: se a query falhar (ex: coluna nova ainda não migrada no banco),
+  // refaz com as colunas essenciais em vez de expulsar o usuário para o dashboard.
+  if (tenantErr) {
+    console.error('[configuracoes] select completo falhou, usando fallback:', tenantErr.message)
+    const fb = await supabase
+      .from('tenants')
+      .select('id, nome, plano, status, criado_em, segmentos')
+      .eq('id', tenantId)
+      .maybeSingle()
+    tenantData = fb.data ? { ...fb.data, divisao_carteira: false } : null
+  }
 
   if (!tenantData) redirect('/dashboard')
 
