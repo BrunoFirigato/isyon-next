@@ -102,7 +102,7 @@ export default function NcmSearch({ value, onChange, inputCls, labelCls }: Props
       )}
 
       {open && (results.length > 0 || loading) && (
-        <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
+        <div className="absolute z-20 mt-1 w-full min-w-[320px] max-h-72 overflow-y-auto bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
           {loading && results.length === 0 && (
             <p className="px-3 py-2 text-xs text-gray-400">Buscando...</p>
           )}
@@ -111,10 +111,10 @@ export default function NcmSearch({ value, onChange, inputCls, labelCls }: Props
               key={r.codigo}
               type="button"
               onClick={() => pick(r)}
-              className="w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-600 border-b border-gray-50 dark:border-gray-600 last:border-0"
+              className="w-full text-left px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-600 border-b border-gray-50 dark:border-gray-600 last:border-0"
             >
-              <span className="text-xs font-mono font-medium text-gray-900 dark:text-gray-100">{r.codigo}</span>
-              <span className="block text-[11px] text-gray-500 dark:text-gray-400 truncate">{r.descricao}</span>
+              <span className="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400">{r.codigo}</span>
+              <span className="block text-[11px] text-gray-600 dark:text-gray-300 leading-snug mt-0.5">{r.descricao}</span>
             </button>
           ))}
         </div>
