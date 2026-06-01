@@ -156,7 +156,7 @@ export default async function DashboardPage() {
   if (propsAVencer.length) resumo.push(`${propsAVencer.length} proposta${propsAVencer.length > 1 ? 's' : ''} vencendo`)
   if ((leadsNovo ?? 0) > 0) resumo.push(`${leadsNovo} lead${(leadsNovo ?? 0) > 1 ? 's' : ''} sem contato`)
 
-  const subline = !setupCompleto
+  const subline = mostrarOnboarding
     ? 'Vamos montar sua operação? Siga os primeiros passos abaixo. 🚀'
     : resumo.length ? `Você tem ${resumo.join(', ')}.`
     : 'Pipeline em dia! Ótimo momento pra prospectar novos clientes. 💪'
