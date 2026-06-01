@@ -50,6 +50,17 @@ export default function LeadFormModal({ lead, onClose }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    // Validações obrigatórias
+    if (!form.origem) {
+      setError('Selecione a origem do lead.')
+      return
+    }
+    if (!form.telefone.trim() && !form.email.trim()) {
+      setError('Informe ao menos um contato — telefone ou e-mail.')
+      return
+    }
+
     setSaving(true)
     setError('')
 
@@ -125,7 +136,9 @@ export default function LeadFormModal({ lead, onClose }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Telefone</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                Telefone <span className="text-gray-400 dark:text-gray-500 font-normal">(ou e-mail)</span>
+              </label>
               <input
                 type="tel"
                 value={form.telefone}
@@ -136,7 +149,9 @@ export default function LeadFormModal({ lead, onClose }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">E-mail</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                E-mail <span className="text-gray-400 dark:text-gray-500 font-normal">(ou telefone)</span>
+              </label>
               <input
                 type="email"
                 value={form.email}
@@ -162,10 +177,13 @@ export default function LeadFormModal({ lead, onClose }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Origem</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                Origem <span className="text-red-500">*</span>
+              </label>
               <select
                 value={form.origem}
                 onChange={(e) => set('origem', e.target.value)}
+                required
                 className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Selecione...</option>
