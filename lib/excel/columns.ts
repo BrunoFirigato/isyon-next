@@ -46,7 +46,7 @@ export const COLS_LEADS: ColDef[] = [
   { header: 'E-mail',     key: 'email',    width: 32 },
   { header: 'Telefone',   key: 'telefone', width: 18 },
   { header: 'Status',     key: 'status',   width: 14 }, // novo | contato | qualificado | perdido
-  { header: 'Origem',     key: 'origem',   width: 18 },
+  { header: 'Origem *',   key: 'origem',   width: 18 },
   { header: 'Observações',key: 'obs',      width: 45 },
 ]
 

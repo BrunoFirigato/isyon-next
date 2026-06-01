@@ -4,7 +4,7 @@ import { generateTemplate } from '@/lib/excel/generate'
 import { parseExcel } from '@/lib/excel/parse'
 import { COLS_LEADS, EXEMPLO_LEAD } from '@/lib/excel/columns'
 
-const REQUIRED = ['nome']
+const REQUIRED = ['nome', 'origem']
 const MAX_ROWS  = 1000
 
 export async function GET() {
@@ -31,6 +31,14 @@ export async function POST(req: NextRequest) {
 
   if (rows.length > MAX_ROWS)
     return NextResponse.json({ error: `Máximo de ${MAX_ROWS} linhas por importação.` }, { status: 400 })
+
+  // Regra "ao menos um contato": telefone OU e-mail
+  for (const row of rows) {
+    if (!row.dados.telefone?.trim() && !row.dados.email?.trim()) {
+      row.erros.push('Informe ao menos um contato (telefone ou e-mail)')
+      row.valido = false
+    }
+  }
 
   return NextResponse.json({
     rows,
