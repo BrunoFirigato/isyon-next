@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getCarteiraScope } from '@/lib/carteira'
 import ClientesView from './_components/ClientesView'
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 export default async function ClientesPage({ searchParams }: Props) {
   const { status, q, vendedor, parceiro } = await searchParams
   const supabase = await createClient()
+  const { restrict, vendedorId } = await getCarteiraScope(supabase)
 
   const [{ data: vendedores }, { data: parceiros }] = await Promise.all([
     supabase.from('vendedores').select('id, nome').eq('status', 'ativo').order('nome'),
@@ -34,6 +36,11 @@ export default async function ClientesPage({ searchParams }: Props) {
 
   if (vendedor) {
     query = query.or(`vendedor_maq_id.eq.${vendedor},vendedor_pec_id.eq.${vendedor}`)
+  }
+
+  // Restrição de carteira — vendedor só vê os próprios clientes
+  if (restrict && vendedorId) {
+    query = query.or(`vendedor_maq_id.eq.${vendedorId},vendedor_pec_id.eq.${vendedorId}`)
   }
 
   if (parceiro) {

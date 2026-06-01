@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getCarteiraScope } from '@/lib/carteira'
 import PropostasView from './_components/PropostasView'
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 export default async function PropostasPage({ searchParams }: Props) {
   const { status } = await searchParams
   const supabase = await createClient()
+  const { restrict, vendedorId } = await getCarteiraScope(supabase)
 
   let query = supabase
     .from('propostas')
@@ -17,6 +19,8 @@ export default async function PropostasPage({ searchParams }: Props) {
   if (status && status !== 'todos') {
     query = query.eq('status', status)
   }
+
+  if (restrict && vendedorId) query = query.eq('vendedor_id', vendedorId)
 
   const [{ data: propostas }, { data: clientes }] = await Promise.all([
     query,
