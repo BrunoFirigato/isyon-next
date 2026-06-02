@@ -51,11 +51,17 @@ export async function POST(req: NextRequest) {
   const erros: string[] = []
 
   for (let i = 0; i < payload.length; i += BATCH) {
-    const { error, count } = await admin
-      .from('produtos')
-      .insert(payload.slice(i, i + BATCH), { count: 'exact' })
-    if (error) erros.push(`Lote ${Math.floor(i / BATCH) + 1}: ${error.message}`)
-    else       inseridos += count ?? BATCH
+    const batch = payload.slice(i, i + BATCH)
+    const { error, count } = await admin.from('produtos').insert(batch, { count: 'exact' })
+
+    if (!error) { inseridos += count ?? batch.length; continue }
+
+    // Fallback: insere uma a uma para não perder o lote inteiro por causa de poucas linhas
+    for (const row of batch) {
+      const { error: rowErr } = await admin.from('produtos').insert(row)
+      if (rowErr) erros.push(`"${row.nome}": ${rowErr.message}`)
+      else inseridos++
+    }
   }
 
   return NextResponse.json({ ok: true, inseridos, erros })
