@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, Trash2, MapPin, LayoutGrid, Upload } from 'lucide-react'
+import { Plus, Search, X, Pencil, Trash2, MapPin, LayoutGrid, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import ClienteFormModal from './ClienteFormModal'
@@ -10,7 +10,7 @@ import ExportButton from '@/app/(crm)/_components/ExportButton'
 import ImportModal from '@/app/(crm)/_components/ImportModal'
 import {
   type Cliente, type VendedorRef, type ParceiroRef,
-  STATUS_CLIENTE, TIPOS,
+  STATUS_CLIENTE, TIPOS, CLIENTES_PAGE_SIZE, CLIENTE_COLS,
   tipoLabel, statusStyle, statusLabel,
   brl, formatDate,
 } from './types'
@@ -19,6 +19,9 @@ import { useSegmentos, segmentoLabel } from '@/app/(crm)/_components/SegmentosCo
 
 interface Props {
   clientes: Cliente[]
+  total: number
+  restrict: boolean
+  scopedVendedorId: string | null
   currentStatus: string
   currentQ: string
   currentVendedor: string
@@ -27,12 +30,72 @@ interface Props {
   parceiros: ParceiroRef[]
 }
 
-export default function ClientesView({ clientes, currentStatus, currentQ, currentVendedor, currentParceiro, vendedores, parceiros }: Props) {
+/** Números de página visíveis com reticências (ex.: 1 … 4 5 6 … 20). */
+function pageNumbers(current: number, totalPages: number): (number | '…')[] {
+  const set = new Set<number>()
+  ;[1, current - 1, current, current + 1, totalPages].forEach((p) => {
+    if (p >= 1 && p <= totalPages) set.add(p)
+  })
+  const sorted = [...set].sort((a, b) => a - b)
+  const out: (number | '…')[] = []
+  sorted.forEach((p, i) => {
+    if (i > 0 && p - sorted[i - 1] > 1) out.push('…')
+    out.push(p)
+  })
+  return out
+}
+
+export default function ClientesView({ clientes, total: totalProp, restrict, scopedVendedorId, currentStatus, currentQ, currentVendedor, currentParceiro, vendedores, parceiros }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [, startTransition] = useTransition()
   const toast = useToast()
   const segmentos = useSegmentos()
+
+  // Paginação
+  const [items, setItems] = useState<Cliente[]>(clientes)
+  const [total, setTotal] = useState(totalProp)
+  const [page, setPage]   = useState(1)
+  const [loadingPage, setLoadingPage] = useState(false)
+  const totalPages = Math.max(1, Math.ceil(total / CLIENTES_PAGE_SIZE))
+
+  useEffect(() => {
+    setItems(clientes)
+    setTotal(totalProp)
+    setPage(1)
+  }, [clientes, totalProp])
+
+  // Busca uma página aplicando os mesmos filtros do servidor (inclui carteira)
+  async function fetchPage(n: number): Promise<Cliente[]> {
+    const supabase = createClient()
+    let qy = supabase.from('clientes').select(CLIENTE_COLS).order('nome', { ascending: true })
+    if (currentStatus && currentStatus !== 'todos') qy = qy.eq('status', currentStatus)
+    if (currentQ.trim()) {
+      const termo = currentQ.trim()
+      qy = qy.or(`nome.ilike.%${termo}%,empresa.ilike.%${termo}%,email.ilike.%${termo}%,cpf_cnpj.ilike.%${termo}%,telefone.ilike.%${termo}%`)
+    }
+    if (currentVendedor) qy = qy.or(`vendedor_maq_id.eq.${currentVendedor},vendedor_pec_id.eq.${currentVendedor}`)
+    if (restrict && scopedVendedorId) qy = qy.or(`vendedor_maq_id.eq.${scopedVendedorId},vendedor_pec_id.eq.${scopedVendedorId}`)
+    if (currentParceiro) qy = qy.eq('parceiro_id', currentParceiro)
+    const { data, error } = await qy.range((n - 1) * CLIENTES_PAGE_SIZE, n * CLIENTES_PAGE_SIZE - 1)
+    if (error) { toast('Erro ao carregar clientes', 'error'); return [] }
+    return (data ?? []) as Cliente[]
+  }
+
+  async function goToPage(n: number) {
+    if (n === page || n < 1 || n > totalPages || loadingPage) return
+    setLoadingPage(true)
+    const rows = await fetchPage(n)
+    setItems(rows); setPage(n); setLoadingPage(false)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function loadMore() {
+    if (loadingPage) return
+    setLoadingPage(true)
+    const rows = await fetchPage(page + 1)
+    setItems((prev) => [...prev, ...rows]); setPage((p) => p + 1); setLoadingPage(false)
+  }
 
   const [search, setSearch]               = useState(currentQ)
   const [formOpen,   setFormOpen]   = useState(false)
@@ -79,8 +142,10 @@ export default function ClientesView({ clientes, currentStatus, currentQ, curren
     const { error } = await supabase.from('clientes').delete().eq('id', id)
     setDeletingId(null)
     if (error) { toast('Erro ao excluir cliente', 'error'); return }
+    // Remoção otimista
+    setItems((prev) => prev.filter((c) => c.id !== id))
+    setTotal((t) => Math.max(0, t - 1))
     toast('Cliente excluído', 'info')
-    router.refresh()
   }
 
   function endereco(c: Cliente) {
@@ -95,7 +160,7 @@ export default function ClientesView({ clientes, currentStatus, currentQ, curren
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Clientes</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {clientes.length} registro{clientes.length !== 1 ? 's' : ''}
+            {total} registro{total !== 1 ? 's' : ''}
             {currentStatus !== 'todos' && ` · ${statusLabel(currentStatus)}`}
           </p>
         </div>
@@ -201,7 +266,7 @@ export default function ClientesView({ clientes, currentStatus, currentQ, curren
       </form>
 
       {/* Lista vazia */}
-      {clientes.length === 0 && (
+      {total === 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm py-16 text-center">
           <p className="text-gray-400 dark:text-gray-500 text-sm">Nenhum cliente encontrado.</p>
           <button onClick={() => { setEditingCliente(null); setFormOpen(true) }}
@@ -212,7 +277,7 @@ export default function ClientesView({ clientes, currentStatus, currentQ, curren
       )}
 
       {/* Tabela — desktop */}
-      {clientes.length > 0 && (
+      {items.length > 0 && (
         <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -228,7 +293,7 @@ export default function ClientesView({ clientes, currentStatus, currentQ, curren
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {clientes.map((c) => {
+              {items.map((c) => {
                 const st = statusStyle(c.status)
                 return (
                   <>
@@ -306,10 +371,53 @@ export default function ClientesView({ clientes, currentStatus, currentQ, curren
         </div>
       )}
 
+      {/* Paginação numerada — desktop */}
+      {items.length > 0 && totalPages > 1 && (
+        <div className="hidden md:flex items-center justify-between mt-4">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Página {page} de {totalPages} · {total} registros
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1 || loadingPage}
+              className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            {pageNumbers(page, totalPages).map((p, i) =>
+              p === '…' ? (
+                <span key={`e${i}`} className="px-2 text-sm text-gray-400">…</span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => goToPage(p)}
+                  disabled={loadingPage}
+                  className={`min-w-[2rem] h-8 px-2 rounded-lg text-sm font-medium transition-colors ${
+                    p === page
+                      ? 'bg-blue-600 text-white'
+                      : 'border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {p}
+                </button>
+              )
+            )}
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages || loadingPage}
+              className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight size={15} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Cards — mobile */}
-      {clientes.length > 0 && (
+      {items.length > 0 && (
         <div className="md:hidden space-y-3">
-          {clientes.map((c) => {
+          {items.map((c) => {
             const st = statusStyle(c.status)
             return (
               <div key={c.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
@@ -371,6 +479,19 @@ export default function ClientesView({ clientes, currentStatus, currentQ, curren
               </div>
             )
           })}
+
+          {/* Carregar mais — mobile */}
+          {items.length < total && (
+            <button
+              onClick={loadMore}
+              disabled={loadingPage}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-60 transition-colors"
+            >
+              {loadingPage
+                ? <><Loader2 size={15} className="animate-spin" /> Carregando...</>
+                : <>Carregar mais <span className="text-gray-400">· {items.length} de {total}</span></>}
+            </button>
+          )}
         </div>
       )}
 

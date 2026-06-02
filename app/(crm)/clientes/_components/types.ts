@@ -60,6 +60,10 @@ export const ESTADOS_BR = [
   'RJ','RN','RS','RO','RR','SC','SP','SE','TO',
 ]
 
+// ── Paginação ─────────────────────────────────────────────────────────────────
+export const CLIENTES_PAGE_SIZE = 30
+export const CLIENTE_COLS = 'id, nome, empresa, email, telefone, tipo_pessoa, cpf_cnpj, inscricao_estadual, indicador_ie, cep, rua, numero, complemento, bairro, cidade, estado, tipo, segmento, status, valor_total, origem, lead_id, vendedor_maq_id, vendedor_pec_id, parceiro_id, criado_em, atualizado_em'
+
 export function tipoStyle(tipo: string | null) {
   const found = TIPOS.find((t) => t.value === tipo)
   return found && found.value !== 'todos' ? `${found.bg} ${found.text}` : 'bg-gray-100 text-gray-600'

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCarteiraScope } from '@/lib/carteira'
 import ClientesView from './_components/ClientesView'
+import { CLIENTE_COLS, CLIENTES_PAGE_SIZE } from './_components/types'
 
 interface Props {
   searchParams: Promise<{ status?: string; q?: string; vendedor?: string; parceiro?: string }>
@@ -18,9 +19,7 @@ export default async function ClientesPage({ searchParams }: Props) {
 
   let query = supabase
     .from('clientes')
-    .select(
-      'id, nome, empresa, email, telefone, tipo_pessoa, cpf_cnpj, inscricao_estadual, indicador_ie, cep, rua, numero, complemento, bairro, cidade, estado, tipo, segmento, status, valor_total, origem, lead_id, vendedor_maq_id, vendedor_pec_id, parceiro_id, criado_em, atualizado_em'
-    )
+    .select(CLIENTE_COLS, { count: 'exact' })
     .order('nome', { ascending: true })
 
   if (status && status !== 'todos') {
@@ -47,11 +46,17 @@ export default async function ClientesPage({ searchParams }: Props) {
     query = query.eq('parceiro_id', parceiro)
   }
 
-  const { data: clientes } = await query
+  // Só a primeira página; o total vem do count para montar a paginação
+  const { data: clientes, count } = await query.range(0, CLIENTES_PAGE_SIZE - 1)
 
   return (
     <ClientesView
+      // Remonta (reseta paginação) sempre que filtro/busca muda
+      key={`${status ?? 'todos'}-${q ?? ''}-${vendedor ?? ''}-${parceiro ?? ''}`}
       clientes={clientes ?? []}
+      total={count ?? 0}
+      restrict={restrict}
+      scopedVendedorId={restrict ? vendedorId : null}
       currentStatus={status ?? 'todos'}
       currentQ={q ?? ''}
       currentVendedor={vendedor ?? ''}
