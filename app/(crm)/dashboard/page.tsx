@@ -99,13 +99,13 @@ export default async function DashboardPage() {
     supabase.from('oportunidades').select('id, titulo, status, valor, etapa, criado_em, atualizado_em').order('criado_em', { ascending: false }),
     supabase.from('propostas').select('id, status, validade'),
     supabase.from('compromissos').select('id, titulo, tipo, data_hora, status').gte('data_hora', hoje0.toISOString()).lte('data_hora', hojeFim.toISOString()).order('data_hora'),
-    supabase.from('pedidos').select('valor').gte('criado_em', inicio),
+    supabase.from('pedidos').select('valor, status, nf_numero, nfe_chave').gte('criado_em', inicio),
     supabase.from('leads').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('*', { count: 'exact', head: true }).gte('criado_em', inicio),
     supabase.from('produtos').select('*', { count: 'exact', head: true }),
     supabase.from('empresas').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('criado_em').gte('criado_em', ha14),
-    supabase.from('pedidos').select('criado_em, valor').gte('criado_em', ha14),
+    supabase.from('pedidos').select('criado_em, valor, status, nf_numero, nfe_chave').gte('criado_em', ha14),
   ])
 
   const cfg = Object.fromEntries((config ?? []).map(c => [c.chave, c.valor]))
@@ -118,7 +118,11 @@ export default async function DashboardPage() {
   const opGanhasDoMes = opDoMes.filter(o => o.status === 'ganho')
   const taxaConversao = opDoMes.length > 0 ? Math.round((opGanhasDoMes.length / opDoMes.length) * 100) : 0
   const valorPipeline = opAbertas.reduce((s, o) => s + (o.valor ?? 0), 0)
-  const receitaMes = (pedidos ?? []).reduce((s, p) => s + (p.valor ?? 0), 0)
+  // Receita = pedidos FATURADOS (com NF-e) e não cancelados; sem nota é só provisão
+  const faturado = (p: { nf_numero?: string | null; nfe_chave?: string | null }) => !!(p?.nf_numero || p?.nfe_chave)
+  const pedidosMes = (pedidos ?? []).filter(p => p.status !== 'cancelado')
+  const receitaMes  = pedidosMes.filter(faturado).reduce((s, p) => s + (p.valor ?? 0), 0)
+  const provisaoMes = pedidosMes.filter(p => !faturado(p)).reduce((s, p) => s + (p.valor ?? 0), 0)
 
   // Onboarding
   const passos = [
@@ -177,7 +181,7 @@ export default async function DashboardPage() {
 
   // Séries dos sparklines
   const serieLeads = serieContagem((leads14 ?? []).map(l => l.criado_em))
-  const serieReceita = serieSoma(pedidos14 ?? [])
+  const serieReceita = serieSoma((pedidos14 ?? []).filter(p => p.status !== 'cancelado' && faturado(p)))
 
   const acaoBtn = 'inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors'
 
@@ -259,7 +263,7 @@ export default async function DashboardPage() {
         <KpiSpark label="Leads no mês" value={String(leadsDoMes ?? 0)} icon={<Target size={16} />} serie={serieLeads} color="#3b82f6" />
         <KpiSpark label="Pipeline aberto" value={brl(valorPipeline)} sub={`${opAbertas.length} oport.`} icon={<TrendingUp size={16} />} serie={pipeline.map(p => p.valor)} color="#8b5cf6" />
         <KpiSpark label="Conversão mês" value={`${taxaConversao}%`} sub={`${opGanhasDoMes.length}/${opDoMes.length}`} icon={<CheckCircle2 size={16} />} serie={[taxaConversao]} color="#f59e0b" flat />
-        <KpiSpark label="Receita no mês" value={brl(receitaMes)} icon={<DollarSign size={16} />} serie={serieReceita} color="#10b981" />
+        <KpiSpark label="Receita faturada" value={brl(receitaMes)} sub={provisaoMes > 0 ? `${brl(provisaoMes)} a faturar` : undefined} icon={<DollarSign size={16} />} serie={serieReceita} color="#10b981" />
       </div>
 
       {/* Meta do mês */}
