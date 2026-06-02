@@ -76,7 +76,7 @@ export default function NotificationBell() {
             subtitulo: diffDays === 0
               ? 'Vence hoje!'
               : `Vence em ${diffDays} dia${diffDays !== 1 ? 's' : ''}`,
-            href: '/propostas',
+            href: '/propostas?status=enviada',
             urgente: diffDays <= 1,
           }
         }),
@@ -104,6 +104,8 @@ export default function NotificationBell() {
 
   const urgentes = items.filter(i => i.urgente).length
   const count    = items.length
+  const temCompromissos = items.some(i => i.tipo === 'compromisso')
+  const temPropostas    = items.some(i => i.tipo === 'proposta')
 
   return (
     <div ref={ref} className="relative">
@@ -170,13 +172,23 @@ export default function NotificationBell() {
           </div>
 
           {loaded && items.length > 0 && (
-            <div className="px-4 py-2.5 border-t border-gray-100 dark:border-gray-700">
-              <button
-                onClick={() => navegar('/agenda')}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Ver agenda completa →
-              </button>
+            <div className="px-4 py-2.5 border-t border-gray-100 dark:border-gray-700 flex items-center gap-4">
+              {temCompromissos && (
+                <button
+                  onClick={() => navegar('/agenda')}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Ver agenda →
+                </button>
+              )}
+              {temPropostas && (
+                <button
+                  onClick={() => navegar('/propostas?status=enviada')}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Ver propostas →
+                </button>
+              )}
             </div>
           )}
         </div>
