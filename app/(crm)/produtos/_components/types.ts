@@ -24,6 +24,10 @@ export const TIPOS = [
   { value: 'servico', label: 'Serviço' },
 ]
 
+// ── Paginação ─────────────────────────────────────────────────────────────────
+export const PRODUTOS_PAGE_SIZE = 30
+export const PRODUTO_COLS = 'id, tenant_id, codigo, nome, tipo, unidade, preco, custo, descricao, ncm, cod_servico, cest, origem, segmento, ativo, criado_em, atualizado_em'
+
 export const UNIDADES = ['UN', 'PÇ', 'CX', 'KG', 'LT', 'MT', 'BR', 'HR']
 
 export const ORIGENS = [

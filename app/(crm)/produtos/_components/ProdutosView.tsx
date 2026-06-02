@@ -1,29 +1,88 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, Trash2, Package, Wrench, Upload } from 'lucide-react'
+import { Plus, Search, X, Pencil, Trash2, Package, Wrench, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ProdutoFormModal from './ProdutoFormModal'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import ImportModal  from '@/app/(crm)/_components/ImportModal'
 import {
-  type Produto, TIPOS, tipoStyle, brl, formatDate,
+  type Produto, TIPOS, PRODUTOS_PAGE_SIZE, PRODUTO_COLS, tipoStyle, brl, formatDate,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 
 interface Props {
   produtos: Produto[]
+  total: number
   currentTipo: string
   currentAtivo: string
   currentQ: string
 }
 
-export default function ProdutosView({ produtos, currentTipo, currentAtivo, currentQ }: Props) {
+/** Números de página visíveis com reticências (ex.: 1 … 4 5 6 … 20). */
+function pageNumbers(current: number, totalPages: number): (number | '…')[] {
+  const set = new Set<number>()
+  ;[1, current - 1, current, current + 1, totalPages].forEach((p) => {
+    if (p >= 1 && p <= totalPages) set.add(p)
+  })
+  const sorted = [...set].sort((a, b) => a - b)
+  const out: (number | '…')[] = []
+  sorted.forEach((p, i) => {
+    if (i > 0 && p - sorted[i - 1] > 1) out.push('…')
+    out.push(p)
+  })
+  return out
+}
+
+export default function ProdutosView({ produtos, total: totalProp, currentTipo, currentAtivo, currentQ }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [, startTransition] = useTransition()
   const toast = useToast()
+
+  // Paginação
+  const [items, setItems] = useState<Produto[]>(produtos)
+  const [total, setTotal] = useState(totalProp)
+  const [page, setPage]   = useState(1)
+  const [loadingPage, setLoadingPage] = useState(false)
+  const totalPages = Math.max(1, Math.ceil(total / PRODUTOS_PAGE_SIZE))
+
+  useEffect(() => {
+    setItems(produtos)
+    setTotal(totalProp)
+    setPage(1)
+  }, [produtos, totalProp])
+
+  async function fetchPage(n: number): Promise<Produto[]> {
+    const supabase = createClient()
+    let qy = supabase.from('produtos').select(PRODUTO_COLS).order('nome')
+    if (currentTipo && currentTipo !== 'todos') qy = qy.eq('tipo', currentTipo)
+    if (currentAtivo === 'ativo')   qy = qy.eq('ativo', true)
+    if (currentAtivo === 'inativo') qy = qy.eq('ativo', false)
+    if (currentQ.trim()) {
+      const termo = currentQ.trim()
+      qy = qy.or(`nome.ilike.%${termo}%,codigo.ilike.%${termo}%,ncm.ilike.%${termo}%`)
+    }
+    const { data, error } = await qy.range((n - 1) * PRODUTOS_PAGE_SIZE, n * PRODUTOS_PAGE_SIZE - 1)
+    if (error) { toast('Erro ao carregar produtos', 'error'); return [] }
+    return (data ?? []) as Produto[]
+  }
+
+  async function goToPage(n: number) {
+    if (n === page || n < 1 || n > totalPages || loadingPage) return
+    setLoadingPage(true)
+    const rows = await fetchPage(n)
+    setItems(rows); setPage(n); setLoadingPage(false)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function loadMore() {
+    if (loadingPage) return
+    setLoadingPage(true)
+    const rows = await fetchPage(page + 1)
+    setItems((prev) => [...prev, ...rows]); setPage((p) => p + 1); setLoadingPage(false)
+  }
 
   const [search, setSearch] = useState(currentQ)
   const [formOpen, setFormOpen] = useState(false)
@@ -56,8 +115,10 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
     const { error } = await supabase.from('produtos').delete().eq('id', id)
     setDeletingId(null)
     if (error) { toast('Erro ao excluir produto', 'error'); return }
+    // Remoção otimista
+    setItems((prev) => prev.filter((p) => p.id !== id))
+    setTotal((t) => Math.max(0, t - 1))
     toast('Produto excluído', 'info')
-    router.refresh()
   }
 
   const ativos = [
@@ -72,7 +133,7 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Produtos</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {produtos.length} {produtos.length !== 1 ? 'itens' : 'item'}
+            {total} {total !== 1 ? 'itens' : 'item'}
             {currentTipo !== 'todos' && ` · ${currentTipo === 'servico' ? 'Serviços' : 'Produtos'}`}
           </p>
         </div>
@@ -154,7 +215,7 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
       </form>
 
       {/* Lista vazia */}
-      {produtos.length === 0 && (
+      {total === 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm py-16 text-center">
           <Package size={32} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
           <p className="text-gray-400 dark:text-gray-500 text-sm">Nenhum produto encontrado.</p>
@@ -168,7 +229,7 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
       )}
 
       {/* Tabela desktop */}
-      {produtos.length > 0 && (
+      {items.length > 0 && (
         <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -185,7 +246,7 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {produtos.map((p) => (
+              {items.map((p) => (
                 <tr key={p.id} className="hover:bg-blue-50/40 dark:hover:bg-gray-700/50 transition-colors group">
                   <td className="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">{p.codigo ?? '—'}</td>
                   <td className="px-4 py-3">
@@ -208,7 +269,7 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 justify-end opacity-70 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => { setEditingProduto(p); setFormOpen(true) }}
                         className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"
@@ -232,10 +293,53 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
         </div>
       )}
 
+      {/* Paginação numerada — desktop */}
+      {items.length > 0 && totalPages > 1 && (
+        <div className="hidden md:flex items-center justify-between mt-4">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Página {page} de {totalPages} · {total} itens
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1 || loadingPage}
+              className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            {pageNumbers(page, totalPages).map((p, i) =>
+              p === '…' ? (
+                <span key={`e${i}`} className="px-2 text-sm text-gray-400">…</span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => goToPage(p)}
+                  disabled={loadingPage}
+                  className={`min-w-[2rem] h-8 px-2 rounded-lg text-sm font-medium transition-colors ${
+                    p === page
+                      ? 'bg-blue-600 text-white'
+                      : 'border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {p}
+                </button>
+              )
+            )}
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages || loadingPage}
+              className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight size={15} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Cards mobile */}
-      {produtos.length > 0 && (
+      {items.length > 0 && (
         <div className="md:hidden space-y-3">
-          {produtos.map((p) => (
+          {items.map((p) => (
             <div key={p.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex-1 min-w-0">
@@ -291,6 +395,19 @@ export default function ProdutosView({ produtos, currentTipo, currentAtivo, curr
               )}
             </div>
           ))}
+
+          {/* Carregar mais — mobile */}
+          {items.length < total && (
+            <button
+              onClick={loadMore}
+              disabled={loadingPage}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-60 transition-colors"
+            >
+              {loadingPage
+                ? <><Loader2 size={15} className="animate-spin" /> Carregando...</>
+                : <>Carregar mais <span className="text-gray-400">· {items.length} de {total}</span></>}
+            </button>
+          )}
         </div>
       )}
 
