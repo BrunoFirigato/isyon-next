@@ -22,15 +22,27 @@ export default async function PedidosPage({ searchParams }: Props) {
 
   if (restrict && vendedorId) query = query.eq('vendedor_id', vendedorId)
 
-  const [{ data: pedidos }, { data: clientes }] = await Promise.all([
+  const [
+    { data: pedidos },
+    { data: clientes },
+    { data: vendedores },
+    { data: empresas },
+    { data: propostaLinks },
+  ] = await Promise.all([
     query,
     supabase.from('clientes').select('id, nome, empresa').order('nome'),
+    supabase.from('vendedores').select('id, nome'),
+    supabase.from('empresas').select('id, nome, sigla'),
+    supabase.from('propostas').select('id, numero'),
   ])
 
   return (
     <PedidosView
       pedidos={pedidos ?? []}
       clientes={clientes ?? []}
+      vendedores={vendedores ?? []}
+      empresas={empresas ?? []}
+      propostaLinks={propostaLinks ?? []}
       currentStatus={status ?? 'todos'}
     />
   )

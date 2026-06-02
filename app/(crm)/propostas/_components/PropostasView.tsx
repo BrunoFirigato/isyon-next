@@ -328,17 +328,27 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
                     {statusLabel(p.status)}
                   </span>
 
-                  {/* Gerar pedido — visível na proposta aprovada */}
+                  {/* Proposta aceita: gerar pedido — ou, se já gerou, link pro pedido */}
                   {p.status === 'aprovada' && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); gerarPedido(p) }}
-                      disabled={gerandoId === p.id}
-                      title="Gerar pedido a partir desta proposta"
-                      className="shrink-0 inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors"
-                    >
-                      <ShoppingCart size={13} />
-                      <span className="hidden sm:inline">{gerandoId === p.id ? 'Gerando...' : 'Gerar pedido'}</span>
-                    </button>
+                    pedidoNum ? (
+                      <span
+                        onClick={(e) => { e.stopPropagation(); router.push('/pedidos') }}
+                        title="Pedido já gerado — abrir pedidos"
+                        className="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                      >
+                        <ShoppingCart size={12} /> {pedidoNum}
+                      </span>
+                    ) : (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); gerarPedido(p) }}
+                        disabled={gerandoId === p.id}
+                        title="Gerar pedido a partir desta proposta"
+                        className="shrink-0 inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+                      >
+                        <ShoppingCart size={13} />
+                        <span className="hidden sm:inline">{gerandoId === p.id ? 'Gerando...' : 'Gerar pedido'}</span>
+                      </button>
+                    )
                   )}
 
                   {/* Ações */}

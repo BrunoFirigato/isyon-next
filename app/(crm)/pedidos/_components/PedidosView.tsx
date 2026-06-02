@@ -18,13 +18,20 @@ import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 import { useSegmentos, segmentoLabel } from '@/app/(crm)/_components/SegmentosContext'
 
+interface VendedorRef { id: string; nome: string }
+interface EmpresaRef  { id: string; nome: string; sigla: string }
+interface PropostaLink { id: string; numero: string | null }
+
 interface Props {
   pedidos: Pedido[]
   clientes: ClienteRef[]
+  vendedores: VendedorRef[]
+  empresas: EmpresaRef[]
+  propostaLinks: PropostaLink[]
   currentStatus: string
 }
 
-export default function PedidosView({ pedidos, clientes, currentStatus }: Props) {
+export default function PedidosView({ pedidos, clientes, vendedores, empresas, propostaLinks, currentStatus }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [, startTransition] = useTransition()
@@ -32,6 +39,11 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
   const segmentos = useSegmentos()
   const { perfil } = useTenantConfig()
   const podeAprovar = perfil === 'admin' || perfil === 'gestor'
+
+  // Lookups de rastreabilidade
+  const vendedorMap = Object.fromEntries(vendedores.map(v => [v.id, v.nome]))
+  const empresaMap  = Object.fromEntries(empresas.map(e => [e.id, e]))
+  const propostaMap = Object.fromEntries(propostaLinks.map(p => [p.id, p.numero]))
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingPedido, setEditingPedido] = useState<Pedido | null>(null)
@@ -54,7 +66,7 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
   }
 
   const STATUS_LABEL: Record<string, string> = {
-    aguardando: 'Aguardando', em_producao: 'Em produção',
+    aguardando: 'Aguardando processamento', em_producao: 'Em produção',
     entregue: 'Entregue', cancelado: 'Cancelado',
   }
 
@@ -144,6 +156,9 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
             const expanded = expandedId === p.id
             const itens = p.itens ?? []
             const nomeCliente = clienteNome(p.cliente_id)
+            const vend = p.vendedor_id ? (vendedorMap[p.vendedor_id] ?? null) : null
+            const emp = p.empresa_id ? empresaMap[p.empresa_id] : null
+            const propNum = p.proposta_id ? (propostaMap[p.proposta_id] ?? null) : null
 
             return (
               <div key={p.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
@@ -249,6 +264,14 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
                       <span className={`inline-block text-xs font-medium px-2 py-1 rounded-lg ${statusStyle(p.status)}`}>
                         {statusLabel(p.status)}
                       </span>
+                    </div>
+
+                    {/* Rastreabilidade / metadados (mesma estrutura da proposta) */}
+                    <div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 border-b border-gray-100 dark:border-gray-700">
+                      <Meta label="Origem" value={propNum ? `Proposta ${propNum}` : 'Cadastro manual'} destaque={!!propNum} />
+                      <Meta label="Vendedor" value={vend ?? '—'} />
+                      <Meta label="Filial emissora" value={emp ? `${emp.nome} (${emp.sigla})` : '—'} />
+                      <Meta label="Criado em" value={formatDate(p.criado_em)} />
                     </div>
 
                     {/* Itens */}
@@ -361,5 +384,17 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
         />
       )}
     </>
+  )
+}
+
+// Campo de metadado auto-rotulado (rótulo em cima, valor embaixo)
+function Meta({ label, value, destaque }: { label: string; value: string; destaque?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{label}</p>
+      <p className={`text-sm truncate ${destaque ? 'font-semibold text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}`}>
+        {value}
+      </p>
+    </div>
   )
 }
