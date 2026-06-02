@@ -224,6 +224,11 @@ export default async function ImprimirProposta({ params }: Props) {
             <div className="border-t border-gray-300 pt-1">{empresa?.razao_social ?? empresa?.nome ?? 'Empresa'}</div>
             <div className="border-t border-gray-300 pt-1">Aceite do cliente</div>
           </div>
+
+          {/* Crédito do sistema — divulgação discreta do Isyon */}
+          <p className="mt-8 text-center text-[10px] text-gray-400">
+            Documento gerado por <span className="font-semibold text-gray-600">Isyon CRM</span> · crm.isyon.com.br
+          </p>
         </footer>
       </div>
     </div>
