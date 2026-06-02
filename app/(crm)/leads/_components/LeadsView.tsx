@@ -1,22 +1,38 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid, Mail, MessageCircle, Send, Upload } from 'lucide-react'
+import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid, Mail, MessageCircle, Send, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import ImportModal  from '@/app/(crm)/_components/ImportModal'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LeadFormModal from './LeadFormModal'
 import ConvertModal from './ConvertModal'
-import { type Lead, STATUS_LEADS, SCORE_OPTIONS, statusStyle, statusLabel, formatDate, scoreInfo } from './types'
+import { type Lead, STATUS_LEADS, SCORE_OPTIONS, LEADS_PAGE_SIZE, LEAD_COLS, statusStyle, statusLabel, formatDate, scoreInfo } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 
 interface Props {
   leads: Lead[]
+  total: number
   currentStatus: string
   currentQ: string
+}
+
+/** Calcula os números de página visíveis, com reticências (ex.: 1 … 4 5 6 … 20). */
+function pageNumbers(current: number, totalPages: number): (number | '…')[] {
+  const set = new Set<number>()
+  ;[1, current - 1, current, current + 1, totalPages].forEach((p) => {
+    if (p >= 1 && p <= totalPages) set.add(p)
+  })
+  const sorted = [...set].sort((a, b) => a - b)
+  const out: (number | '…')[] = []
+  sorted.forEach((p, i) => {
+    if (i > 0 && p - sorted[i - 1] > 1) out.push('…')
+    out.push(p)
+  })
+  return out
 }
 
 const DEFAULT_WA_TEMPLATE = 'Olá {nome}, tudo bem? Gostaria de entrar em contato para conhecer melhor suas necessidades.'
@@ -29,12 +45,57 @@ function formatPhone(tel: string) {
   return d.startsWith('55') && d.length >= 12 ? d : `55${d}`
 }
 
-export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
+export default function LeadsView({ leads, total: totalProp, currentStatus, currentQ }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [, startTransition] = useTransition()
   const toast = useToast()
   const { tenantId, whatsappTemplate, emailTemplateAssunto, emailTemplateCorpo } = useTenantConfig()
+
+  // Paginação: items é a fatia exibida; total é o universo filtrado
+  const [items, setItems] = useState<Lead[]>(leads)
+  const [total, setTotal] = useState(totalProp)
+  const [page, setPage]   = useState(1)
+  const [loadingPage, setLoadingPage] = useState(false)
+  const totalPages = Math.max(1, Math.ceil(total / LEADS_PAGE_SIZE))
+
+  // Quando o servidor reenvia dados (busca, filtro, criação/edição), reseta a paginação
+  useEffect(() => {
+    setItems(leads)
+    setTotal(totalProp)
+    setPage(1)
+  }, [leads, totalProp])
+
+  // Busca uma página no banco (respeitando filtro/busca atuais via RLS do tenant)
+  async function fetchPage(n: number): Promise<Lead[]> {
+    const supabase = createClient()
+    let qy = supabase.from('leads').select(LEAD_COLS).order('criado_em', { ascending: false })
+    if (currentStatus && currentStatus !== 'todos') qy = qy.eq('status', currentStatus)
+    if (currentQ.trim()) {
+      const termo = currentQ.trim()
+      qy = qy.or(`nome.ilike.%${termo}%,empresa.ilike.%${termo}%,email.ilike.%${termo}%,telefone.ilike.%${termo}%`)
+    }
+    const { data, error } = await qy.range((n - 1) * LEADS_PAGE_SIZE, n * LEADS_PAGE_SIZE - 1)
+    if (error) { toast('Erro ao carregar leads', 'error'); return [] }
+    return (data ?? []) as Lead[]
+  }
+
+  // Desktop: troca a janela exibida pela página clicada
+  async function goToPage(n: number) {
+    if (n === page || n < 1 || n > totalPages || loadingPage) return
+    setLoadingPage(true)
+    const rows = await fetchPage(n)
+    setItems(rows); setPage(n); setLoadingPage(false)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Mobile: acrescenta a próxima página ao final
+  async function loadMore() {
+    if (loadingPage) return
+    setLoadingPage(true)
+    const rows = await fetchPage(page + 1)
+    setItems((prev) => [...prev, ...rows]); setPage((p) => p + 1); setLoadingPage(false)
+  }
 
   const [search, setSearch] = useState(currentQ)
   const [formOpen,   setFormOpen]   = useState(false)
@@ -145,8 +206,10 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
     const { error } = await supabase.from('leads').delete().eq('id', id)
     setDeletingId(null)
     if (error) { toast('Erro ao excluir lead', 'error'); return }
+    // Remoção otimista — evita recarregar a página inteira
+    setItems((prev) => prev.filter((l) => l.id !== id))
+    setTotal((t) => Math.max(0, t - 1))
     toast('Lead excluído', 'info')
-    router.refresh()
   }
 
   return (
@@ -156,7 +219,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Leads</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {leads.length} lead{leads.length !== 1 ? 's' : ''}
+            {total} lead{total !== 1 ? 's' : ''}
             {currentStatus !== 'todos' && ` · ${statusLabel(currentStatus)}`}
           </p>
         </div>
@@ -231,7 +294,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
       </form>
 
       {/* Legenda do score — só aparece quando há leads pontuados */}
-      {leads.some((l) => l.score) && (
+      {items.some((l) => l.score) && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4 text-xs text-gray-400 dark:text-gray-500">
           <span className="font-medium text-gray-500 dark:text-gray-400">Score do lead:</span>
           {SCORE_OPTIONS.map((s) => (
@@ -243,7 +306,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
       )}
 
       {/* Lista vazia */}
-      {leads.length === 0 && (
+      {total === 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm py-16 text-center">
           <p className="text-gray-400 dark:text-gray-500 text-sm">Nenhum lead encontrado.</p>
           <button
@@ -256,7 +319,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
       )}
 
       {/* Tabela — desktop */}
-      {leads.length > 0 && (
+      {items.length > 0 && (
         <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -270,7 +333,7 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {leads.map((lead) => (
+              {items.map((lead) => (
                 <tr key={lead.id} className="hover:bg-blue-50/30 dark:hover:bg-gray-700/50 transition-colors group">
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
@@ -349,10 +412,53 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
         </div>
       )}
 
+      {/* Paginação numerada — desktop */}
+      {items.length > 0 && totalPages > 1 && (
+        <div className="hidden md:flex items-center justify-between mt-4">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Página {page} de {totalPages} · {total} leads
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1 || loadingPage}
+              className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            {pageNumbers(page, totalPages).map((p, i) =>
+              p === '…' ? (
+                <span key={`e${i}`} className="px-2 text-sm text-gray-400">…</span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => goToPage(p)}
+                  disabled={loadingPage}
+                  className={`min-w-[2rem] h-8 px-2 rounded-lg text-sm font-medium transition-colors ${
+                    p === page
+                      ? 'bg-blue-600 text-white'
+                      : 'border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {p}
+                </button>
+              )
+            )}
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages || loadingPage}
+              className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight size={15} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Cards — mobile */}
-      {leads.length > 0 && (
+      {items.length > 0 && (
         <div className="md:hidden space-y-3">
-          {leads.map((lead) => (
+          {items.map((lead) => (
             <div key={lead.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div>
@@ -415,6 +521,19 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
               </div>
             </div>
           ))}
+
+          {/* Carregar mais — mobile */}
+          {items.length < total && (
+            <button
+              onClick={loadMore}
+              disabled={loadingPage}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-60 transition-colors"
+            >
+              {loadingPage
+                ? <><Loader2 size={15} className="animate-spin" /> Carregando...</>
+                : <>Carregar mais <span className="text-gray-400">· {items.length} de {total}</span></>}
+            </button>
+          )}
         </div>
       )}
 

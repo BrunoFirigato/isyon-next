@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import LeadsView from './_components/LeadsView'
+import { LEAD_COLS, LEADS_PAGE_SIZE } from './_components/types'
 
 interface Props {
   searchParams: Promise<{ status?: string; q?: string }>
@@ -11,7 +12,7 @@ export default async function LeadsPage({ searchParams }: Props) {
 
   let query = supabase
     .from('leads')
-    .select('id, nome, empresa, email, telefone, status, origem, obs, vendedor_id, cargo, cidade, estado, faturamento, funcionarios, score, criado_em, atualizado_em')
+    .select(LEAD_COLS, { count: 'exact' })
     .order('criado_em', { ascending: false })
 
   if (status && status !== 'todos') {
@@ -25,11 +26,15 @@ export default async function LeadsPage({ searchParams }: Props) {
     )
   }
 
-  const { data: leads } = await query
+  // Só a primeira página; o total vem do count para montar a paginação
+  const { data: leads, count } = await query.range(0, LEADS_PAGE_SIZE - 1)
 
   return (
     <LeadsView
+      // Remonta (reseta paginação) sempre que o filtro/busca muda
+      key={`${status ?? 'todos'}-${q ?? ''}`}
       leads={leads ?? []}
+      total={count ?? 0}
       currentStatus={status ?? 'todos'}
       currentQ={q ?? ''}
     />

@@ -50,6 +50,11 @@ export const ESTADOS = [
   'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
 ]
 
+// ── Paginação ─────────────────────────────────────────────────────────────────
+export const LEADS_PAGE_SIZE = 30
+// Colunas carregadas em toda listagem de lead (servidor e "carregar mais" no cliente)
+export const LEAD_COLS = 'id, nome, empresa, email, telefone, status, origem, obs, vendedor_id, cargo, cidade, estado, faturamento, funcionarios, score, criado_em, atualizado_em'
+
 export const STATUS_LEADS = [
   { value: 'todos', label: 'Todos' },
   { value: 'novo', label: 'Novo', bg: 'bg-blue-100', text: 'text-blue-700' },
