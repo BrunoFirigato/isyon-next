@@ -204,9 +204,9 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
       })
       if (errPed) { toast(`Erro ao gerar pedido: ${errPed.message}`, 'error'); return }
 
-      // 5) Fecha a oportunidade (ganha) e promove o prospect a cliente ativo
+      // 5) Fecha a oportunidade (ganha), adotando o valor real da proposta, e promove o prospect
       if (p.oportunidade_id) {
-        await supabase.from('oportunidades').update({ status: 'ganho' }).eq('id', p.oportunidade_id)
+        await supabase.from('oportunidades').update({ status: 'ganho', valor: p.valor }).eq('id', p.oportunidade_id)
       }
       if (p.cliente_id) {
         await supabase.from('clientes').update({ status: 'ativo' })

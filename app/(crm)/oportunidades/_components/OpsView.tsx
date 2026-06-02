@@ -57,7 +57,16 @@ export default function OpsView({ ops }: Props) {
 
   async function handleGanho(op: Oportunidade) {
     const supabase = createClient()
-    await supabase.from('oportunidades').update({ status: 'ganho' }).eq('id', op.id)
+
+    // Adota o valor real da proposta aceita (mais recente), se houver — senão mantém a estimativa
+    const { data: prop } = await supabase
+      .from('propostas').select('valor')
+      .eq('oportunidade_id', op.id).eq('status', 'aprovada')
+      .order('criado_em', { ascending: false }).limit(1).maybeSingle()
+    const updates = prop?.valor != null
+      ? { status: 'ganho', valor: prop.valor }
+      : { status: 'ganho' }
+    await supabase.from('oportunidades').update(updates).eq('id', op.id)
 
     // Promove o prospect a cliente ativo e abre o cadastro para completar dados fiscais
     if (op.cliente_id) {
