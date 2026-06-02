@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LeadFormModal from './LeadFormModal'
 import ConvertModal from './ConvertModal'
-import { type Lead, STATUS_LEADS, statusStyle, statusLabel, formatDate, scoreInfo } from './types'
+import { type Lead, STATUS_LEADS, SCORE_OPTIONS, statusStyle, statusLabel, formatDate, scoreInfo } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 
@@ -229,6 +229,18 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
           Buscar
         </button>
       </form>
+
+      {/* Legenda do score — só aparece quando há leads pontuados */}
+      {leads.some((l) => l.score) && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4 text-xs text-gray-400 dark:text-gray-500">
+          <span className="font-medium text-gray-500 dark:text-gray-400">Score do lead:</span>
+          {SCORE_OPTIONS.map((s) => (
+            <span key={s.value} className="inline-flex items-center gap-1">
+              <span>{s.emoji}</span> {s.label}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Lista vazia */}
       {leads.length === 0 && (
