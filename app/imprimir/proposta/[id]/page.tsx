@@ -161,40 +161,39 @@ export default async function ImprimirProposta({ params }: Props) {
           </tbody>
         </table>
 
-        {/* Totais */}
-        <div className="flex justify-end mt-4">
-          <div className="w-64 text-sm">
-            <div className="flex justify-between py-1 text-gray-600"><span>Subtotal</span><span>{brl(subtotal)}</span></div>
+        {/* Resumo financeiro: totais + pagamento num bloco único (um total só) */}
+        <div className="flex justify-end mt-5">
+          <div className="w-80 rounded-lg border p-4" style={{ borderColor: cor }}>
+            <div className="flex justify-between py-0.5 text-sm text-gray-600"><span>Subtotal</span><span>{brl(subtotal)}</span></div>
             {descontoPct > 0 && (
-              <div className="flex justify-between py-1 text-green-600"><span>Desconto ({descontoPct}%)</span><span>- {brl(descontoVal)}</span></div>
+              <div className="flex justify-between py-0.5 text-sm text-green-600"><span>Desconto ({descontoPct}%)</span><span>- {brl(descontoVal)}</span></div>
             )}
-            <div className="flex justify-between py-2 mt-1 border-t-2 font-bold text-base text-gray-900" style={{ borderColor: cor }}>
+            <div className="flex justify-between py-2 mt-1 border-t-2 font-bold text-lg text-gray-900" style={{ borderColor: cor }}>
               <span>Total</span><span>{brl(total)}</span>
             </div>
+
+            {cond && (
+              <div className="mt-3 pt-3 border-t border-dashed border-gray-300">
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: cor }}>Pagamento</p>
+                <p className="font-semibold text-gray-900">{cond.nome}</p>
+                {cronograma.length > 1 ? (
+                  <div className="mt-1.5 space-y-0.5">
+                    {cronograma.map((c) => (
+                      <div key={c.n} className="flex justify-between text-xs text-gray-700">
+                        <span>Parcela {c.n}/{cronograma.length} · venc. {dataBR(c.venc)}</span>
+                        <span className="font-medium">{brl(c.valor)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    {cronograma[0]?.venc ? `Vencimento em ${dataBR(cronograma[0].venc)}` : 'Pagamento à vista'}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Condição de pagamento — em destaque */}
-        {cond && (
-          <section className="mt-6 rounded-lg border-2 p-4" style={{ borderColor: cor }}>
-            <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: cor }}>Condição de pagamento</p>
-            <p className="text-lg font-bold text-gray-900">{cond.nome}</p>
-            <div className="mt-2 space-y-1">
-              {cronograma.map((c) => (
-                <div key={c.n} className="flex items-baseline gap-2 text-sm text-gray-800">
-                  {cronograma.length > 1 && <span className="text-gray-500 w-20 shrink-0">Parcela {c.n}/{cronograma.length}</span>}
-                  <span className="font-semibold">{brl(c.valor)}</span>
-                  <span className="text-gray-600">{c.venc ? `· vencimento ${dataBR(c.venc)}` : '· pagamento à vista'}</span>
-                </div>
-              ))}
-            </div>
-            {descontoPct > 0 && (
-              <p className="mt-2.5 inline-block text-sm font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded">
-                ✓ {descontoPct}% de desconto já aplicado no total
-              </p>
-            )}
-          </section>
-        )}
 
         {/* Observações */}
         {p.obs && (
