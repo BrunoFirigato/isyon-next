@@ -69,6 +69,12 @@ export default async function ImprimirProposta({ params }: Props) {
   const endEmpresa = empresa ? [empresa.rua, empresa.numero, empresa.bairro, empresa.cidade, empresa.estado].filter(Boolean).join(', ') : ''
   const endCliente = cliente ? [cliente.rua, cliente.numero, cliente.bairro, cliente.cidade, cliente.estado].filter(Boolean).join(', ') : ''
 
+  // Mostra o título só quando ele agrega algo além do nome do cliente (evita duplicar o bloco "Cliente")
+  const tit = (p.titulo ?? '').toLowerCase()
+  const empNome = (cliente?.empresa ?? '').toLowerCase()
+  const contNome = (cliente?.nome ?? '').toLowerCase()
+  const mostrarAssunto = !!p.titulo && !(empNome && tit.includes(empNome)) && !(contNome && tit.includes(contNome))
+
   return (
     <div className="min-h-screen bg-gray-100 print:bg-white py-8 print:py-0">
       <style>{`@media print { @page { size: A4; margin: 14mm; } .no-print { display: none !important; } }`}</style>
@@ -106,11 +112,16 @@ export default async function ImprimirProposta({ params }: Props) {
           </div>
         </header>
 
-        {/* Título */}
-        <h1 className="text-base font-semibold text-gray-900 mt-5">{p.titulo}</h1>
+        {/* Assunto (só quando agrega algo além do nome do cliente) */}
+        {mostrarAssunto && (
+          <p className="mt-5 text-sm">
+            <span className="text-gray-400">Assunto: </span>
+            <span className="font-semibold text-gray-900">{p.titulo}</span>
+          </p>
+        )}
 
         {/* Cliente */}
-        <section className="mt-3 bg-gray-50 rounded-lg p-4">
+        <section className="mt-5 bg-gray-50 rounded-lg p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Cliente</p>
           <p className="font-medium text-gray-900">{cliente?.empresa ?? cliente?.nome ?? '—'}</p>
           {cliente?.empresa && cliente?.nome && <p className="text-xs text-gray-600">A/C {cliente.nome}</p>}
@@ -163,19 +174,25 @@ export default async function ImprimirProposta({ params }: Props) {
           </div>
         </div>
 
-        {/* Condição de pagamento */}
+        {/* Condição de pagamento — em destaque */}
         {cond && (
-          <section className="mt-5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Condição de pagamento</p>
-            <p className="font-medium text-gray-800">{cond.nome}</p>
-            <div className="mt-2 text-xs text-gray-600 space-y-0.5">
+          <section className="mt-6 rounded-lg border-2 p-4" style={{ borderColor: cor }}>
+            <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: cor }}>Condição de pagamento</p>
+            <p className="text-lg font-bold text-gray-900">{cond.nome}</p>
+            <div className="mt-2 space-y-1">
               {cronograma.map((c) => (
-                <p key={c.n}>
-                  {cronograma.length > 1 ? `Parcela ${c.n}/${cronograma.length}: ` : ''}
-                  {brl(c.valor)}{c.venc ? ` — vencimento ${dataBR(c.venc)}` : ' — à vista'}
-                </p>
+                <div key={c.n} className="flex items-baseline gap-2 text-sm text-gray-800">
+                  {cronograma.length > 1 && <span className="text-gray-500 w-20 shrink-0">Parcela {c.n}/{cronograma.length}</span>}
+                  <span className="font-semibold">{brl(c.valor)}</span>
+                  <span className="text-gray-600">{c.venc ? `· vencimento ${dataBR(c.venc)}` : '· pagamento à vista'}</span>
+                </div>
               ))}
             </div>
+            {descontoPct > 0 && (
+              <p className="mt-2.5 inline-block text-sm font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded">
+                ✓ {descontoPct}% de desconto já aplicado no total
+              </p>
+            )}
           </section>
         )}
 
