@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
-  CheckCircle, XCircle, PackageCheck, FileText,
+  CheckCircle, XCircle, PackageCheck, FileText, Clock, ShieldCheck,
 } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import EmitirNFeModal from './EmitirNFeModal'
@@ -15,6 +15,7 @@ import {
   statusStyle, statusLabel, brl, formatDate, calcTotal,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 import { useSegmentos, segmentoLabel } from '@/app/(crm)/_components/SegmentosContext'
 
 interface Props {
@@ -29,6 +30,8 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
   const [, startTransition] = useTransition()
   const toast = useToast()
   const segmentos = useSegmentos()
+  const { perfil } = useTenantConfig()
+  const podeAprovar = perfil === 'admin' || perfil === 'gestor'
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingPedido, setEditingPedido] = useState<Pedido | null>(null)
@@ -59,6 +62,13 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
     const supabase = createClient()
     await supabase.from('pedidos').update({ status: novoStatus }).eq('id', id)
     toast(`Status alterado para ${STATUS_LABEL[novoStatus] ?? novoStatus}`, 'info')
+    router.refresh()
+  }
+
+  async function aprovarPedido(id: string) {
+    const supabase = createClient()
+    await supabase.from('pedidos').update({ aprovado: true }).eq('id', id)
+    toast('Pedido aprovado e liberado para faturamento. ✅')
     router.refresh()
   }
 
@@ -169,6 +179,24 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
                     {brl(p.valor)}
                   </span>
 
+                  {/* Aguardando aprovação do gestor */}
+                  {!p.aprovado && (
+                    <span className="shrink-0 inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                      <Clock size={11} /> <span className="hidden sm:inline">Aguardando aprovação</span>
+                    </span>
+                  )}
+
+                  {/* Liberar (gestor/admin) */}
+                  {!p.aprovado && podeAprovar && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); aprovarPedido(p.id) }}
+                      title="Liberar pedido para faturamento"
+                      className="shrink-0 inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+                    >
+                      <ShieldCheck size={13} /> <span className="hidden sm:inline">Liberar</span>
+                    </button>
+                  )}
+
                   {/* Status */}
                   <span className={`shrink-0 hidden sm:inline-block text-xs font-medium px-2 py-1 rounded-lg ${statusStyle(p.status)}`}>
                     {statusLabel(p.status)}
@@ -276,13 +304,19 @@ export default function PedidosView({ pedidos, clientes, currentStatus }: Props)
 
                     {/* Ações fiscais */}
                     <div className="px-4 pb-4 pt-1 flex justify-end">
-                      <button
-                        onClick={() => setNfePedido(p)}
-                        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
-                      >
-                        <FileText size={15} />
-                        Emitir NF-e
-                      </button>
+                      {p.aprovado ? (
+                        <button
+                          onClick={() => setNfePedido(p)}
+                          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+                        >
+                          <FileText size={15} />
+                          Emitir NF-e
+                        </button>
+                      ) : (
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 px-3 py-2 rounded-lg">
+                          <Clock size={13} /> Emissão de NF-e liberada após a aprovação do gestor
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}

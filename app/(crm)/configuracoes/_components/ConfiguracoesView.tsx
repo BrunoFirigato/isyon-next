@@ -14,6 +14,7 @@ interface Tenant {
   status: string | null
   criado_em: string
   divisao_carteira: boolean | null
+  aprovacao_pedido: boolean | null
 }
 
 interface ConfigUsuario {
@@ -82,6 +83,8 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
 
   // Política do tenant (não é por usuário) — divisão de carteira por vendedor
   const [divisaoCarteira, setDivisaoCarteira] = useState(tenant.divisao_carteira ?? false)
+  // Política do tenant — exigir aprovação do gestor no pedido
+  const [aprovacaoPedido, setAprovacaoPedido] = useState(tenant.aprovacao_pedido ?? false)
 
   async function salvarConfigs(e: React.FormEvent) {
     e.preventDefault()
@@ -98,8 +101,11 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
       }
     }
 
-    // Política de carteira — do tenant (tenants)
-    await supabase.from('tenants').update({ divisao_carteira: divisaoCarteira }).eq('id', tenant.id)
+    // Políticas do tenant (tenants)
+    await supabase.from('tenants').update({
+      divisao_carteira: divisaoCarteira,
+      aprovacao_pedido: aprovacaoPedido,
+    }).eq('id', tenant.id)
 
     setSavingConfig(false)
     toast('Preferências salvas!')
@@ -381,6 +387,32 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                       Quando ativado, vendedores só atribuem oportunidades a si mesmos — o vendedor fica travado na conversão.
                       Gestores e administradores continuam livres para escolher. Desligado, qualquer um atribui livremente.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Aprovação de pedido (tenant) */}
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={aprovacaoPedido}
+                    onClick={() => setAprovacaoPedido(v => !v)}
+                    className={`mt-0.5 relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                      aprovacaoPedido ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      aprovacaoPedido ? 'translate-x-4' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Exigir aprovação do gestor no pedido</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                      Quando ativado, todo pedido nasce &quot;Aguardando aprovação&quot; e só pode ser faturado (emitir NF-e)
+                      após um gestor ou administrador liberar. Desligado, o pedido já nasce pronto para faturar.
                     </p>
                   </div>
                 </label>

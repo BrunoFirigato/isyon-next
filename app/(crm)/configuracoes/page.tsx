@@ -18,7 +18,7 @@ export default async function ConfiguracoesPage() {
 
   let { data: tenantData, error: tenantErr } = await supabase
     .from('tenants')
-    .select('id, nome, plano, status, criado_em, segmentos, divisao_carteira')
+    .select('id, nome, plano, status, criado_em, segmentos, divisao_carteira, aprovacao_pedido')
     .eq('id', tenantId)
     .maybeSingle()
 
@@ -31,7 +31,7 @@ export default async function ConfiguracoesPage() {
       .select('id, nome, plano, status, criado_em, segmentos')
       .eq('id', tenantId)
       .maybeSingle()
-    tenantData = fb.data ? { ...fb.data, divisao_carteira: false } : null
+    tenantData = fb.data ? { ...fb.data, divisao_carteira: false, aprovacao_pedido: false } : null
   }
 
   if (!tenantData) redirect('/dashboard')

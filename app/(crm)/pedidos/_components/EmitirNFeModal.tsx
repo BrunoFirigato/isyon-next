@@ -100,6 +100,7 @@ export default function EmitirNFeModal({ pedido, onClose }: Props) {
 
   // Validações
   const alertas: string[] = []
+  if (!pedido.aprovado) alertas.push('Pedido aguardando aprovação do gestor — só é possível emitir após a liberação.')
   if (!pedido.empresa_id) alertas.push('Pedido sem filial emissora — edite o pedido e selecione a filial.')
   if (!pedido.cliente_id) alertas.push('Pedido sem cliente vinculado.')
   const itensSemNcm = itens.filter(it => it.tipo === 'produto' && !it.ncm.trim()).length

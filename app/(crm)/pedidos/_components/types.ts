@@ -3,12 +3,16 @@ export interface ItemPedido {
   descricao: string
   quantidade: number
   valorUnitario: number
+  produto_id?: string | null
+  ncm?: string | null
+  unidade?: string | null
 }
 
 export interface Pedido {
   id: string
   numero: string | null
   status: string
+  aprovado: boolean
   valor: number | null
   obs: string | null
   cliente_id: string | null

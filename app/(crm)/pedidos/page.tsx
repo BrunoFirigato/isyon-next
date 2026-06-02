@@ -13,7 +13,7 @@ export default async function PedidosPage({ searchParams }: Props) {
 
   let query = supabase
     .from('pedidos')
-    .select('id, numero, status, valor, obs, cliente_id, vendedor_id, proposta_id, empresa_id, segmento, itens, criado_em, atualizado_em')
+    .select('id, numero, status, aprovado, valor, obs, cliente_id, vendedor_id, proposta_id, empresa_id, segmento, itens, criado_em, atualizado_em')
     .order('criado_em', { ascending: false })
 
   if (status && status !== 'todos') {

@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
-  CheckCircle, XCircle, Send, Mail, X,
+  CheckCircle, XCircle, Send, Mail, X, ShoppingCart,
 } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import { createClient } from '@/lib/supabase/client'
@@ -14,6 +14,7 @@ import {
   statusStyle, statusLabel, brl, formatDate, calcTotal,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 
 interface Props {
   propostas: Proposta[]
@@ -26,7 +27,9 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
   const pathname = usePathname()
   const [, startTransition] = useTransition()
   const toast = useToast()
+  const { tenantId, aprovacaoPedido } = useTenantConfig()
 
+  const [gerandoId, setGerandoId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [editingProposta, setEditingProposta] = useState<Proposta | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -137,6 +140,73 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
     router.refresh()
   }
 
+  // Gera um pedido a partir da proposta aprovada — fecha o negócio de ponta a ponta
+  async function gerarPedido(p: Proposta) {
+    if (gerandoId) return
+    setGerandoId(p.id)
+    const supabase = createClient()
+    try {
+      // 1) Evita gerar dois pedidos da mesma proposta
+      const { data: existente } = await supabase
+        .from('pedidos').select('numero').eq('proposta_id', p.id).limit(1).maybeSingle()
+      if (existente) {
+        toast(`Esta proposta já gerou o pedido ${existente.numero ?? ''}.`, 'info')
+        return
+      }
+
+      // 2) Número sequencial PED-XXXX
+      const { data: ultimas } = await supabase
+        .from('pedidos').select('numero').eq('tenant_id', tenantId)
+        .ilike('numero', 'PED-%').order('numero', { ascending: false }).limit(1)
+      const ultimoNum = ultimas?.[0]?.numero
+        ? parseInt(String(ultimas[0].numero).replace(/\D/g, ''), 10) || 0
+        : 0
+      const numero = `PED-${String(ultimoNum + 1).padStart(4, '0')}`
+
+      // 3) Itens carregam dados fiscais (NCM/unidade) para a NF-e lá na frente
+      const itens = (p.itens ?? []).map((it) => ({
+        descricao: it.descricao,
+        quantidade: it.quantidade,
+        valorUnitario: it.valorUnitario,
+        produto_id: it.produto_id ?? null,
+        ncm: it.ncm ?? null,
+        unidade: it.unidade ?? null,
+      }))
+
+      // 4) Cria o pedido; se a aprovação está ligada, nasce pendente (aprovado=false)
+      const { error: errPed } = await supabase.from('pedidos').insert({
+        tenant_id:   tenantId,
+        numero,
+        cliente_id:  p.cliente_id,
+        vendedor_id: p.vendedor_id,
+        empresa_id:  p.empresa_id,
+        proposta_id: p.id,
+        segmento:    p.segmento,
+        valor:       p.valor,
+        itens,
+        status:      'aguardando',
+        aprovado:    !aprovacaoPedido,
+      })
+      if (errPed) { toast(`Erro ao gerar pedido: ${errPed.message}`, 'error'); return }
+
+      // 5) Fecha a oportunidade (ganha) e promove o prospect a cliente ativo
+      if (p.oportunidade_id) {
+        await supabase.from('oportunidades').update({ status: 'ganho' }).eq('id', p.oportunidade_id)
+      }
+      if (p.cliente_id) {
+        await supabase.from('clientes').update({ status: 'ativo' })
+          .eq('id', p.cliente_id).eq('status', 'prospect')
+      }
+
+      toast(aprovacaoPedido
+        ? `Pedido ${numero} gerado — aguardando aprovação do gestor.`
+        : `Pedido ${numero} gerado! Oportunidade fechada como ganha. 🏆`)
+      router.refresh()
+    } finally {
+      setGerandoId(null)
+    }
+  }
+
   const totalFiltrado = propostas.reduce((s, p) => s + (p.valor ?? 0), 0)
 
   return (
@@ -237,6 +307,19 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
                   <span className={`shrink-0 hidden sm:inline-block text-xs font-medium px-2 py-1 rounded-lg ${statusStyle(p.status)}`}>
                     {statusLabel(p.status)}
                   </span>
+
+                  {/* Gerar pedido — visível na proposta aprovada */}
+                  {p.status === 'aprovada' && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); gerarPedido(p) }}
+                      disabled={gerandoId === p.id}
+                      title="Gerar pedido a partir desta proposta"
+                      className="shrink-0 inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+                    >
+                      <ShoppingCart size={13} />
+                      <span className="hidden sm:inline">{gerandoId === p.id ? 'Gerando...' : 'Gerar pedido'}</span>
+                    </button>
+                  )}
 
                   {/* Ações (hover) */}
                   <div
