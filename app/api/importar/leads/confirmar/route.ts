@@ -26,10 +26,13 @@ export async function POST(req: NextRequest) {
   const vendByNome = new Map((vendedores ?? []).map(v => [v.nome.trim().toLowerCase(), v.id]))
 
   const scoreValidos = new Set(['quente', 'morno', 'frio'])
+  // Status aceitos pela trava do banco; fora disso, vira 'novo'
+  const STATUS_OK = ['novo', 'contato', 'qualificado', 'convertido', 'perdido']
 
   const payload = validas.map(r => {
     const vendNome = r.dados.vendedor?.trim().toLowerCase()
     const score    = r.dados.score?.trim().toLowerCase()
+    const statusRaw = (r.dados.status?.trim().toLowerCase()) || 'novo'
     return {
       tenant_id:    usuario.tenant_id,
       nome:         r.dados.nome?.trim(),
@@ -43,7 +46,7 @@ export async function POST(req: NextRequest) {
       faturamento:  r.dados.faturamento?.trim()  || null,
       funcionarios: r.dados.funcionarios?.trim() || null,
       score:        score && scoreValidos.has(score) ? score : null,
-      status:       r.dados.status?.trim()       || 'novo',
+      status:       STATUS_OK.includes(statusRaw) ? statusRaw : 'novo',
       origem:       r.dados.origem?.trim()        || null,
       obs:          r.dados.obs?.trim()           || null,
     }
@@ -54,12 +57,17 @@ export async function POST(req: NextRequest) {
   const erros: string[] = []
 
   for (let i = 0; i < payload.length; i += BATCH) {
-    const { error, count } = await admin
-      .from('leads')
-      .insert(payload.slice(i, i + BATCH), { count: 'exact' })
+    const batch = payload.slice(i, i + BATCH)
+    const { error, count } = await admin.from('leads').insert(batch, { count: 'exact' })
 
-    if (error) erros.push(`Lote ${Math.floor(i / BATCH) + 1}: ${error.message}`)
-    else       inseridos += count ?? BATCH
+    if (!error) { inseridos += count ?? batch.length; continue }
+
+    // Fallback: insere uma a uma para não perder o lote inteiro por causa de poucas linhas
+    for (const row of batch) {
+      const { error: rowErr } = await admin.from('leads').insert(row)
+      if (rowErr) erros.push(`"${row.nome}": ${rowErr.message}`)
+      else inseridos++
+    }
   }
 
   return NextResponse.json({ ok: true, inseridos, erros })

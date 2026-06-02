@@ -20,10 +20,14 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient()
 
+  // Status aceitos pela trava do banco (clientes_status_check); fora disso, vira 'ativo'
+  const STATUS_OK = ['prospect', 'ativo', 'inativo']
+
   const payload = validas.map(r => {
     const doc = r.dados.cpf_cnpj?.replace(/\D/g, '') || ''
     // Deriva o tipo de pessoa do documento; sem documento, assume jurídica (B2B)
     const tipoPessoa = doc.length === 11 ? 'fisica' : 'juridica'
+    const statusRaw = (r.dados.status?.trim().toLowerCase()) || 'ativo'
 
     return {
       tenant_id:    usuario.tenant_id,
@@ -34,7 +38,7 @@ export async function POST(req: NextRequest) {
       tipo_pessoa:  tipoPessoa,
       cpf_cnpj:     doc || null,
       indicador_ie: '9',  // não contribuinte por padrão; ajustado antes da emissão
-      status:       r.dados.status?.trim()      || 'ativo',
+      status:       STATUS_OK.includes(statusRaw) ? statusRaw : 'ativo',
       segmento:     r.dados.segmento?.trim()    || null,
       origem:       r.dados.origem?.trim()      || null,
       cep:          r.dados.cep?.replace(/\D/g, '') || null,
@@ -47,21 +51,22 @@ export async function POST(req: NextRequest) {
     }
   })
 
-  // Inserir em lotes de 100
+  // Inserir em lotes de 100; se um lote falhar, tenta linha a linha para salvar as boas
   const BATCH = 100
   let inseridos = 0
   const erros: string[] = []
 
   for (let i = 0; i < payload.length; i += BATCH) {
     const batch = payload.slice(i, i + BATCH)
-    const { error, count } = await admin
-      .from('clientes')
-      .insert(batch, { count: 'exact' })
+    const { error, count } = await admin.from('clientes').insert(batch, { count: 'exact' })
 
-    if (error) {
-      erros.push(`Lote ${Math.floor(i / BATCH) + 1}: ${error.message}`)
-    } else {
-      inseridos += count ?? batch.length
+    if (!error) { inseridos += count ?? batch.length; continue }
+
+    // Fallback: insere uma a uma para não perder o lote inteiro por causa de poucas linhas
+    for (const row of batch) {
+      const { error: rowErr } = await admin.from('clientes').insert(row)
+      if (rowErr) erros.push(`"${row.nome}": ${rowErr.message}`)
+      else inseridos++
     }
   }
 
