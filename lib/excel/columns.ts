@@ -41,23 +41,37 @@ export const EXEMPLO_CLIENTE = {
 
 // ── Leads ─────────────────────────────────────────────────────────────────────
 export const COLS_LEADS: ColDef[] = [
-  { header: 'Nome *',     key: 'nome',     width: 32 },
-  { header: 'Empresa',    key: 'empresa',  width: 28 },
-  { header: 'E-mail',     key: 'email',    width: 32 },
-  { header: 'Telefone',   key: 'telefone', width: 18 },
-  { header: 'Status',     key: 'status',   width: 14 }, // novo | contato | qualificado | perdido
-  { header: 'Origem *',   key: 'origem',   width: 18 },
-  { header: 'Observações',key: 'obs',      width: 45 },
+  { header: 'Nome *',        key: 'nome',         width: 32 },
+  { header: 'Empresa',       key: 'empresa',      width: 28 },
+  { header: 'E-mail',        key: 'email',        width: 32 },
+  { header: 'Telefone',      key: 'telefone',     width: 18 },
+  { header: 'Cargo',         key: 'cargo',        width: 20 },
+  { header: 'Vendedor',      key: 'vendedor',     width: 22 }, // nome do vendedor responsável
+  { header: 'Cidade',        key: 'cidade',       width: 22 },
+  { header: 'Estado',        key: 'estado',       width:  8 },
+  { header: 'Faturamento',   key: 'faturamento',  width: 26 },
+  { header: 'Funcionários',  key: 'funcionarios', width: 14 },
+  { header: 'Score',         key: 'score',        width: 12 }, // quente | morno | frio
+  { header: 'Status',        key: 'status',       width: 14 }, // novo | contato | qualificado | perdido
+  { header: 'Origem *',      key: 'origem',       width: 18 },
+  { header: 'Observações',   key: 'obs',          width: 45 },
 ]
 
 export const EXEMPLO_LEAD = {
-  nome:     'Maria Oliveira',
-  empresa:  'Tech Solutions',
-  email:    'maria@techsolutions.com.br',
-  telefone: '(21) 98888-1234',
-  status:   'novo',
-  origem:   'Site',
-  obs:      'Demonstrou interesse no produto A',
+  nome:         'Maria Oliveira',
+  empresa:      'Tech Solutions',
+  email:        'maria@techsolutions.com.br',
+  telefone:     '(21) 98888-1234',
+  cargo:        'Comprador(a)',
+  vendedor:     'João Souza',
+  cidade:       'Rio de Janeiro',
+  estado:       'RJ',
+  faturamento:  'R$ 360 mil – 4,8 mi (EPP)',
+  funcionarios: '10 a 49',
+  score:        'quente',
+  status:       'novo',
+  origem:       'Site',
+  obs:          'Demonstrou interesse no produto A',
 }
 
 // ── Produtos ──────────────────────────────────────────────────────────────────

@@ -28,7 +28,8 @@ export default function ConvertModal({ lead, onClose }: Props) {
   const [titulo,           setTitulo]          = useState(lead.empresa ? `${lead.empresa} — ${lead.nome}` : lead.nome)
   const [valor,            setValor]            = useState('')
   const [etapa,            setEtapa]            = useState('Prospecção')
-  const [vendedorId,       setVendedorId]       = useState('')
+  // Vendedor: herda o responsável do lead, se houver
+  const [vendedorId,       setVendedorId]       = useState(lead.vendedor_id ?? '')
   const [empresaId,        setEmpresaId]        = useState('')
   const [prazoFechamento,  setPrazoFechamento]  = useState('')
   const [saving,           setSaving]           = useState(false)
@@ -36,7 +37,7 @@ export default function ConvertModal({ lead, onClose }: Props) {
 
   const [vendedores,       setVendedores]       = useState<VendedorRef[]>([])
   const [empresas,         setEmpresas]         = useState<EmpresaRef[]>([])
-  const [autoPreenchido,   setAutoPreenchido]   = useState(false)
+  const [autoPreenchido,   setAutoPreenchido]   = useState(!!lead.vendedor_id)
   const [loadingVendedor,  setLoadingVendedor]  = useState(true)
 
   // Carrega vendedores, empresas e tenta auto-preencher pelo e-mail do usuário logado
@@ -58,8 +59,8 @@ export default function ConvertModal({ lead, onClose }: Props) {
         if (emps.length === 1) setEmpresaId(emps[0].id)
       }
 
-      // Auto-preenche vendedor pelo e-mail do usuário logado
-      if (user?.email) {
+      // Se o lead não tem responsável, tenta auto-preencher pelo e-mail do usuário logado
+      if (!lead.vendedor_id && user?.email) {
         const { data: meu } = await supabase
           .from('vendedores')
           .select('id')

@@ -7,9 +7,48 @@ export interface Lead {
   status: string
   origem: string | null
   obs: string | null
+  // Qualificação
+  vendedor_id: string | null
+  cargo: string | null
+  cidade: string | null
+  estado: string | null
+  faturamento: string | null
+  funcionarios: string | null
+  score: string | null
   criado_em: string
   atualizado_em: string
 }
+
+// ── Opções de qualificação ────────────────────────────────────────────────────
+export const CARGOS = [
+  'Comprador(a)', 'Diretor(a)', 'Gerente', 'Supervisor(a)',
+  'Coordenador(a)', 'Analista', 'Sócio(a) / Proprietário(a)', 'Outro',
+]
+
+export const FATURAMENTO_FAIXAS = [
+  'Até R$ 360 mil (ME)',
+  'R$ 360 mil – 4,8 mi (EPP)',
+  'R$ 4,8 mi – 20 mi',
+  'R$ 20 mi – 100 mi',
+  'Acima de R$ 100 mi',
+]
+
+export const FUNCIONARIOS_FAIXAS = ['1 a 9', '10 a 49', '50 a 99', '100 a 499', '500+']
+
+export const SCORE_OPTIONS = [
+  { value: 'quente', label: 'Quente', emoji: '🔥', bg: 'bg-red-100 dark:bg-red-900/30',   text: 'text-red-700 dark:text-red-300' },
+  { value: 'morno',  label: 'Morno',  emoji: '🌤️', bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300' },
+  { value: 'frio',   label: 'Frio',   emoji: '❄️', bg: 'bg-sky-100 dark:bg-sky-900/30',    text: 'text-sky-700 dark:text-sky-300' },
+] as const
+
+export function scoreInfo(score: string | null | undefined) {
+  return SCORE_OPTIONS.find((s) => s.value === score) ?? null
+}
+
+export const ESTADOS = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
+  'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+]
 
 export const STATUS_LEADS = [
   { value: 'todos', label: 'Todos' },

@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
   let query = admin
     .from('leads')
-    .select('nome, empresa, email, telefone, status, origem, obs')
+    .select('nome, empresa, email, telefone, cargo, vendedor_id, cidade, estado, faturamento, funcionarios, score, status, origem, obs')
     .eq('tenant_id', usuario.tenant_id)
     .order('nome')
 
@@ -28,8 +28,19 @@ export async function GET(req: NextRequest) {
   const q = params.get('q')
   if (q) query = query.or(`nome.ilike.%${q}%,empresa.ilike.%${q}%`)
 
-  const { data: leads } = await query
-  const buffer = await generateExcel(COLS_LEADS, leads ?? [], 'Leads')
+  const [{ data: leads }, { data: vendedores }] = await Promise.all([
+    query,
+    admin.from('vendedores').select('id, nome').eq('tenant_id', usuario.tenant_id),
+  ])
+
+  // Resolve o nome do vendedor responsável a partir do vendedor_id
+  const vendMap = new Map((vendedores ?? []).map(v => [v.id, v.nome]))
+  const rows = (leads ?? []).map(({ vendedor_id, ...rest }) => ({
+    ...rest,
+    vendedor: vendedor_id ? (vendMap.get(vendedor_id) ?? '') : '',
+  }))
+
+  const buffer = await generateExcel(COLS_LEADS, rows, 'Leads')
 
   return new Response(buffer, {
     headers: {

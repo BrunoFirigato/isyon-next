@@ -11,7 +11,7 @@ export default async function LeadsPage({ searchParams }: Props) {
 
   let query = supabase
     .from('leads')
-    .select('id, nome, empresa, email, telefone, status, origem, obs, criado_em, atualizado_em')
+    .select('id, nome, empresa, email, telefone, status, origem, obs, vendedor_id, cargo, cidade, estado, faturamento, funcionarios, score, criado_em, atualizado_em')
     .order('criado_em', { ascending: false })
 
   if (status && status !== 'todos') {

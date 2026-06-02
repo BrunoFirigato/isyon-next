@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X } from 'lucide-react'
+import { X, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import type { Lead } from './types'
+import {
+  type Lead, CARGOS, FATURAMENTO_FAIXAS, FUNCIONARIOS_FAIXAS, SCORE_OPTIONS, ESTADOS,
+} from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
@@ -40,9 +42,28 @@ export default function LeadFormModal({ lead, onClose }: Props) {
     status: lead?.status ?? 'novo',
     origem: lead?.origem ?? '',
     obs: lead?.obs ?? '',
+    vendedor_id: lead?.vendedor_id ?? '',
+    cargo: lead?.cargo ?? '',
+    cidade: lead?.cidade ?? '',
+    estado: lead?.estado ?? '',
+    faturamento: lead?.faturamento ?? '',
+    funcionarios: lead?.funcionarios ?? '',
+    score: lead?.score ?? '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([])
+
+  // Abre a seção de qualificação já expandida quando o lead tem algum desses dados
+  const temQualif = !!(lead?.cargo || lead?.cidade || lead?.estado || lead?.faturamento || lead?.funcionarios || lead?.score)
+  const [qualifAberta, setQualifAberta] = useState(temQualif)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('vendedores').select('id, nome').eq('status', 'ativo').order('nome')
+      .then(({ data }) => { if (data) setVendedores(data) })
+  }, [])
 
   function set(field: string, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -73,6 +94,13 @@ export default function LeadFormModal({ lead, onClose }: Props) {
       status: form.status,
       origem: form.origem || null,
       obs: form.obs.trim() || null,
+      vendedor_id: form.vendedor_id || null,
+      cargo: form.cargo || null,
+      cidade: form.cidade.trim() || null,
+      estado: form.estado || null,
+      faturamento: form.faturamento || null,
+      funcionarios: form.funcionarios || null,
+      score: form.score || null,
     }
 
     const { error: err } = isEditing
@@ -195,18 +223,145 @@ export default function LeadFormModal({ lead, onClose }: Props) {
               </select>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-                Observações
-              </label>
-              <textarea
-                value={form.obs}
-                onChange={(e) => set('obs', e.target.value)}
-                rows={3}
-                placeholder="Anotações sobre o lead..."
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              />
+            {/* Vendedor responsável (mesmo campo do "Vendedor" na conversão) */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Vendedor</label>
+              <select
+                value={form.vendedor_id}
+                onChange={(e) => set('vendedor_id', e.target.value)}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Selecione...</option>
+                {vendedores.map((v) => (
+                  <option key={v.id} value={v.id}>{v.nome}</option>
+                ))}
+              </select>
             </div>
+          </div>
+
+          {/* Qualificação — recolhível para não poluir a captura */}
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setQualifAberta((v) => !v)}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <span className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Sparkles size={14} className="text-amber-500" />
+                Qualificação <span className="text-xs font-normal text-gray-400 dark:text-gray-500">· opcional</span>
+              </span>
+              {qualifAberta
+                ? <ChevronUp size={16} className="text-gray-400" />
+                : <ChevronDown size={16} className="text-gray-400" />}
+            </button>
+
+            {qualifAberta && (
+              <div className="px-3.5 pb-4 pt-2 space-y-4 border-t border-gray-100 dark:border-gray-700">
+                {/* Score */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Score</label>
+                  <div className="flex gap-2">
+                    {SCORE_OPTIONS.map((s) => {
+                      const active = form.score === s.value
+                      return (
+                        <button
+                          key={s.value}
+                          type="button"
+                          onClick={() => set('score', active ? '' : s.value)}
+                          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                            active
+                              ? `${s.bg} ${s.text} border-transparent`
+                              : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          <span>{s.emoji}</span> {s.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Cargo */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Cargo do contato</label>
+                    <select
+                      value={form.cargo}
+                      onChange={(e) => set('cargo', e.target.value)}
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Selecione...</option>
+                      {CARGOS.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Cidade + UF */}
+                  <div className="grid grid-cols-[1fr_5rem] gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Cidade</label>
+                      <input
+                        type="text"
+                        value={form.cidade}
+                        onChange={(e) => set('cidade', e.target.value)}
+                        placeholder="Cidade"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">UF</label>
+                      <select
+                        value={form.estado}
+                        onChange={(e) => set('estado', e.target.value)}
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">—</option>
+                        {ESTADOS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Faturamento */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Faturamento anual</label>
+                    <select
+                      value={form.faturamento}
+                      onChange={(e) => set('faturamento', e.target.value)}
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Selecione...</option>
+                      {FATURAMENTO_FAIXAS.map((f) => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Funcionários */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Nº de funcionários</label>
+                    <select
+                      value={form.funcionarios}
+                      onChange={(e) => set('funcionarios', e.target.value)}
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Selecione...</option>
+                      {FUNCIONARIOS_FAIXAS.map((f) => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Observações */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+              Observações
+            </label>
+            <textarea
+              value={form.obs}
+              onChange={(e) => set('obs', e.target.value)}
+              rows={3}
+              placeholder="Anotações sobre o lead..."
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
           </div>
 
           {error && (

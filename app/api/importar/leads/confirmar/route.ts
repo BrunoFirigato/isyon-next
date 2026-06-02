@@ -20,16 +20,34 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient()
 
-  const payload = validas.map(r => ({
-    tenant_id: usuario.tenant_id,
-    nome:      r.dados.nome?.trim(),
-    empresa:   r.dados.empresa?.trim()  || null,
-    email:     r.dados.email?.trim()    || null,
-    telefone:  r.dados.telefone?.trim() || null,
-    status:    r.dados.status?.trim()   || 'novo',
-    origem:    r.dados.origem?.trim()   || null,
-    obs:       r.dados.obs?.trim()      || null,
-  }))
+  // Mapa nome (minúsculo) → id para resolver o vendedor responsável da planilha
+  const { data: vendedores } = await admin
+    .from('vendedores').select('id, nome').eq('tenant_id', usuario.tenant_id)
+  const vendByNome = new Map((vendedores ?? []).map(v => [v.nome.trim().toLowerCase(), v.id]))
+
+  const scoreValidos = new Set(['quente', 'morno', 'frio'])
+
+  const payload = validas.map(r => {
+    const vendNome = r.dados.vendedor?.trim().toLowerCase()
+    const score    = r.dados.score?.trim().toLowerCase()
+    return {
+      tenant_id:    usuario.tenant_id,
+      nome:         r.dados.nome?.trim(),
+      empresa:      r.dados.empresa?.trim()      || null,
+      email:        r.dados.email?.trim()        || null,
+      telefone:     r.dados.telefone?.trim()     || null,
+      cargo:        r.dados.cargo?.trim()        || null,
+      vendedor_id:  vendNome ? (vendByNome.get(vendNome) ?? null) : null,
+      cidade:       r.dados.cidade?.trim()       || null,
+      estado:       r.dados.estado?.trim()       || null,
+      faturamento:  r.dados.faturamento?.trim()  || null,
+      funcionarios: r.dados.funcionarios?.trim() || null,
+      score:        score && scoreValidos.has(score) ? score : null,
+      status:       r.dados.status?.trim()       || 'novo',
+      origem:       r.dados.origem?.trim()        || null,
+      obs:          r.dados.obs?.trim()           || null,
+    }
+  })
 
   const BATCH = 100
   let inseridos = 0

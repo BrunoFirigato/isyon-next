@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import LeadFormModal from './LeadFormModal'
 import ConvertModal from './ConvertModal'
-import { type Lead, STATUS_LEADS, statusStyle, statusLabel, formatDate } from './types'
+import { type Lead, STATUS_LEADS, statusStyle, statusLabel, formatDate, scoreInfo } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 
@@ -261,7 +261,12 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
               {leads.map((lead) => (
                 <tr key={lead.id} className="hover:bg-blue-50/30 dark:hover:bg-gray-700/50 transition-colors group">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900 dark:text-gray-100">{lead.nome}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                      {scoreInfo(lead.score) && (
+                        <span title={`Lead ${scoreInfo(lead.score)!.label}`} className="text-sm leading-none">{scoreInfo(lead.score)!.emoji}</span>
+                      )}
+                      {lead.nome}
+                    </p>
                     {lead.empresa && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{lead.empresa}</p>}
                   </td>
                   <td className="px-4 py-3">
@@ -339,7 +344,12 @@ export default function LeadsView({ leads, currentStatus, currentQ }: Props) {
             <div key={lead.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{lead.nome}</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                    {scoreInfo(lead.score) && (
+                      <span title={`Lead ${scoreInfo(lead.score)!.label}`} className="text-sm leading-none">{scoreInfo(lead.score)!.emoji}</span>
+                    )}
+                    {lead.nome}
+                  </p>
                   {lead.empresa && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{lead.empresa}</p>}
                 </div>
                 <span className={`shrink-0 text-xs font-medium px-2 py-1 rounded-lg capitalize ${statusStyle(lead.status)}`}>

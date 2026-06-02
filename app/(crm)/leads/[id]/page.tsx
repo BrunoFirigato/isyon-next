@@ -17,7 +17,7 @@ export default async function LeadPage({ params }: Props) {
   ] = await Promise.all([
     supabase
       .from('leads')
-      .select('id, nome, empresa, email, telefone, status, origem, obs, criado_em, atualizado_em')
+      .select('id, nome, empresa, email, telefone, status, origem, obs, vendedor_id, cargo, cidade, estado, faturamento, funcionarios, score, criado_em, atualizado_em')
       .eq('id', id)
       .maybeSingle(),
     supabase
