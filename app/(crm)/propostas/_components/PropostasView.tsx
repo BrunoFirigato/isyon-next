@@ -120,7 +120,7 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
   }
 
   const STATUS_LABEL: Record<string, string> = {
-    enviada: 'Enviada', aprovada: 'Aprovada', rejeitada: 'Rejeitada',
+    enviada: 'Enviada', aprovada: 'Aceita', recusada: 'Recusada',
     rascunho: 'Rascunho', cancelada: 'Cancelada',
   }
 
@@ -334,11 +334,11 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
                     )}
                     {p.status === 'enviada' && (
                       <>
-                        <button onClick={() => updateStatus(p.id, 'aprovada')} title="Aprovar"
+                        <button onClick={() => updateStatus(p.id, 'aprovada')} title="Cliente aceitou a proposta"
                           className="p-1.5 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors">
                           <CheckCircle size={14} />
                         </button>
-                        <button onClick={() => updateStatus(p.id, 'recusada')} title="Recusar"
+                        <button onClick={() => updateStatus(p.id, 'recusada')} title="Cliente recusou a proposta"
                           className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
                           <XCircle size={14} />
                         </button>

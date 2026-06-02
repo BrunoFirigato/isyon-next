@@ -38,7 +38,7 @@ export const STATUS_PROPOSTA = [
   { value: 'todos', label: 'Todas' },
   { value: 'rascunho', label: 'Rascunho', bg: 'bg-gray-100', text: 'text-gray-600' },
   { value: 'enviada', label: 'Enviada', bg: 'bg-blue-100', text: 'text-blue-700' },
-  { value: 'aprovada', label: 'Aprovada', bg: 'bg-green-100', text: 'text-green-700' },
+  { value: 'aprovada', label: 'Aceita', bg: 'bg-green-100', text: 'text-green-700' },
   { value: 'recusada', label: 'Recusada', bg: 'bg-red-100', text: 'text-red-700' },
 ] as const
 

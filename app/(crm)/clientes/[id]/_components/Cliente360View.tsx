@@ -93,7 +93,7 @@ function opBadge(status: string, etapa: string | null) {
 }
 function propostaBadge(s: string) {
   if (s === 'enviada')  return { label: 'Enviada',  cls: 'bg-blue-100 text-blue-700' }
-  if (s === 'aprovada') return { label: 'Aprovada', cls: 'bg-green-100 text-green-700' }
+  if (s === 'aprovada') return { label: 'Aceita', cls: 'bg-green-100 text-green-700' }
   if (s === 'recusada') return { label: 'Recusada', cls: 'bg-red-100 text-red-600' }
   return { label: 'Rascunho', cls: 'bg-gray-100 text-gray-500' }
 }
@@ -245,7 +245,7 @@ export default function Cliente360View({ cliente, oportunidades, propostas, pedi
         <StatCard icon={FileText} label="Propostas"
           value={String(propostas.length)}
           sub={propostas.filter(p => p.status === 'aprovada').length > 0
-            ? `${propostas.filter(p => p.status === 'aprovada').length} aprovada${propostas.filter(p => p.status === 'aprovada').length > 1 ? 's' : ''}`
+            ? `${propostas.filter(p => p.status === 'aprovada').length} aceita${propostas.filter(p => p.status === 'aprovada').length > 1 ? 's' : ''}`
             : undefined}
           color="indigo" />
         <StatCard icon={ShoppingCart} label="Pedidos"
