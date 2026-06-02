@@ -11,6 +11,8 @@ export const COLS_CLIENTES: ColDef[] = [
   { header: 'CPF/CNPJ',      key: 'cpf_cnpj',   width: 20 },
   { header: 'Status',        key: 'status',      width: 14 },  // ativo | prospect | inativo
   { header: 'Segmento',      key: 'segmento',    width: 18 },
+  { header: 'Vendedor',      key: 'vendedor',    width: 22 },  // nome do vendedor responsável
+  { header: 'Parceiro',      key: 'parceiro',    width: 22 },  // nome do parceiro comercial
   { header: 'Origem',        key: 'origem',      width: 18 },
   { header: 'CEP',           key: 'cep',         width: 12 },
   { header: 'Rua',           key: 'rua',         width: 30 },
@@ -29,6 +31,8 @@ export const EXEMPLO_CLIENTE = {
   cpf_cnpj:    '12.345.678/0001-99',
   status:      'ativo',
   segmento:    '',
+  vendedor:    'Maria Souza',
+  parceiro:    '',
   origem:      'Indicação',
   cep:         '01310-100',
   rua:         'Av. Paulista',

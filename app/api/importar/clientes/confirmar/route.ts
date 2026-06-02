@@ -23,31 +23,43 @@ export async function POST(req: NextRequest) {
   // Status aceitos pela trava do banco (clientes_status_check); fora disso, vira 'ativo'
   const STATUS_OK = ['prospect', 'ativo', 'inativo']
 
+  // Mapas nome (minúsculo) → id para casar vendedor e parceiro vindos da planilha
+  const [{ data: vendedores }, { data: parceiros }] = await Promise.all([
+    admin.from('vendedores').select('id, nome').eq('tenant_id', usuario.tenant_id),
+    admin.from('parceiros').select('id, nome').eq('tenant_id', usuario.tenant_id),
+  ])
+  const vendByNome = new Map((vendedores ?? []).map(v => [v.nome.trim().toLowerCase(), v.id]))
+  const parcByNome = new Map((parceiros ?? []).map(p => [p.nome.trim().toLowerCase(), p.id]))
+
   const payload = validas.map(r => {
     const doc = r.dados.cpf_cnpj?.replace(/\D/g, '') || ''
     // Deriva o tipo de pessoa do documento; sem documento, assume jurídica (B2B)
     const tipoPessoa = doc.length === 11 ? 'fisica' : 'juridica'
     const statusRaw = (r.dados.status?.trim().toLowerCase()) || 'ativo'
+    const vendNome  = r.dados.vendedor?.trim().toLowerCase()
+    const parcNome  = r.dados.parceiro?.trim().toLowerCase()
 
     return {
-      tenant_id:    usuario.tenant_id,
-      nome:         r.dados.nome?.trim(),
-      empresa:      r.dados.empresa?.trim()     || null,
-      email:        r.dados.email?.trim()       || null,
-      telefone:     r.dados.telefone?.trim()    || null,
-      tipo_pessoa:  tipoPessoa,
-      cpf_cnpj:     doc || null,
-      indicador_ie: '9',  // não contribuinte por padrão; ajustado antes da emissão
-      status:       STATUS_OK.includes(statusRaw) ? statusRaw : 'ativo',
-      segmento:     r.dados.segmento?.trim()    || null,
-      origem:       r.dados.origem?.trim()      || null,
-      cep:          r.dados.cep?.replace(/\D/g, '') || null,
-      rua:          r.dados.rua?.trim()         || null,
-      numero:       r.dados.numero?.trim()      || null,
-      complemento:  r.dados.complemento?.trim() || null,
-      bairro:       r.dados.bairro?.trim()      || null,
-      cidade:       r.dados.cidade?.trim()      || null,
-      estado:       r.dados.estado?.trim()      || null,
+      tenant_id:       usuario.tenant_id,
+      nome:            r.dados.nome?.trim(),
+      empresa:         r.dados.empresa?.trim()     || null,
+      email:           r.dados.email?.trim()       || null,
+      telefone:        r.dados.telefone?.trim()    || null,
+      tipo_pessoa:     tipoPessoa,
+      cpf_cnpj:        doc || null,
+      indicador_ie:    '9',  // não contribuinte por padrão; ajustado antes da emissão
+      status:          STATUS_OK.includes(statusRaw) ? statusRaw : 'ativo',
+      segmento:        r.dados.segmento?.trim()    || null,
+      vendedor_maq_id: vendNome ? (vendByNome.get(vendNome) ?? null) : null,
+      parceiro_id:     parcNome ? (parcByNome.get(parcNome) ?? null) : null,
+      origem:          r.dados.origem?.trim()      || null,
+      cep:             r.dados.cep?.replace(/\D/g, '') || null,
+      rua:             r.dados.rua?.trim()         || null,
+      numero:          r.dados.numero?.trim()      || null,
+      complemento:     r.dados.complemento?.trim() || null,
+      bairro:          r.dados.bairro?.trim()      || null,
+      cidade:          r.dados.cidade?.trim()      || null,
+      estado:          r.dados.estado?.trim()      || null,
     }
   })
 
