@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
   CheckCircle, XCircle, Send, Mail, X, ShoppingCart,
+  Link2, Hand, User, ArrowRight, AlertTriangle,
 } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import { createClient } from '@/lib/supabase/client'
@@ -15,19 +16,39 @@ import {
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
+import { useSegmentos, segmentoLabel } from '@/app/(crm)/_components/SegmentosContext'
+
+interface VendedorRef    { id: string; nome: string }
+interface EmpresaRef     { id: string; nome: string; sigla: string }
+interface OportunidadeRef { id: string; titulo: string }
+interface PedidoLink     { numero: string | null; proposta_id: string | null }
 
 interface Props {
   propostas: Proposta[]
   clientes: ClienteRef[]
+  vendedores: VendedorRef[]
+  empresas: EmpresaRef[]
+  oportunidades: OportunidadeRef[]
+  pedidoLinks: PedidoLink[]
   currentStatus: string
 }
 
-export default function PropostasView({ propostas, clientes, currentStatus }: Props) {
+export default function PropostasView({ propostas, clientes, vendedores, empresas, oportunidades, pedidoLinks, currentStatus }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [, startTransition] = useTransition()
   const toast = useToast()
   const { tenantId, aprovacaoPedido } = useTenantConfig()
+  const segmentos = useSegmentos()
+
+  // Lookups de rastreabilidade
+  const vendedorMap = Object.fromEntries(vendedores.map(v => [v.id, v.nome]))
+  const empresaMap  = Object.fromEntries(empresas.map(e => [e.id, e]))
+  const opMap       = Object.fromEntries(oportunidades.map(o => [o.id, o.titulo]))
+  const pedidoMap: Record<string, string> = {}
+  pedidoLinks.forEach(pl => { if (pl.proposta_id && pl.numero) pedidoMap[pl.proposta_id] = pl.numero })
+  const hoje = new Date().toISOString().slice(0, 10)
+  function vendedorNome(id: string | null) { return id ? (vendedorMap[id] ?? null) : null }
 
   const [gerandoId, setGerandoId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
@@ -270,6 +291,12 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
             const expanded = expandedId === p.id
             const itens = p.itens ?? []
             const nomeCliente = clienteNome(p.cliente_id)
+            const viaOp = !!p.oportunidade_id
+            const opTitulo = p.oportunidade_id ? (opMap[p.oportunidade_id] ?? null) : null
+            const pedidoNum = pedidoMap[p.id] ?? null
+            const vend = vendedorNome(p.vendedor_id)
+            const vencida = !!p.validade && p.validade < hoje && p.status === 'enviada'
+            const emp = p.empresa_id ? empresaMap[p.empresa_id] : null
 
             return (
               <div key={p.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
@@ -283,7 +310,7 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
                     <span className="shrink-0 text-xs font-mono text-gray-400 dark:text-gray-500 w-20">{p.numero}</span>
                   )}
 
-                  {/* Título + cliente */}
+                  {/* Título + cliente + rastreabilidade */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{p.titulo}</p>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -291,10 +318,18 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
                         <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{nomeCliente}</span>
                       )}
                       {p.validade && (
-                        <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
-                          válida até {formatDate(p.validade)}
+                        <span className={`text-xs shrink-0 ${vencida ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
+                          válida até {formatDate(p.validade)}{vencida ? ' · vencida' : ''}
                         </span>
                       )}
+                    </div>
+                    {/* Linha meta: origem · vendedor · pedido gerado */}
+                    <div className="flex items-center gap-x-2.5 gap-y-1 mt-1 flex-wrap text-[11px]">
+                      {viaOp
+                        ? <span className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400"><Link2 size={11} /> De oportunidade</span>
+                        : <span className="inline-flex items-center gap-1 text-gray-400 dark:text-gray-500"><Hand size={11} /> Manual</span>}
+                      {vend && <span className="inline-flex items-center gap-1 text-gray-400 dark:text-gray-500"><User size={11} /> {vend}</span>}
+                      {pedidoNum && <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 font-medium"><ArrowRight size={11} /> {pedidoNum}</span>}
                     </div>
                   </div>
 
@@ -375,6 +410,17 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
                       <span className={`inline-block text-xs font-medium px-2 py-1 rounded-lg ${statusStyle(p.status)}`}>
                         {statusLabel(p.status)}
                       </span>
+                    </div>
+
+                    {/* Rastreabilidade / metadados */}
+                    <div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 border-b border-gray-100 dark:border-gray-700">
+                      <Meta label="Origem" value={viaOp ? (opTitulo ? `Oportunidade · ${opTitulo}` : 'Oportunidade') : 'Cadastro manual'} />
+                      <Meta label="Vendedor" value={vend ?? '—'} />
+                      <Meta label="Validade" value={p.validade ? formatDate(p.validade) : '—'} alerta={vencida ? 'vencida' : undefined} />
+                      <Meta label="Filial emissora" value={emp ? `${emp.nome} (${emp.sigla})` : '—'} />
+                      <Meta label="Segmento" value={p.segmento ? segmentoLabel(p.segmento, segmentos) : '—'} />
+                      <Meta label="Criada em" value={formatDate(p.criado_em)} />
+                      <Meta label="Pedido gerado" value={pedidoNum ?? '— ainda não'} destaque={!!pedidoNum} />
                     </div>
 
                     {/* Itens */}
@@ -599,5 +645,20 @@ export default function PropostasView({ propostas, clientes, currentStatus }: Pr
         />
       )}
     </>
+  )
+}
+
+// Campo de metadado auto-rotulado (rótulo em cima, valor embaixo)
+function Meta({ label, value, alerta, destaque }: { label: string; value: string; alerta?: string; destaque?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{label}</p>
+      <p className={`text-sm truncate ${destaque ? 'font-semibold text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}`}>
+        {value}
+        {alerta && (
+          <span className="ml-1.5 text-[10px] font-medium text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded align-middle">{alerta}</span>
+        )}
+      </p>
+    </div>
   )
 }
