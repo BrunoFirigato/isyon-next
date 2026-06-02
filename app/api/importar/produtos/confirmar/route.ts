@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       nome:        r.dados.nome?.trim(),
       codigo:      r.dados.codigo?.trim()      || null,
       tipo,
-      unidade:     r.dados.unidade?.trim()     || 'un',
+      unidade:     r.dados.unidade?.trim().toUpperCase() || 'UN',
       custo:       num(r.dados.custo),
       preco:       num(r.dados.preco),
       ncm:         r.dados.ncm?.replace(/\D/g, '') || null,

@@ -24,10 +24,7 @@ export const TIPOS = [
   { value: 'servico', label: 'Serviço' },
 ]
 
-export const UNIDADES = [
-  'un', 'pc', 'cx', 'pr', 'kg', 'g', 't',
-  'l', 'ml', 'mt', 'm²', 'm³', 'h', 'sc',
-]
+export const UNIDADES = ['UN', 'PÇ', 'CX', 'KG', 'LT', 'MT', 'BR', 'HR']
 
 export const ORIGENS = [
   { value: 0, label: '0 – Nacional' },

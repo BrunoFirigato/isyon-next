@@ -27,7 +27,7 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
     codigo:      produto?.codigo ?? '',
     nome:        produto?.nome ?? '',
     tipo:        produto?.tipo ?? 'produto',
-    unidade:     produto?.unidade ?? 'un',
+    unidade:     produto?.unidade ?? 'UN',
     custo:       produto?.custo != null ? String(produto.custo) : '',
     // margem derivada de custo/preço quando ambos existem
     margem:      (produto?.custo != null && produto.custo > 0 && produto?.preco != null)
@@ -226,6 +226,10 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
             <div>
               <label className={labelCls}>Unidade</label>
               <select value={form.unidade} onChange={(e) => set('unidade', e.target.value)} className={selectCls}>
+                {/* Mantém visível uma unidade legada (minúscula) de produto antigo */}
+                {form.unidade && !UNIDADES.includes(form.unidade) && (
+                  <option value={form.unidade}>{form.unidade}</option>
+                )}
                 {UNIDADES.map((u) => (
                   <option key={u} value={u}>{u}</option>
                 ))}
