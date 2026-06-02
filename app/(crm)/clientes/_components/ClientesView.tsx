@@ -336,7 +336,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-0.5 justify-end opacity-70 group-hover:opacity-100 transition-opacity">
                           <Link href={`/clientes/${c.id}`} title="Ver 360°"
                             className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors">
                             <LayoutGrid size={15} />

@@ -356,7 +356,7 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
                   </td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(lead.criado_em)}</td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 justify-end opacity-70 group-hover:opacity-100 transition-opacity">
                       <Link
                         href={`/leads/${lead.id}`}
                         title="Visão 360°"
