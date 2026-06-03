@@ -33,7 +33,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
   const [segmento, setSegmento] = useState(pedido?.segmento ?? '')
   const [vendedorId, setVendedorId] = useState(pedido?.vendedor_id ?? '')
   const [condPagamentoId, setCondPagamentoId] = useState(pedido?.cond_pagamento_id ?? '')
-  const [tabelaPrecoId, setTabelaPrecoId] = useState('')
+  const [tabelaPrecoId, setTabelaPrecoId] = useState(pedido?.tabela_preco_id ?? '')
   const [status, setStatus] = useState(pedido?.status ?? 'aguardando')
   const [obs, setObs] = useState(pedido?.obs ?? '')
   const [itens, setItens] = useState<ItemPedido[]>(
@@ -149,6 +149,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
       empresa_id:        empresaId  || null,
       vendedor_id:       vendedorId || null,
       cond_pagamento_id: condPagamentoId || null,
+      tabela_preco_id:   tabelaPrecoId || null,
       segmento:          segmento   || null,
       status,
       obs:   obs.trim() || null,

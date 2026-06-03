@@ -202,6 +202,7 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
         cliente_id:       p.cliente_id,
         vendedor_id:      p.vendedor_id,
         cond_pagamento_id: p.cond_pagamento_id,
+        tabela_preco_id:  p.tabela_preco_id,
         empresa_id:       p.empresa_id,
         proposta_id:      p.id,
         segmento:         p.segmento,
