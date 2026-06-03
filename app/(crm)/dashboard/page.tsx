@@ -26,24 +26,6 @@ function saudacao() {
 function horaDe(iso: string) {
   return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 }
-function serieContagem(dates: string[], dias = 14): number[] {
-  const b = new Array(dias).fill(0)
-  const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (dias - 1))
-  for (const d of dates) {
-    const idx = Math.floor((new Date(d).getTime() - start.getTime()) / 864e5)
-    if (idx >= 0 && idx < dias) b[idx]++
-  }
-  return b
-}
-function serieSoma(rows: { criado_em: string; valor: number | null }[], dias = 14): number[] {
-  const b = new Array(dias).fill(0)
-  const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (dias - 1))
-  for (const r of rows) {
-    const idx = Math.floor((new Date(r.criado_em).getTime() - start.getTime()) / 864e5)
-    if (idx >= 0 && idx < dias) b[idx] += r.valor ?? 0
-  }
-  return b
-}
 
 const ETAPAS_PIPELINE = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação']
 
@@ -54,19 +36,6 @@ const DICAS = [
   'Cadastre o custo dos produtos — assim você acompanha a margem em cada venda.',
 ]
 
-// ─── Sparkline (SVG leve, sem lib) ────────────────────────────────────────────
-function Sparkline({ data, color }: { data: number[]; color: string }) {
-  const w = 96, h = 32
-  const max = Math.max(...data, 1)
-  const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - (v / max) * (h - 4) - 2}`).join(' ')
-  const temDado = data.some(v => v > 0)
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible">
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity={temDado ? 1 : 0.35} />
-    </svg>
-  )
-}
-
 const TIPO_COMP: Record<string, { icon: string }> = {
   reuniao: { icon: '🤝' }, ligacao: { icon: '📞' }, visita: { icon: '📍' },
   email: { icon: '✉️' }, whatsapp: { icon: '💬' }, tarefa: { icon: '✅' },
@@ -75,7 +44,6 @@ const TIPO_COMP: Record<string, { icon: string }> = {
 export default async function DashboardPage() {
   const supabase = await createClient()
   const inicio = inicioDeMes()
-  const ha14 = new Date(Date.now() - 14 * 864e5).toISOString()
 
   const { data: { user } } = await supabase.auth.getUser()
   const { data: usuario } = await supabase.from('usuarios').select('id, nome').eq('auth_id', user?.id ?? '').maybeSingle()
@@ -95,8 +63,6 @@ export default async function DashboardPage() {
     { count: leadsDoMes },
     { count: totalProdutos },
     { count: totalFiliais },
-    { data: leads14 },
-    { data: pedidos14 },
   ] = await Promise.all([
     supabase.from('config_usuario').select('chave, valor').eq('usuario_id', usuario?.id ?? ''),
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'novo'),
@@ -108,8 +74,6 @@ export default async function DashboardPage() {
     supabase.from('leads').select('*', { count: 'exact', head: true }).gte('criado_em', inicio),
     supabase.from('produtos').select('*', { count: 'exact', head: true }),
     supabase.from('empresas').select('*', { count: 'exact', head: true }),
-    supabase.from('leads').select('criado_em').gte('criado_em', ha14),
-    supabase.from('pedidos').select('criado_em, valor, status, nf_numero, nfe_chave').gte('criado_em', ha14),
   ])
 
   const cfg = Object.fromEntries((config ?? []).map(c => [c.chave, c.valor]))
@@ -122,6 +86,7 @@ export default async function DashboardPage() {
   const opGanhasDoMes = opDoMes.filter(o => o.status === 'ganho')
   const taxaConversao = opDoMes.length > 0 ? Math.round((opGanhasDoMes.length / opDoMes.length) * 100) : 0
   const valorPipeline = opAbertas.reduce((s, o) => s + (o.valor ?? 0), 0)
+
   // Receita = pedidos FATURADOS (com NF-e) e não cancelados; sem nota é só provisão
   const faturado = (p: { nf_numero?: string | null; nfe_chave?: string | null }) => !!(p?.nf_numero || p?.nfe_chave)
   const pedidosMes = (pedidos ?? []).filter(p => p.status !== 'cancelado')
@@ -146,20 +111,7 @@ export default async function DashboardPage() {
   const em7 = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)
   const propsAVencer = (props ?? []).filter(p => p.status === 'enviada' && p.validade && p.validade <= em7)
   const compromissosHoje = (comps ?? []).filter(c => c.status !== 'concluido' && c.status !== 'cancelado')
-
-  const acoes = [
-    { on: (leadsNovo ?? 0) > 0, cor: 'red', Icon: Target, n: leadsNovo ?? 0, sing: 'lead', label: 'sem contato', href: '/leads?status=novo', cta: 'Contatar agora' },
-    { on: opsParadas.length > 0, cor: 'amber', Icon: TrendingUp, n: opsParadas.length, sing: 'oportunidade', label: `parada(s) +${diasOpParada}d`, href: '/oportunidades', cta: 'Revisar' },
-    { on: propsAVencer.length > 0, cor: 'orange', Icon: FileText, n: propsAVencer.length, sing: 'proposta', label: 'a vencer', href: '/propostas?status=enviada', cta: 'Acompanhar' },
-    { on: compromissosHoje.length > 0, cor: 'blue', Icon: Calendar, n: compromissosHoje.length, sing: 'compromisso', label: 'hoje', href: '/agenda', cta: 'Ver agenda' },
-  ].filter(a => a.on)
-
-  const cores: Record<string, { bg: string; text: string; dot: string }> = {
-    red: { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', dot: 'bg-red-500' },
-    amber: { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-500' },
-    orange: { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400', dot: 'bg-orange-500' },
-    blue: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400', dot: 'bg-blue-500' },
-  }
+  const totalPropostas = (props ?? []).length
 
   const resumo: string[] = []
   if (compromissosHoje.length) resumo.push(`${compromissosHoje.length} compromisso${compromissosHoje.length > 1 ? 's' : ''} hoje`)
@@ -171,7 +123,7 @@ export default async function DashboardPage() {
     : resumo.length ? `Você tem ${resumo.join(', ')}.`
     : 'Pipeline em dia! Ótimo momento pra prospectar novos clientes. 💪'
 
-  // Pipeline (sempre mostra os estágios)
+  // Pipeline por etapa
   const pipelineMap = opAbertas.reduce((acc, o) => {
     const e = o.etapa ?? 'Prospecção'
     if (!acc[e]) acc[e] = { count: 0, valor: 0 }
@@ -183,10 +135,6 @@ export default async function DashboardPage() {
   const metaPct = metaGlobal > 0 ? Math.min(Math.round((receitaMes / metaGlobal) * 100), 100) : 0
   const dica = DICAS[new Date().getDate() % DICAS.length]
 
-  // Séries dos sparklines
-  const serieLeads = serieContagem((leads14 ?? []).map(l => l.criado_em))
-  const serieReceita = serieSoma((pedidos14 ?? []).filter(p => p.status !== 'cancelado' && faturado(p)))
-
   const acaoBtn = 'inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors'
 
   return (
@@ -195,25 +143,6 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{saudacao()}{primeiroNome ? `, ${primeiroNome}` : ''} 👋</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{subline}</p>
-      </div>
-
-      {/* Atalhos rápidos (launchpad) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: 'Novo lead', Icon: Target, href: '/leads', from: 'from-blue-500 to-blue-600' },
-          { label: 'Oportunidade', Icon: TrendingUp, href: '/oportunidades', from: 'from-purple-500 to-purple-600' },
-          { label: 'Proposta', Icon: FileText, href: '/propostas', from: 'from-orange-500 to-orange-600' },
-          { label: 'Agendar', Icon: Calendar, href: '/agenda', from: 'from-emerald-500 to-emerald-600' },
-        ].map((q, i) => (
-          <Link key={i} href={q.href}
-            className={`group relative overflow-hidden bg-gradient-to-br ${q.from} text-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all`}>
-            <q.Icon size={20} className="mb-6 opacity-90" />
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">{q.label}</span>
-              <Plus size={16} className="opacity-80 group-hover:rotate-90 transition-transform" />
-            </div>
-          </Link>
-        ))}
       </div>
 
       {/* Primeiros passos (onboarding) */}
@@ -242,42 +171,31 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Cards de ação (pendências) — flex que não estica quando há poucos */}
-      {acoes.length > 0 && (
-        <div className="flex flex-wrap gap-3">
-          {acoes.map((a, i) => {
-            const c = cores[a.cor]
-            return (
-              <Link key={i} href={a.href} className="group flex-1 min-w-[240px] max-w-xs bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 hover:shadow-md transition-all">
-                <div className="flex items-start justify-between mb-3">
-                  <div className={`inline-flex p-2 rounded-lg ${c.bg} ${c.text}`}><a.Icon size={18} /></div>
-                  <span className={`w-2 h-2 rounded-full ${c.dot} mt-1`} />
-                </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-none">{a.n}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{a.sing}{a.n > 1 ? 's' : ''} {a.label}</p>
-                <p className={`flex items-center gap-1 text-xs font-medium mt-3 ${c.text} group-hover:gap-2 transition-all`}>{a.cta} <ArrowRight size={13} /></p>
-              </Link>
-            )
-          })}
-        </div>
-      )}
-
-      {/* KPIs com sparkline */}
+      {/* Cards unificados por entidade: métrica + alerta + criar */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiSpark label="Leads no mês" value={String(leadsDoMes ?? 0)} icon={<Target size={16} />} serie={serieLeads} color="#3b82f6" />
-        <KpiSpark label="Pipeline aberto" value={brl(valorPipeline)} sub={`${opAbertas.length} oport.`} icon={<TrendingUp size={16} />} serie={pipeline.map(p => p.valor)} color="#8b5cf6" />
-        <KpiSpark label="Conversão mês" value={`${taxaConversao}%`} sub={`${opGanhasDoMes.length}/${opDoMes.length}`} icon={<CheckCircle2 size={16} />} serie={[taxaConversao]} color="#f59e0b" flat />
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="inline-flex p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500"><DollarSign size={16} /></div>
-            {serieReceita.length > 1 && <Sparkline data={serieReceita} color="#10b981" />}
-          </div>
-          <p className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-none">{brl(receitaMes)}</p>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Receita faturada</p>
-          {provisaoMes > 0 && (
-            <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400 mt-1.5">{brl(provisaoMes)} a faturar</p>
-          )}
-        </div>
+        <CardEntidade
+          tone="blue" icon={<Target size={16} />} title="Leads"
+          criarHref="/leads" criarLabel="Novo"
+          valor={String(leadsDoMes ?? 0)} label="leads no mês"
+          alerta={(leadsNovo ?? 0) > 0 ? { texto: `${leadsNovo} sem contato`, href: '/leads?status=novo', cor: 'red' } : undefined}
+        />
+        <CardEntidade
+          tone="purple" icon={<TrendingUp size={16} />} title="Oportunidades"
+          criarHref="/oportunidades" criarLabel="Nova"
+          valor={brl(valorPipeline)} label={`${opAbertas.length} abertas · conv. ${taxaConversao}%`}
+          alerta={opsParadas.length > 0 ? { texto: `${opsParadas.length} parada${opsParadas.length > 1 ? 's' : ''} +${diasOpParada}d`, href: '/oportunidades', cor: 'amber' } : undefined}
+        />
+        <CardEntidade
+          tone="orange" icon={<FileText size={16} />} title="Propostas"
+          criarHref="/propostas" criarLabel="Nova"
+          valor={String(totalPropostas)} label="no total"
+          alerta={propsAVencer.length > 0 ? { texto: `${propsAVencer.length} a vencer`, href: '/propostas?status=enviada', cor: 'orange' } : undefined}
+        />
+        <CardEntidade
+          tone="emerald" icon={<DollarSign size={16} />} title="Receita"
+          valor={brl(receitaMes)} label="faturada no mês"
+          alerta={provisaoMes > 0 ? { texto: `${brl(provisaoMes)} a faturar`, href: '/pedidos', cor: 'amber' } : undefined}
+        />
       </div>
 
       {/* Meta do mês */}
@@ -285,7 +203,7 @@ export default async function DashboardPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
           <div className="flex items-end justify-between mb-3">
             <div>
-              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Meta do mês</p>
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Meta do mês (faturada)</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{brl(receitaMes)} <span className="text-sm font-normal text-gray-400">/ {brl(metaGlobal)}</span></p>
             </div>
             <p className={`text-2xl font-bold ${metaPct >= 100 ? 'text-emerald-500' : metaPct >= 60 ? 'text-blue-500' : 'text-orange-500'}`}>{metaPct}%</p>
@@ -303,7 +221,7 @@ export default async function DashboardPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5"><Calendar size={15} className="text-gray-400" /> Hoje</h2>
-            <Link href="/agenda" className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">Ver agenda <ChevronRight size={13} /></Link>
+            <Link href="/agenda" className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"><Plus size={13} /> Agendar</Link>
           </div>
           {compromissosHoje.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-8">
@@ -327,14 +245,13 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Pipeline */}
+        {/* Pipeline por etapa */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Pipeline por etapa</h2>
             <Link href="/oportunidades" className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">Ver tudo <ChevronRight size={13} /></Link>
           </div>
           <div className="p-5">
-            {/* Estágios sempre visíveis */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
               {pipeline.map(p => (
                 <Link key={p.etapa} href="/oportunidades" className="rounded-lg border border-gray-100 dark:border-gray-700 p-3 hover:border-blue-200 dark:hover:border-blue-700 transition-colors">
@@ -371,18 +288,50 @@ export default async function DashboardPage() {
   )
 }
 
-// ─── KPI com sparkline ────────────────────────────────────────────────────────
-function KpiSpark({ label, value, sub, icon, serie, color, flat }: {
-  label: string; value: string; sub?: string; icon: React.ReactNode; serie: number[]; color: string; flat?: boolean
+// ─── Card unificado de entidade (métrica + alerta + criar) ────────────────────
+const TONES: Record<string, { iconBg: string; iconText: string; link: string }> = {
+  blue:    { iconBg: 'bg-blue-50 dark:bg-blue-900/20',    iconText: 'text-blue-600 dark:text-blue-400',    link: 'text-blue-600 hover:text-blue-700' },
+  purple:  { iconBg: 'bg-purple-50 dark:bg-purple-900/20', iconText: 'text-purple-600 dark:text-purple-400', link: 'text-purple-600 hover:text-purple-700' },
+  orange:  { iconBg: 'bg-orange-50 dark:bg-orange-900/20', iconText: 'text-orange-600 dark:text-orange-400', link: 'text-orange-600 hover:text-orange-700' },
+  emerald: { iconBg: 'bg-emerald-50 dark:bg-emerald-900/20', iconText: 'text-emerald-600 dark:text-emerald-400', link: 'text-emerald-600 hover:text-emerald-700' },
+}
+const ALERTA_COR: Record<string, string> = {
+  red:    'text-red-600 dark:text-red-400',
+  amber:  'text-amber-600 dark:text-amber-400',
+  orange: 'text-orange-600 dark:text-orange-400',
+}
+
+function CardEntidade({ tone, icon, title, criarHref, criarLabel, valor, label, alerta }: {
+  tone: 'blue' | 'purple' | 'orange' | 'emerald'
+  icon: React.ReactNode
+  title: string
+  criarHref?: string
+  criarLabel?: string
+  valor: string
+  label: string
+  alerta?: { texto: string; href: string; cor: 'red' | 'amber' | 'orange' }
 }) {
+  const t = TONES[tone]
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className="inline-flex p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500">{icon}</div>
-        {!flat && serie.length > 1 && <Sparkline data={serie} color={color} />}
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 flex flex-col">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`inline-flex p-1.5 rounded-lg shrink-0 ${t.iconBg} ${t.iconText}`}>{icon}</span>
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate">{title}</span>
+        </div>
+        {criarHref && (
+          <Link href={criarHref} className={`inline-flex items-center gap-0.5 text-xs font-medium shrink-0 ${t.link}`}>
+            <Plus size={13} /> {criarLabel ?? 'Novo'}
+          </Link>
+        )}
       </div>
-      <p className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-none">{value}</p>
-      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">{label}{sub ? ` · ${sub}` : ''}</p>
+      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-none">{valor}</p>
+      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">{label}</p>
+      {alerta && (
+        <Link href={alerta.href} className={`mt-2.5 inline-flex items-center gap-1 text-xs font-medium hover:gap-1.5 transition-all ${ALERTA_COR[alerta.cor]}`}>
+          {alerta.texto} <ArrowRight size={12} />
+        </Link>
+      )}
     </div>
   )
 }
