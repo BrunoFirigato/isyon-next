@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Plus, Search, X, Pencil, Trash2, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { vinculosParceiro, mensagemBloqueio } from '@/lib/exclusao'
 import ParceiroFormModal from './ParceiroFormModal'
 import {
   type Parceiro, type Vendedor, STATUS_PARCEIRO,
@@ -51,9 +52,11 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
 
   async function handleDelete(id: string) {
     const supabase = createClient()
+    const vinc = await vinculosParceiro(supabase, id)
+    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
     const { error } = await supabase.from('parceiros').delete().eq('id', id)
     setDeletingId(null)
-    if (error) { toast('Erro ao excluir parceiro', 'error'); return }
+    if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
     toast('Parceiro excluído', 'info')
     router.refresh()
   }

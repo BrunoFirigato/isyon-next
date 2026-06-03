@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Plus, Search, X, Pencil, Trash2, Phone, Mail } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { vinculosVendedor, mensagemBloqueio } from '@/lib/exclusao'
 import VendedorFormModal from './VendedorFormModal'
 import {
   type Vendedor, STATUS_VENDEDOR,
@@ -52,9 +53,11 @@ export default function VendedoresView({ vendedores, currentStatus, currentQ }: 
 
   async function handleDelete(id: string) {
     const supabase = createClient()
+    const vinc = await vinculosVendedor(supabase, id)
+    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
     const { error } = await supabase.from('vendedores').delete().eq('id', id)
     setDeletingId(null)
-    if (error) { toast('Erro ao excluir vendedor', 'error'); return }
+    if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
     toast('Vendedor excluído', 'info')
     router.refresh()
   }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { vinculosUsuario, mensagemBloqueio } from '@/lib/exclusao'
 
 /** Verifica que o chamador é admin do seu tenant. Retorna { userId, tenantId } ou null. */
 async function assertTenantAdmin() {
@@ -124,8 +125,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Você não pode excluir sua própria conta' }, { status: 400 })
     }
 
-    // Remover da tabela usuarios
-    await admin.from('usuarios').delete().eq('id', usuario_id)
+    // Trava amigável: bloqueia se o usuário tem vínculos (rotas/visitas/leads)
+    const vinc = await vinculosUsuario(admin, usuario_id)
+    if (vinc.length) {
+      return NextResponse.json(
+        { error: mensagemBloqueio(vinc) + ' Dica: você pode desativar o usuário em vez de excluí-lo.' },
+        { status: 409 },
+      )
+    }
+
+    // Remover da tabela usuarios (aborta se o banco recusar)
+    const { error: errDel } = await admin.from('usuarios').delete().eq('id', usuario_id)
+    if (errDel) {
+      return NextResponse.json(
+        { error: 'Não foi possível excluir — há registros vinculados. Considere desativar o usuário.' },
+        { status: 409 },
+      )
+    }
 
     // Remover do Supabase Auth (se tiver auth_id)
     if (alvo.auth_id) {

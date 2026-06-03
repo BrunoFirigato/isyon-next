@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Plus, Pencil, Trash2, Search, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { vinculosCondPagamento, mensagemBloqueio } from '@/lib/exclusao'
 import {
   type Ncm, type NaturezaOperacao, type Cfop, type Transportadora, type CondPagamento,
   formatDate, formaLabel, formaStyle,
@@ -70,10 +71,15 @@ export default function CadastrosView({
   async function handleDelete() {
     if (!deletingId || !deletingTable) return
     const supabase = createClient()
+    // Condição de pagamento é referenciada por pedidos/propostas — trava amigável
+    if (deletingTable === 'cond_pagamentos') {
+      const vinc = await vinculosCondPagamento(supabase, deletingId)
+      if (vinc.length) { setDeletingId(null); setDeletingTable(''); toast(mensagemBloqueio(vinc), 'error'); return }
+    }
     const { error } = await supabase.from(deletingTable).delete().eq('id', deletingId)
     setDeletingId(null)
     setDeletingTable('')
-    if (error) { toast('Erro ao excluir', 'error'); return }
+    if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
     toast('Registro excluído', 'info')
     router.refresh()
   }

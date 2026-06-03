@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Pencil, Trash2, Building2, Phone, Mail, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { vinculosEmpresa, mensagemBloqueio } from '@/lib/exclusao'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import EmpresaFormModal from './EmpresaFormModal'
 import type { Empresa } from './types'
@@ -28,9 +29,11 @@ export default function EmpresasView({ empresas }: Props) {
 
   async function handleDelete(id: string) {
     const supabase = createClient()
+    const vinc = await vinculosEmpresa(supabase, id)
+    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
     const { error } = await supabase.from('empresas').delete().eq('id', id)
     setDeletingId(null)
-    if (error) { toast('Erro ao excluir empresa', 'error'); return }
+    if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
     toast('Empresa excluída', 'info')
     router.refresh()
   }
@@ -149,7 +152,7 @@ export default function EmpresasView({ empresas }: Props) {
           <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Excluir empresa?</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-              Esta ação não pode ser desfeita. Oportunidades, propostas e pedidos vinculados perderão o vínculo.
+              Esta ação não pode ser desfeita. Só é possível excluir uma empresa que não esteja vinculada a clientes, propostas, pedidos ou outros registros.
             </p>
             <div className="flex gap-3">
               <button onClick={() => setDeletingId(null)}

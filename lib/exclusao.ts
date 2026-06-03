@@ -68,6 +68,73 @@ export function vinculosPedido(supabase: SupabaseClient, id: string) {
   ], id)
 }
 
+// ── Vendedor ─────────────────────────────────────────────────────────────────
+// clientes/parceiros referenciam o vendedor por duas colunas (maq e pec) → OR.
+export async function vinculosVendedor(supabase: SupabaseClient, id: string): Promise<Vinculo[]> {
+  const orVend = `vendedor_maq_id.eq.${id},vendedor_pec_id.eq.${id}`
+  const [cli, par, leads, ops, props, peds, com, metas, ag] = await Promise.all([
+    supabase.from('clientes').select('id',  { count: 'exact', head: true }).or(orVend),
+    supabase.from('parceiros').select('id', { count: 'exact', head: true }).or(orVend),
+    supabase.from('leads').select('id',         { count: 'exact', head: true }).eq('vendedor_id', id),
+    supabase.from('oportunidades').select('id', { count: 'exact', head: true }).eq('vendedor_id', id),
+    supabase.from('propostas').select('id',     { count: 'exact', head: true }).eq('vendedor_id', id),
+    supabase.from('pedidos').select('id',       { count: 'exact', head: true }).eq('vendedor_id', id),
+    supabase.from('comissoes').select('id',     { count: 'exact', head: true }).eq('vendedor_id', id),
+    supabase.from('metas').select('id',         { count: 'exact', head: true }).eq('vendedor_id', id),
+    supabase.from('agenda').select('id',        { count: 'exact', head: true }).eq('vendedor_id', id),
+  ])
+  const out: Vinculo[] = []
+  const add = (r: { count: number | null }, sing: string, plur: string) => {
+    const total = r.count ?? 0
+    if (total > 0) out.push({ sing, plur, total })
+  }
+  add(cli, 'cliente', 'clientes'); add(par, 'parceiro', 'parceiros'); add(leads, 'lead', 'leads')
+  add(ops, 'oportunidade', 'oportunidades'); add(props, 'proposta', 'propostas'); add(peds, 'pedido', 'pedidos')
+  add(com, 'comissão', 'comissões'); add(metas, 'meta', 'metas'); add(ag, 'item de agenda', 'itens de agenda')
+  return out
+}
+
+// ── Parceiro comercial ───────────────────────────────────────────────────────
+export function vinculosParceiro(supabase: SupabaseClient, id: string) {
+  return contarDefs(supabase, [
+    ['clientes',          'parceiro_id', 'cliente', 'clientes'],
+    ['visitas_parceiros', 'parceiro_id', 'visita',  'visitas'],
+  ], id)
+}
+
+// ── Empresa ──────────────────────────────────────────────────────────────────
+export function vinculosEmpresa(supabase: SupabaseClient, id: string) {
+  return contarDefs(supabase, [
+    ['clientes',      'empresa_id', 'cliente',      'clientes'],
+    ['oportunidades', 'empresa_id', 'oportunidade', 'oportunidades'],
+    ['propostas',     'empresa_id', 'proposta',     'propostas'],
+    ['pedidos',       'empresa_id', 'pedido',       'pedidos'],
+    ['faturas',       'empresa_id', 'fatura',       'faturas'],
+    ['parcelas',      'empresa_id', 'parcela',      'parcelas'],
+    ['comissoes',     'empresa_id', 'comissão',     'comissões'],
+    ['vendedores',    'empresa_id', 'vendedor',     'vendedores'],
+    ['parceiros',     'empresa_id', 'parceiro',     'parceiros'],
+    ['lancamentos',   'empresa_id', 'lançamento',   'lançamentos'],
+  ], id)
+}
+
+// ── Condição de pagamento ─────────────────────────────────────────────────────
+export function vinculosCondPagamento(supabase: SupabaseClient, id: string) {
+  return contarDefs(supabase, [
+    ['pedidos',   'cond_pagamento_id', 'pedido',   'pedidos'],
+    ['propostas', 'cond_pagamento_id', 'proposta', 'propostas'],
+  ], id)
+}
+
+// ── Usuário ──────────────────────────────────────────────────────────────────
+export function vinculosUsuario(supabase: SupabaseClient, id: string) {
+  return contarDefs(supabase, [
+    ['rotas_parceiros',   'usuario_id',     'rota de parceiro',          'rotas de parceiro'],
+    ['visitas_parceiros', 'usuario_id',     'visita de parceiro',        'visitas de parceiro'],
+    ['leads',             'responsavel_id', 'lead sob responsabilidade', 'leads sob responsabilidade'],
+  ], id)
+}
+
 // ── Produto ──────────────────────────────────────────────────────────────────
 // Produtos não têm FK em pedidos/propostas — ficam no JSONB `itens`.
 // Usamos contains (@>) para detectar o produto dentro dos itens.
