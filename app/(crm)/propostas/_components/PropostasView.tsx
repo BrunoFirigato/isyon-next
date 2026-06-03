@@ -125,6 +125,7 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
         if (emailModal.status === 'rascunho') {
           const supabase = createClient()
           await supabase.from('propostas').update({ status: 'enviada' }).eq('id', emailModal.id)
+          await avancarOpNegociacao(supabase, emailModal.oportunidade_id)
           router.refresh()
         }
         setEmailModal(null)
@@ -147,9 +148,21 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
     rascunho: 'Rascunho', cancelada: 'Cancelada',
   }
 
-  async function updateStatus(id: string, novoStatus: string) {
+  // Automação de funil: enviar/aceitar a proposta empurra a oportunidade para "Negociação".
+  async function avancarOpNegociacao(supabase: ReturnType<typeof createClient>, oportunidadeId: string | null) {
+    if (!oportunidadeId) return
+    await supabase.from('oportunidades')
+      .update({ etapa: 'Negociação' })
+      .eq('id', oportunidadeId)
+      .eq('status', 'aberto')
+  }
+
+  async function updateStatus(p: Proposta, novoStatus: string) {
     const supabase = createClient()
-    await supabase.from('propostas').update({ status: novoStatus }).eq('id', id)
+    await supabase.from('propostas').update({ status: novoStatus }).eq('id', p.id)
+    if (novoStatus === 'enviada' || novoStatus === 'aprovada') {
+      await avancarOpNegociacao(supabase, p.oportunidade_id)
+    }
     toast(`Status alterado para ${STATUS_LABEL[novoStatus] ?? novoStatus}`, 'info')
     router.refresh()
   }
@@ -369,18 +382,18 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
                     onClick={(e) => e.stopPropagation()}
                   >
                     {p.status === 'rascunho' && (
-                      <button onClick={() => updateStatus(p.id, 'enviada')} title="Marcar como enviada"
+                      <button onClick={() => updateStatus(p, 'enviada')} title="Marcar como enviada"
                         className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
                         <Send size={14} />
                       </button>
                     )}
                     {p.status === 'enviada' && (
                       <>
-                        <button onClick={() => updateStatus(p.id, 'aprovada')} title="Cliente aceitou a proposta"
+                        <button onClick={() => updateStatus(p, 'aprovada')} title="Cliente aceitou a proposta"
                           className="p-1.5 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors">
                           <CheckCircle size={14} />
                         </button>
-                        <button onClick={() => updateStatus(p.id, 'recusada')} title="Cliente recusou a proposta"
+                        <button onClick={() => updateStatus(p, 'recusada')} title="Cliente recusou a proposta"
                           className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
                           <XCircle size={14} />
                         </button>
