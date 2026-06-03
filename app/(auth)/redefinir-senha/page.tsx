@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function RedefinirSenhaPage() {
@@ -13,6 +14,7 @@ export default function RedefinirSenhaPage() {
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
   const [ok, setOk] = useState(false)
+  const [mostrarSenha, setMostrarSenha] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -94,11 +96,21 @@ export default function RedefinirSenhaPage() {
             <form onSubmit={handle} className="space-y-4">
               <div>
                 <label className={labelCls}>Nova senha</label>
-                <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Mínimo 8 caracteres" required autoFocus className={inputCls} />
+                <div className="relative">
+                  <input type={mostrarSenha ? 'text' : 'password'} value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Mínimo 8 caracteres" required autoFocus className={`${inputCls} pr-10`} />
+                  <button type="button" onClick={() => setMostrarSenha((v) => !v)} aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className={labelCls}>Confirmar nova senha</label>
-                <input type="password" value={confirma} onChange={(e) => setConfirma(e.target.value)} placeholder="Repita a senha" required className={inputCls} />
+                <div className="relative">
+                  <input type={mostrarSenha ? 'text' : 'password'} value={confirma} onChange={(e) => setConfirma(e.target.value)} placeholder="Repita a senha" required className={`${inputCls} pr-10`} />
+                  <button type="button" onClick={() => setMostrarSenha((v) => !v)} aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               {erro && (
                 <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2.5">{erro}</div>
