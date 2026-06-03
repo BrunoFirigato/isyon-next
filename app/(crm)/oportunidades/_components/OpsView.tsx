@@ -128,7 +128,7 @@ export default function OpsView({ ops }: Props) {
   }
 
   // ── Kanban card ─────────────────────────────────────────────────────────────
-  function OpCard({ op, compact = false }: { op: Oportunidade; compact?: boolean }) {
+  function OpCard({ op }: { op: Oportunidade }) {
     const proxima = proximaEtapa(op.etapa)
     const seg = segmentos.find((s) => s.value === op.segmento)
     const vendedorNome = op.vendedor_id ? vendedorMap[op.vendedor_id] : null
@@ -171,8 +171,8 @@ export default function OpsView({ ops }: Props) {
           </div>
         )}
 
-        {/* Ações — duas linhas para não vazar */}
-        <div className={`mt-3 pt-2.5 border-t border-gray-100 dark:border-gray-700 ${compact ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}`}>
+        {/* Ações — sempre visíveis, em duas linhas para não vazar */}
+        <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-gray-700">
           <div className="flex flex-wrap items-center gap-1.5">
             {proxima && (
               <button
@@ -384,7 +384,7 @@ export default function OpsView({ ops }: Props) {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {cards.map((op) => <OpCard key={op.id} op={op} compact />)}
+                  {cards.map((op) => <OpCard key={op.id} op={op} />)}
                 </div>
               )
             })()}
