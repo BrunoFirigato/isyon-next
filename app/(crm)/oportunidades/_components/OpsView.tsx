@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
-  Plus, Pencil, Trophy, XCircle, Trash2, ChevronRight, FileText,
+  Plus, Pencil, Trophy, XCircle, Trash2, ChevronRight, FileText, User, Calendar,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { vinculosOportunidade, mensagemBloqueio } from '@/lib/exclusao'
@@ -49,6 +49,15 @@ export default function OpsView({ ops }: Props) {
   const [propostaOp, setPropostaOp] = useState<Oportunidade | null>(null)
   const [completarCliente, setCompletarCliente] = useState<Cliente | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [vendedorMap, setVendedorMap] = useState<Record<string, string>>({})
+
+  // Mapa id→nome de vendedores, para exibir o responsável no card
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('vendedores').select('id, nome').then(({ data }) => {
+      if (data) setVendedorMap(Object.fromEntries(data.map((v) => [v.id, v.nome])))
+    })
+  }, [])
 
   const abertas = ops.filter((o) => o.status === 'aberto')
   const ganhas   = ops.filter((o) => o.status === 'ganho')
@@ -122,55 +131,85 @@ export default function OpsView({ ops }: Props) {
   function OpCard({ op, compact = false }: { op: Oportunidade; compact?: boolean }) {
     const proxima = proximaEtapa(op.etapa)
     const seg = segmentos.find((s) => s.value === op.segmento)
+    const vendedorNome = op.vendedor_id ? vendedorMap[op.vendedor_id] : null
+    const prazo = op.prazo_fechamento
+      ? (() => { const [y, m, d] = op.prazo_fechamento!.slice(0, 10).split('-'); return `${d}/${m}/${y}` })()
+      : null
 
     return (
       <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3.5 shadow-sm group hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md transition-all">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-snug">{op.titulo}</p>
+        {/* Etapa + segmento */}
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
+            {etapaCanonica(op.etapa)}
+          </span>
           {seg && (
-            <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600">
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300">
               {seg.label}
             </span>
           )}
         </div>
 
-        <p className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">{brl(op.valor)}</p>
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-snug">{op.titulo}</p>
+        <p className="text-base font-bold text-gray-900 dark:text-gray-100 mt-1.5">{brl(op.valor)}</p>
 
-        {/* Actions */}
-        <div className={`flex items-center gap-1 ${compact ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}`}>
-          {proxima && (
+        {/* Meta: responsável + previsão */}
+        {(vendedorNome || prazo) && (
+          <div className="mt-2 space-y-1">
+            {vendedorNome && (
+              <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                <User size={12} className="text-gray-400 shrink-0" />
+                <span className="truncate">{vendedorNome}</span>
+              </div>
+            )}
+            {prazo && (
+              <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                <Calendar size={12} className="text-gray-400 shrink-0" />
+                <span>Previsão: {prazo}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Ações — duas linhas para não vazar */}
+        <div className={`mt-3 pt-2.5 border-t border-gray-100 dark:border-gray-700 ${compact ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}`}>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {proxima && (
+              <button
+                onClick={() => handleAvancarEtapa(op)}
+                title={`Mover para ${proxima}`}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-300 text-xs font-medium transition-colors"
+              >
+                {proxima} <ChevronRight size={12} />
+              </button>
+            )}
             <button
-              onClick={() => handleAvancarEtapa(op)}
-              title={`Mover para ${proxima}`}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-medium transition-colors"
+              onClick={() => setPropostaOp(op)}
+              title="Criar proposta a partir desta oportunidade"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-300 text-xs font-medium transition-colors"
             >
-              {proxima} <ChevronRight size={12} />
+              <FileText size={12} /> Proposta
             </button>
-          )}
-          <button
-            onClick={() => setPropostaOp(op)}
-            title="Criar proposta a partir desta oportunidade"
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-600 text-xs font-medium transition-colors"
-          >
-            <FileText size={12} /> Proposta
-          </button>
-          <div className="ml-auto flex gap-1">
+          </div>
+          <div className="flex items-center gap-1 mt-2">
             <button onClick={() => handleGanho(op)} title="Marcar ganho"
-              className="p-1.5 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors">
+              className="p-1.5 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/30 text-gray-400 hover:text-green-600 transition-colors">
               <Trophy size={14} />
             </button>
             <button onClick={() => setLostOp(op)} title="Marcar perdida"
-              className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+              className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors">
               <XCircle size={14} />
             </button>
-            <button onClick={() => openEdit(op)} title="Editar"
-              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-              <Pencil size={14} />
-            </button>
-            <button onClick={() => setDeletingId(op.id)} title="Excluir"
-              className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
-              <Trash2 size={14} />
-            </button>
+            <div className="ml-auto flex gap-1">
+              <button onClick={() => openEdit(op)} title="Editar"
+                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                <Pencil size={14} />
+              </button>
+              <button onClick={() => setDeletingId(op.id)} title="Excluir"
+                className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors">
+                <Trash2 size={14} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
