@@ -32,7 +32,8 @@ export default async function proxy(req: NextRequest) {
   const isLoginNormal     = path.startsWith('/login')
   const isLoginSuperadmin = path.startsWith('/admin')
   const isCadastro        = path.startsWith('/cadastro')
-  const isPublic = isLoginNormal || isLoginSuperadmin || isCadastro
+  const isRedefinirSenha  = path.startsWith('/redefinir-senha')
+  const isPublic = isLoginNormal || isLoginSuperadmin || isCadastro || isRedefinirSenha
 
   // Não autenticado tentando acessar rota protegida
   if (!user && !isPublic) {
