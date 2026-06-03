@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Plus, Search, X, Pencil, Trash2, Package, Wrench, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { vinculosProduto, mensagemBloqueio } from '@/lib/exclusao'
 import ProdutoFormModal from './ProdutoFormModal'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import ImportModal  from '@/app/(crm)/_components/ImportModal'
@@ -112,9 +113,11 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
 
   async function handleDelete(id: string) {
     const supabase = createClient()
+    const vinc = await vinculosProduto(supabase, id)
+    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
     const { error } = await supabase.from('produtos').delete().eq('id', id)
     setDeletingId(null)
-    if (error) { toast('Erro ao excluir produto', 'error'); return }
+    if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
     // Remoção otimista
     setItems((prev) => prev.filter((p) => p.id !== id))
     setTotal((t) => Math.max(0, t - 1))

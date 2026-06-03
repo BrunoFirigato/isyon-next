@@ -7,6 +7,7 @@ import ExportButton from '@/app/(crm)/_components/ExportButton'
 import ImportModal  from '@/app/(crm)/_components/ImportModal'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { vinculosLead, mensagemBloqueio } from '@/lib/exclusao'
 import LeadFormModal from './LeadFormModal'
 import ConvertModal from './ConvertModal'
 import { type Lead, STATUS_LEADS, SCORE_OPTIONS, LEADS_PAGE_SIZE, LEAD_COLS, statusStyle, statusLabel, formatDate, scoreInfo } from './types'
@@ -210,9 +211,11 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
 
   async function handleDelete(id: string) {
     const supabase = createClient()
+    const vinc = await vinculosLead(supabase, id)
+    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
     const { error } = await supabase.from('leads').delete().eq('id', id)
     setDeletingId(null)
-    if (error) { toast('Erro ao excluir lead', 'error'); return }
+    if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
     // Remoção otimista — evita recarregar a página inteira
     setItems((prev) => prev.filter((l) => l.id !== id))
     setTotal((t) => Math.max(0, t - 1))

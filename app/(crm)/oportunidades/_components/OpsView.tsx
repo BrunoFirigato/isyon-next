@@ -6,6 +6,7 @@ import {
   Plus, Pencil, Trophy, XCircle, Trash2, ChevronRight, FileText,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { vinculosOportunidade, mensagemBloqueio } from '@/lib/exclusao'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import OpFormModal from './OpFormModal'
 import LostModal from './LostModal'
@@ -97,9 +98,11 @@ export default function OpsView({ ops }: Props) {
 
   async function handleDelete(id: string) {
     const supabase = createClient()
+    const vinc = await vinculosOportunidade(supabase, id)
+    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
     const { error } = await supabase.from('oportunidades').delete().eq('id', id)
     setDeletingId(null)
-    if (error) { toast('Erro ao excluir oportunidade', 'error'); return }
+    if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
     toast('Oportunidade excluída', 'info')
     router.refresh()
   }

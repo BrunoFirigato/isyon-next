@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import { createClient } from '@/lib/supabase/client'
+import { vinculosProposta, mensagemBloqueio } from '@/lib/exclusao'
 import PropostaFormModal from './PropostaFormModal'
 import {
   type Proposta, type ClienteRef, STATUS_PROPOSTA,
@@ -155,9 +156,11 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
 
   async function handleDelete(id: string) {
     const supabase = createClient()
+    const vinc = await vinculosProposta(supabase, id)
+    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
     const { error } = await supabase.from('propostas').delete().eq('id', id)
     setDeletingId(null)
-    if (error) { toast('Erro ao excluir proposta', 'error'); return }
+    if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
     toast('Proposta excluída', 'info')
     router.refresh()
   }

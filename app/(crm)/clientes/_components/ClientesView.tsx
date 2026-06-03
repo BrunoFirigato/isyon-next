@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { Plus, Search, X, Pencil, Trash2, MapPin, LayoutGrid, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { vinculosCliente, mensagemBloqueio } from '@/lib/exclusao'
 import ClienteFormModal from './ClienteFormModal'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import ImportModal from '@/app/(crm)/_components/ImportModal'
@@ -139,9 +140,11 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
 
   async function handleDelete(id: string) {
     const supabase = createClient()
+    const vinc = await vinculosCliente(supabase, id)
+    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
     const { error } = await supabase.from('clientes').delete().eq('id', id)
     setDeletingId(null)
-    if (error) { toast('Erro ao excluir cliente', 'error'); return }
+    if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
     // Remoção otimista
     setItems((prev) => prev.filter((c) => c.id !== id))
     setTotal((t) => Math.max(0, t - 1))

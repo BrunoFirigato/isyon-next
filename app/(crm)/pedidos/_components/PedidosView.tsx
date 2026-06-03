@@ -9,6 +9,7 @@ import {
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import EmitirNFeModal from './EmitirNFeModal'
 import { createClient } from '@/lib/supabase/client'
+import { vinculosPedido, mensagemBloqueio } from '@/lib/exclusao'
 import PedidoFormModal from './PedidoFormModal'
 import {
   type Pedido, type ClienteRef, STATUS_PEDIDO,
@@ -86,9 +87,11 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
 
   async function handleDelete(id: string) {
     const supabase = createClient()
+    const vinc = await vinculosPedido(supabase, id)
+    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
     const { error } = await supabase.from('pedidos').delete().eq('id', id)
     setDeletingId(null)
-    if (error) { toast('Erro ao excluir pedido', 'error'); return }
+    if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
     toast('Pedido excluído', 'info')
     router.refresh()
   }
