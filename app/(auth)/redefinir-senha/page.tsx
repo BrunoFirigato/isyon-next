@@ -16,16 +16,33 @@ export default function RedefinirSenhaPage() {
 
   useEffect(() => {
     const supabase = createClient()
-    // O link do e-mail traz o token no hash; o cliente Supabase cria a sessão de recuperação
+    let cancelado = false
+    // O link cria uma sessão de recuperação (hash) ou traz ?code= (PKCE)
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') setPronto(true)
     })
-    supabase.auth.getSession().then(({ data }) => { if (data.session) setPronto(true) })
-    // Se em alguns segundos não houver sessão, o link é inválido/expirado
-    const t = setTimeout(() => {
-      supabase.auth.getSession().then(({ data }) => { if (!data.session) setLinkInvalido(true) })
-    }, 2500)
-    return () => { sub.subscription.unsubscribe(); clearTimeout(t) }
+
+    async function init() {
+      // 1) Já tem sessão? (auto-detect já resolveu)
+      const { data: s1 } = await supabase.auth.getSession()
+      if (s1.session) { setPronto(true); return }
+      // 2) Espera o auto-detect do cliente e checa de novo
+      await new Promise((r) => setTimeout(r, 1500))
+      if (cancelado) return
+      const { data: s2 } = await supabase.auth.getSession()
+      if (s2.session) { setPronto(true); return }
+      // 3) PKCE: troca o ?code= manualmente
+      const code = new URL(window.location.href).searchParams.get('code')
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        if (!cancelado && !error) { setPronto(true); return }
+      }
+      // 4) Sem sessão e sem code válido → link inválido/expirado
+      if (!cancelado) setLinkInvalido(true)
+    }
+    init()
+
+    return () => { cancelado = true; sub.subscription.unsubscribe() }
   }, [])
 
   async function handle(e: React.FormEvent) {
