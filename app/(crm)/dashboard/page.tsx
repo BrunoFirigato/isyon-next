@@ -263,7 +263,17 @@ export default async function DashboardPage() {
         <KpiSpark label="Leads no mês" value={String(leadsDoMes ?? 0)} icon={<Target size={16} />} serie={serieLeads} color="#3b82f6" />
         <KpiSpark label="Pipeline aberto" value={brl(valorPipeline)} sub={`${opAbertas.length} oport.`} icon={<TrendingUp size={16} />} serie={pipeline.map(p => p.valor)} color="#8b5cf6" />
         <KpiSpark label="Conversão mês" value={`${taxaConversao}%`} sub={`${opGanhasDoMes.length}/${opDoMes.length}`} icon={<CheckCircle2 size={16} />} serie={[taxaConversao]} color="#f59e0b" flat />
-        <KpiSpark label="Receita faturada" value={brl(receitaMes)} sub={provisaoMes > 0 ? `${brl(provisaoMes)} a faturar` : undefined} icon={<DollarSign size={16} />} serie={serieReceita} color="#10b981" />
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="inline-flex p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500"><DollarSign size={16} /></div>
+            {serieReceita.length > 1 && <Sparkline data={serieReceita} color="#10b981" />}
+          </div>
+          <p className="text-xl font-bold text-gray-900 dark:text-gray-100 leading-none">{brl(receitaMes)}</p>
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Receita faturada</p>
+          {provisaoMes > 0 && (
+            <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400 mt-1.5">{brl(provisaoMes)} a faturar</p>
+          )}
+        </div>
       </div>
 
       {/* Meta do mês */}
