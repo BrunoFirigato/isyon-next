@@ -137,7 +137,7 @@ export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
           <div>
-            <label className={labelCls}>Título <span className="text-red-500">*</span></label>
+            <label className={labelCls}>Título da oportunidade <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={form.titulo}
@@ -158,17 +158,24 @@ export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {empresas.length > 0 && (
             <div>
-              <label className={labelCls}>Etapa</label>
-              <select value={form.etapa} onChange={(e) => set('etapa', e.target.value)} className={selectCls}>
-                {/* Ao criar: só etapas iniciais. Ao editar: todas (permite correção manual). */}
-                {(isEditing ? ETAPAS : ETAPAS_INICIAIS).map((et) => (
-                  <option key={et} value={et}>{et}</option>
+              <label className={`${labelCls} flex items-center gap-1.5`}>
+                Empresa
+                {empresas.length === 1 && (
+                  <span className="text-[10px] font-normal text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded-full">auto</span>
+                )}
+              </label>
+              <select value={form.empresaId} onChange={(e) => set('empresaId', e.target.value)} className={selectCls}>
+                <option value="">Selecione...</option>
+                {empresas.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{emp.nome} ({emp.sigla})</option>
                 ))}
               </select>
             </div>
+          )}
 
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>Valor estimado (R$)</label>
               <input
@@ -179,21 +186,19 @@ export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
                 className={inputCls}
               />
             </div>
+
+            <div>
+              <label className={labelCls}>Etapa</label>
+              <select value={form.etapa} onChange={(e) => set('etapa', e.target.value)} className={selectCls}>
+                {/* Ao criar: só etapas iniciais. Ao editar: todas (permite correção manual). */}
+                {(isEditing ? ETAPAS : ETAPAS_INICIAIS).map((et) => (
+                  <option key={et} value={et}>{et}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {empresas.length > 0 && (
-              <div>
-                <label className={labelCls}>Empresa emissora</label>
-                <select value={form.empresaId} onChange={(e) => set('empresaId', e.target.value)} className={selectCls}>
-                  <option value="">Selecione...</option>
-                  {empresas.map((emp) => (
-                    <option key={emp.id} value={emp.id}>{emp.nome} ({emp.sigla})</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
             <div>
               <label className={labelCls}>Vendedor</label>
               <select value={form.vendedorId} onChange={(e) => set('vendedorId', e.target.value)} className={selectCls}>
@@ -203,11 +208,9 @@ export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
                 ))}
               </select>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>Previsão de fechamento</label>
+              <label className={labelCls}>Data prevista de fechamento</label>
               <input
                 type="date"
                 value={form.prazo}
@@ -215,19 +218,19 @@ export default function OpFormModal({ op, defaultEtapa, onClose }: Props) {
                 className={inputCls}
               />
             </div>
-
-            {segmentos.length > 0 && (
-              <div>
-                <label className={labelCls}>Segmento</label>
-                <select value={form.segmento} onChange={(e) => set('segmento', e.target.value)} className={selectCls}>
-                  <option value="">Selecione...</option>
-                  {segmentos.map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
-              </div>
-            )}
           </div>
+
+          {segmentos.length > 0 && (
+            <div>
+              <label className={labelCls}>Segmento</label>
+              <select value={form.segmento} onChange={(e) => set('segmento', e.target.value)} className={selectCls}>
+                <option value="">Selecione...</option>
+                {segmentos.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
