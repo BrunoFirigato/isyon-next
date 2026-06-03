@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Plus, Pencil, Trophy, XCircle, Trash2, ChevronRight, FileText,
 } from 'lucide-react'
@@ -34,6 +34,13 @@ export default function OpsView({ ops }: Props) {
   const [mobileEtapa, setMobileEtapa] = useState<string>(ETAPAS[0])
   const [formOpen, setFormOpen] = useState(false)
   const [editingOp, setEditingOp] = useState<Oportunidade | null>(null)
+
+  // Abre o modal de nova oportunidade direto quando vem do dashboard (?novo=1)
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('novo') === '1') { setEditingOp(null); setFormOpen(true) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const [defaultEtapa, setDefaultEtapa] = useState<string>('Prospecção')
   const [lostOp, setLostOp] = useState<Oportunidade | null>(null)
   const [propostaOp, setPropostaOp] = useState<Oportunidade | null>(null)

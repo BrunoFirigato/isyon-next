@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useState, useEffect, useTransition } from 'react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
   CheckCircle, XCircle, Send, Mail, X, ShoppingCart, Printer,
@@ -47,6 +47,13 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
   const [gerandoId, setGerandoId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [editingProposta, setEditingProposta] = useState<Proposta | null>(null)
+
+  // Abre o modal de nova proposta direto quando vem do dashboard (?novo=1)
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('novo') === '1') { setEditingProposta(null); setFormOpen(true) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [emailModal, setEmailModal] = useState<Proposta | null>(null)

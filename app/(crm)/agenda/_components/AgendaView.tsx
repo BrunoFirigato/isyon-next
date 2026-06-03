@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, CheckCircle2, Pencil, Trash2, Calendar } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -73,6 +73,13 @@ export default function AgendaView({ compromissos }: Props) {
   const [editing,         setEditing]         = useState<Compromisso | null>(null)
   const [deletingId,      setDeletingId]      = useState<string | null>(null)
   const [loadingId,       setLoadingId]       = useState<string | null>(null)
+
+  // Abre o modal de novo compromisso direto quando vem do dashboard (?novo=1)
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('novo') === '1') { setEditing(null); setFormOpen(true) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const filtered = applyFilter(
     tipoFiltro ? compromissos.filter(c => c.tipo === tipoFiltro) : compromissos,

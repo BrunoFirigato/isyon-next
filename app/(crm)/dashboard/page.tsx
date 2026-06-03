@@ -175,19 +175,19 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <CardEntidade
           tone="blue" icon={<Target size={16} />} title="Leads"
-          criarHref="/leads" criarLabel="Novo"
+          criarHref="/leads?novo=1" criarLabel="Novo"
           valor={String(leadsDoMes ?? 0)} label="leads no mês"
           alerta={(leadsNovo ?? 0) > 0 ? { texto: `${leadsNovo} sem contato`, href: '/leads?status=novo', cor: 'red' } : undefined}
         />
         <CardEntidade
           tone="purple" icon={<TrendingUp size={16} />} title="Oportunidades"
-          criarHref="/oportunidades" criarLabel="Nova"
+          criarHref="/oportunidades?novo=1" criarLabel="Nova"
           valor={brl(valorPipeline)} label={`${opAbertas.length} abertas · conv. ${taxaConversao}%`}
           alerta={opsParadas.length > 0 ? { texto: `${opsParadas.length} parada${opsParadas.length > 1 ? 's' : ''} +${diasOpParada}d`, href: '/oportunidades', cor: 'amber' } : undefined}
         />
         <CardEntidade
           tone="orange" icon={<FileText size={16} />} title="Propostas"
-          criarHref="/propostas" criarLabel="Nova"
+          criarHref="/propostas?novo=1" criarLabel="Nova"
           valor={String(totalPropostas)} label="no total"
           alerta={propsAVencer.length > 0 ? { texto: `${propsAVencer.length} a vencer`, href: '/propostas?status=enviada', cor: 'orange' } : undefined}
         />
@@ -221,14 +221,14 @@ export default async function DashboardPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5"><Calendar size={15} className="text-gray-400" /> Hoje</h2>
-            <Link href="/agenda" className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"><Plus size={13} /> Agendar</Link>
+            <Link href="/agenda?novo=1" className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"><Plus size={13} /> Agendar</Link>
           </div>
           {compromissosHoje.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-8">
               <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-2xl mb-3">📅</div>
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Nenhum compromisso hoje</p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 mb-4">Agenda livre — aproveite para prospectar!</p>
-              <Link href="/agenda" className={acaoBtn}><Plus size={15} /> Nova atividade</Link>
+              <Link href="/agenda?novo=1" className={acaoBtn}><Plus size={15} /> Nova atividade</Link>
             </div>
           ) : (
             <div className="divide-y divide-gray-50 dark:divide-gray-700 max-h-80 overflow-y-auto">
@@ -266,7 +266,7 @@ export default async function DashboardPage() {
                 <div className="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-2xl mb-3 mx-auto">🎯</div>
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Nenhuma oportunidade aberta</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 mb-4">Que tal adicionar a primeira ao seu funil?</p>
-                <Link href="/oportunidades" className={acaoBtn}><Plus size={15} /> Nova oportunidade</Link>
+                <Link href="/oportunidades?novo=1" className={acaoBtn}><Plus size={15} /> Nova oportunidade</Link>
               </div>
             )}
           </div>

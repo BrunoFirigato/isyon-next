@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid, Mail, MessageCircle, Send, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import ImportModal  from '@/app/(crm)/_components/ImportModal'
@@ -110,6 +110,13 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
   const [emailCorpo,    setEmailCorpo]    = useState('')
   const [sendingEmail,  setSendingEmail]  = useState(false)
   const [emailErro,     setEmailErro]     = useState('')
+
+  // Abre o modal de novo lead direto quando vem do dashboard (?novo=1)
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('novo') === '1') { setEditingLead(null); setFormOpen(true) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function updateParams(params: Record<string, string>) {
     const sp = new URLSearchParams()
