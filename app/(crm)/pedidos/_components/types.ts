@@ -35,7 +35,7 @@ export interface ClienteRef {
 
 export const STATUS_PEDIDO = [
   { value: 'todos', label: 'Todos' },
-  { value: 'aguardando', label: 'Aguardando processamento' },
+  { value: 'aguardando', label: 'Aberto' },
   { value: 'em_producao', label: 'Em produção' },
   { value: 'entregue', label: 'Entregue' },
   { value: 'cancelado', label: 'Cancelado' },

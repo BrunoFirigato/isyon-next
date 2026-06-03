@@ -66,7 +66,7 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
   }
 
   const STATUS_LABEL: Record<string, string> = {
-    aguardando: 'Aguardando processamento', em_producao: 'Em produção',
+    aguardando: 'Aberto', em_producao: 'Em produção',
     entregue: 'Entregue', cancelado: 'Cancelado',
   }
 
