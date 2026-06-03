@@ -113,15 +113,13 @@ export default async function DashboardPage() {
   const compromissosHoje = (comps ?? []).filter(c => c.status !== 'concluido' && c.status !== 'cancelado')
   const totalPropostas = (props ?? []).length
 
-  const resumo: string[] = []
-  if (compromissosHoje.length) resumo.push(`${compromissosHoje.length} compromisso${compromissosHoje.length > 1 ? 's' : ''} hoje`)
-  if (propsAVencer.length) resumo.push(`${propsAVencer.length} proposta${propsAVencer.length > 1 ? 's' : ''} vencendo`)
-  if ((leadsNovo ?? 0) > 0) resumo.push(`${leadsNovo} lead${(leadsNovo ?? 0) > 1 ? 's' : ''} sem contato`)
-
+  // Os números das pendências já aparecem nos cards — aqui a saudação fica contextual, sem repetir
+  const temPendencias = (leadsNovo ?? 0) > 0 || opsParadas.length > 0 || propsAVencer.length > 0 || compromissosHoje.length > 0
   const subline = mostrarOnboarding
     ? 'Vamos montar sua operação? Siga os primeiros passos abaixo. 🚀'
-    : resumo.length ? `Você tem ${resumo.join(', ')}.`
-    : 'Pipeline em dia! Ótimo momento pra prospectar novos clientes. 💪'
+    : temPendencias
+      ? 'Tem trabalho te esperando hoje — bora fazer acontecer! 💪'
+      : 'Tudo em dia por aqui! Ótimo momento pra prospectar novos clientes. 🚀'
 
   // Pipeline por etapa
   const pipelineMap = opAbertas.reduce((acc, o) => {
