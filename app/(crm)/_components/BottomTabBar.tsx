@@ -82,7 +82,7 @@ const moreGroups: MoreGroup[] = [
     items: [
       { href: '/configuracoes', label: 'Configurações', icon: Settings2 },
       { href: '/usuarios',      label: 'Usuários',      icon: Users2,    perfis: ['admin'] },
-      { href: '/empresas',      label: 'Filiais',       icon: Building2, perfis: ['admin'] },
+      { href: '/empresas',      label: 'Empresas',      icon: Building2, perfis: ['admin'] },
     ],
   },
 ]

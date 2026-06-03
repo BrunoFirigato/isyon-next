@@ -30,8 +30,8 @@ export default function EmpresasView({ empresas }: Props) {
     const supabase = createClient()
     const { error } = await supabase.from('empresas').delete().eq('id', id)
     setDeletingId(null)
-    if (error) { toast('Erro ao excluir filial', 'error'); return }
-    toast('Filial excluída', 'info')
+    if (error) { toast('Erro ao excluir empresa', 'error'); return }
+    toast('Empresa excluída', 'info')
     router.refresh()
   }
 
@@ -40,9 +40,9 @@ export default function EmpresasView({ empresas }: Props) {
       {/* Cabeçalho */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Filiais</h1>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Empresas</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {empresas.length} {empresas.length === 1 ? 'filial cadastrada' : 'filiais cadastradas'}
+            {empresas.length} {empresas.length === 1 ? 'empresa cadastrada' : 'empresas cadastradas'}
           </p>
         </div>
         <button
@@ -50,7 +50,7 @@ export default function EmpresasView({ empresas }: Props) {
           className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
         >
           <Plus size={15} />
-          <span className="hidden sm:inline">Nova filial</span>
+          <span className="hidden sm:inline">Nova empresa</span>
           <span className="sm:hidden">Nova</span>
         </button>
       </div>
@@ -59,12 +59,12 @@ export default function EmpresasView({ empresas }: Props) {
       {empresas.length === 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm py-16 text-center">
           <Building2 size={32} className="mx-auto text-gray-200 dark:text-gray-600 mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma filial cadastrada.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma empresa cadastrada.</p>
           <button
             onClick={() => { setEditing(null); setFormOpen(true) }}
             className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
-            + Cadastrar primeira filial
+            + Cadastrar primeira empresa
           </button>
         </div>
       )}
@@ -147,7 +147,7 @@ export default function EmpresasView({ empresas }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeletingId(null)} />
           <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Excluir filial?</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Excluir empresa?</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
               Esta ação não pode ser desfeita. Oportunidades, propostas e pedidos vinculados perderão o vínculo.
             </p>

@@ -279,7 +279,7 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
                     <div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 border-b border-gray-100 dark:border-gray-700">
                       <Meta label="Origem" value={propNum ? `Proposta ${propNum}` : 'Cadastro manual'} destaque={!!propNum} />
                       <Meta label="Vendedor" value={vend ?? '—'} />
-                      <Meta label="Filial emissora" value={emp ? `${emp.nome} (${emp.sigla})` : '—'} />
+                      <Meta label="Empresa emissora" value={emp ? `${emp.nome} (${emp.sigla})` : '—'} />
                       <Meta label="Criado em" value={formatDate(p.criado_em)} />
                     </div>
 

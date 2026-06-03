@@ -83,7 +83,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { href: '/configuracoes', label: 'Configurações', icon: Settings2 },
       { href: '/usuarios',      label: 'Usuários',      icon: Users2,      perfis: ['admin'] },
-      { href: '/empresas',      label: 'Filiais',       icon: Building2,   perfis: ['admin'] },
+      { href: '/empresas',      label: 'Empresas',      icon: Building2,   perfis: ['admin'] },
       { href: '/superadmin',    label: 'Superadmin',    icon: ShieldAlert, perfis: ['admin'] },
     ],
   },

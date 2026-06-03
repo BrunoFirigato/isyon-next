@@ -32,6 +32,7 @@ const PAGE_LABELS: Record<string, string> = {
   '/relatorios':    'Relatórios',
   '/configuracoes': 'Configurações',
   '/vendedores':    'Vendedores',
+  '/empresas':      'Empresas',
   '/cadastros':     'Cadastros',
   '/usuarios':      'Usuários',
   '/superadmin':    'Superadmin',

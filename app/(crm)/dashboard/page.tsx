@@ -95,7 +95,7 @@ export default async function DashboardPage() {
 
   // Onboarding
   const passos = [
-    { ok: (totalFiliais ?? 0) > 0,  Icon: Building2,  label: 'Cadastrar sua empresa (filial)', href: '/empresas' },
+    { ok: (totalFiliais ?? 0) > 0,  Icon: Building2,  label: 'Cadastrar sua empresa', href: '/empresas' },
     { ok: (totalProdutos ?? 0) > 0, Icon: Package,    label: 'Cadastrar produtos ou serviços', href: '/produtos' },
     { ok: (totalLeads ?? 0) > 0,    Icon: Target,     label: 'Criar seu primeiro lead',        href: '/leads' },
     { ok: opList.length > 0,        Icon: TrendingUp, label: 'Abrir uma oportunidade',         href: '/oportunidades' },

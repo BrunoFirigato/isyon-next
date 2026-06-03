@@ -211,7 +211,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
 
               {filiais.length > 0 && (
                 <div>
-                  <label className={labelCls}>Filial emissora</label>
+                  <label className={labelCls}>Empresa emissora</label>
                   <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)} className={selectCls}>
                     <option value="">Selecione...</option>
                     {filiais.map((f) => (

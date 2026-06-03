@@ -86,11 +86,11 @@ export default function ConvertModal({ lead, onClose }: Props) {
 
     // Validações obrigatórias
     if (empresas.length === 0) {
-      setError('Cadastre uma filial antes de converter — ela emite as notas dos pedidos.')
+      setError('Cadastre uma empresa antes de converter — ela emite as notas dos pedidos.')
       return
     }
     if (!empresaId) {
-      setError('Selecione a empresa (filial) responsável.')
+      setError('Selecione a empresa responsável.')
       return
     }
     if (!vendedorId) {
@@ -192,7 +192,7 @@ export default function ConvertModal({ lead, onClose }: Props) {
               <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)} required className={inputCls} />
             </div>
 
-            {/* Empresa (filial do tenant responsável) */}
+            {/* Empresa do tenant responsável */}
             {empresas.length > 0 && (
               <div>
                 <label className={labelCls}>
@@ -214,7 +214,7 @@ export default function ConvertModal({ lead, onClose }: Props) {
               </div>
             )}
 
-            {/* Sem filial cadastrada: guia o usuário ao primeiro cadastro */}
+            {/* Sem empresa cadastrada: guia o usuário ao primeiro cadastro */}
             {!loadingVendedor && empresas.length === 0 && (
               <div className="rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/20 p-4">
                 <div className="flex items-start gap-3">
@@ -222,16 +222,16 @@ export default function ConvertModal({ lead, onClose }: Props) {
                     <Building2 size={17} className="text-amber-600 dark:text-amber-400" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Cadastre sua primeira filial</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Cadastre sua primeira empresa</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                      A filial é quem emite as notas dos seus pedidos. Você precisa de pelo menos uma para abrir oportunidades.
+                      A empresa é quem emite as notas dos seus pedidos. Você precisa de pelo menos uma para abrir oportunidades.
                     </p>
                     <button
                       type="button"
                       onClick={() => router.push('/empresas')}
                       className="mt-3 inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors"
                     >
-                      Cadastrar filial <ArrowRight size={13} />
+                      Cadastrar empresa <ArrowRight size={13} />
                     </button>
                   </div>
                 </div>

@@ -300,7 +300,7 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
               {filiais.length > 0 && (
                 <div>
                   <label className={`${labelCls} flex items-center gap-1`}>
-                    Filial emissora
+                    Empresa emissora
                     {filialTravada && <Lock size={11} className="text-gray-400" />}
                   </label>
                   <select

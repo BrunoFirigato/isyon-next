@@ -254,7 +254,7 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                 </div>
 
                 <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg px-3 py-2">
-                  Dados fiscais (CNPJ, regime tributário, NF-e) são configurados por filial em <strong>Administração → Filiais</strong>.
+                  Dados fiscais (CNPJ, regime tributário, NF-e) são configurados por empresa em <strong>Administração → Empresas</strong>.
                 </p>
               </div>
             </div>
