@@ -194,7 +194,7 @@ export default function TopBar({ userEmail, userName: userNameProp }: { userEmai
               <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Sair do sistema?</h2>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-              Você precisará selecionar a empresa e entrar com seu e-mail e senha novamente.
+              Sua sessão será encerrada com segurança. Até logo! 👋
             </p>
             <div className="flex gap-2.5">
               <button
