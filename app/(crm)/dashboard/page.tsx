@@ -28,6 +28,7 @@ function horaDe(iso: string) {
 }
 
 const ETAPAS_PIPELINE = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação']
+const PIPE_CORES = ['#3b82f6', '#6366f1', '#8b5cf6', '#d946ef'] // azul → índigo → violeta → fúcsia
 
 const DICAS = [
   'Leads respondidos em até 1h convertem muito mais. Priorize os "sem contato".',
@@ -129,6 +130,7 @@ export default async function DashboardPage() {
     return acc
   }, {} as Record<string, { count: number; valor: number }>)
   const pipeline = ETAPAS_PIPELINE.map(e => ({ etapa: e, count: pipelineMap[e]?.count ?? 0, valor: pipelineMap[e]?.valor ?? 0 }))
+  const ticketMedioPipeline = opAbertas.length ? valorPipeline / opAbertas.length : 0
 
   const metaPct = metaGlobal > 0 ? Math.min(Math.round((receitaMes / metaGlobal) * 100), 100) : 0
   const dica = DICAS[new Date().getDate() % DICAS.length]
@@ -254,16 +256,43 @@ export default async function DashboardPage() {
             <Link href="/oportunidades" className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5">Ver tudo <ChevronRight size={13} /></Link>
           </div>
           <div className="p-5">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-              {pipeline.map(p => (
-                <Link key={p.etapa} href="/oportunidades" className="rounded-lg border border-gray-100 dark:border-gray-700 p-3 hover:border-blue-200 dark:hover:border-blue-700 transition-colors">
-                  <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 truncate">{p.etapa}</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-0.5">{p.count}</p>
-                  <p className="text-[11px] text-gray-400">{brl(p.valor)}</p>
-                </Link>
-              ))}
-            </div>
-            {opAbertas.length === 0 && (
+            {opAbertas.length > 0 ? (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {pipeline.map((p, i) => {
+                    const cor = PIPE_CORES[i % PIPE_CORES.length]
+                    return (
+                      <Link key={p.etapa} href="/oportunidades"
+                        className="relative rounded-xl border border-gray-100 dark:border-gray-700 p-3.5 pt-4 overflow-hidden hover:shadow-sm hover:-translate-y-0.5 transition-all">
+                        <span className="absolute top-0 inset-x-0 h-1" style={{ backgroundColor: cor }} />
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cor }} />
+                          <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 truncate">{p.etapa}</p>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1.5 leading-none">{p.count}</p>
+                        <p className="text-[11px] text-gray-400 mt-1.5 tabular-nums">{brl(p.valor)}</p>
+                      </Link>
+                    )
+                  })}
+                </div>
+
+                {/* Rodapé complementar — preenche o espaço com os números do funil */}
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-700">
+                  <div className="text-center px-2">
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500">Valor no funil</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5 tabular-nums">{brl(valorPipeline)}</p>
+                  </div>
+                  <div className="text-center px-2">
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500">Ticket médio</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5 tabular-nums">{brl(ticketMedioPipeline)}</p>
+                  </div>
+                  <div className="text-center px-2">
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500">Conversão</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{taxaConversao}%</p>
+                  </div>
+                </div>
+              </>
+            ) : (
               <div className="text-center py-6">
                 <div className="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-2xl mb-3 mx-auto">🎯</div>
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Nenhuma oportunidade aberta</p>
