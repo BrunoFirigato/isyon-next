@@ -51,6 +51,8 @@ export default function TopBar({ userEmail, userName: userNameProp }: { userEmai
   const [menuOpen,   setMenuOpen]   = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [perfilOpen, setPerfilOpen] = useState(false)
+  const [confirmSair, setConfirmSair] = useState(false)
+  const [saindo, setSaindo] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const { breadcrumb } = useBreadcrumb()
 
@@ -80,6 +82,7 @@ export default function TopBar({ userEmail, userName: userNameProp }: { userEmai
   }, [])
 
   async function handleLogout() {
+    setSaindo(true)
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
@@ -150,7 +153,7 @@ export default function TopBar({ userEmail, userName: userNameProp }: { userEmai
                 </button>
                 <ThemeToggle />
                 <button
-                  onClick={handleLogout}
+                  onClick={() => { setConfirmSair(true); setMenuOpen(false) }}
                   className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-t border-gray-100 dark:border-gray-800"
                 >
                   <LogOut size={14} className="text-gray-400" />
@@ -172,6 +175,45 @@ export default function TopBar({ userEmail, userName: userNameProp }: { userEmai
           userName={userName}
           onClose={() => setPerfilOpen(false)}
         />
+      )}
+
+      {/* Confirmação de saída */}
+      {confirmSair && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+          onClick={() => { if (!saindo) setConfirmSair(false) }}
+        >
+          <div
+            className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
+                <LogOut size={18} />
+              </div>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Sair do sistema?</h2>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+              Você precisará selecionar a empresa e entrar com seu e-mail e senha novamente.
+            </p>
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => setConfirmSair(false)}
+                disabled={saindo}
+                className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-60 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleLogout}
+                disabled={saindo}
+                className="flex-1 py-2.5 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 transition-colors"
+              >
+                {saindo ? 'Saindo...' : 'Sair'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   )
