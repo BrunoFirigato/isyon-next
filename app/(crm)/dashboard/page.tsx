@@ -16,7 +16,11 @@ function inicioDeMes() {
   return new Date(d.getFullYear(), d.getMonth(), 1).toISOString()
 }
 function saudacao() {
-  const h = new Date().getHours()
+  // Hora no fuso do Brasil (o servidor roda em UTC — sem isso, "bom dia" às 21h)
+  const h = parseInt(
+    new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: 'numeric', hour12: false }).format(new Date()),
+    10,
+  ) % 24
   return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'
 }
 function horaDe(iso: string) {
@@ -238,13 +242,13 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Cards de ação (pendências) */}
+      {/* Cards de ação (pendências) — flex que não estica quando há poucos */}
       {acoes.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        <div className="flex flex-wrap gap-3">
           {acoes.map((a, i) => {
             const c = cores[a.cor]
             return (
-              <Link key={i} href={a.href} className="group bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 hover:shadow-md transition-all">
+              <Link key={i} href={a.href} className="group flex-1 min-w-[240px] max-w-xs bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 hover:shadow-md transition-all">
                 <div className="flex items-start justify-between mb-3">
                   <div className={`inline-flex p-2 rounded-lg ${c.bg} ${c.text}`}><a.Icon size={18} /></div>
                   <span className={`w-2 h-2 rounded-full ${c.dot} mt-1`} />
