@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
-  CheckCircle, XCircle, PackageCheck, FileText, Clock, ShieldCheck,
+  CheckCircle, XCircle, PackageCheck, FileText, Clock, ShieldCheck, Printer,
 } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import EmitirNFeModal from './EmitirNFeModal'
@@ -240,6 +240,15 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
                         </button>
                       </>
                     )}
+                    <a
+                      href={`/imprimir/pedido/${p.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Imprimir / Salvar PDF"
+                      className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors"
+                    >
+                      <Printer size={14} />
+                    </a>
                     <button onClick={() => { setEditingPedido(p); setFormOpen(true) }}
                       className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                       <Pencil size={14} />
