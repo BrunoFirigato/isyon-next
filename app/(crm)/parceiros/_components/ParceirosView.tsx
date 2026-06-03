@@ -4,7 +4,8 @@ import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Plus, Search, X, Pencil, Trash2, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { vinculosParceiro, mensagemBloqueio } from '@/lib/exclusao'
+import { vinculosParceiro, inativarRegistro, type Vinculo } from '@/lib/exclusao'
+import BloqueioExclusaoDialog from '@/app/(crm)/_components/BloqueioExclusaoDialog'
 import ParceiroFormModal from './ParceiroFormModal'
 import {
   type Parceiro, type Vendedor, STATUS_PARCEIRO,
@@ -29,6 +30,8 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
   const [formOpen, setFormOpen] = useState(false)
   const [editingParceiro, setEditingParceiro] = useState<Parceiro | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [bloqueio, setBloqueio] = useState<{ id: string; vinculos: Vinculo[] } | null>(null)
+  const [inativando, setInativando] = useState(false)
 
   function updateParams(params: { status: string; q: string }) {
     const sp = new URLSearchParams()
@@ -53,11 +56,23 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
   async function handleDelete(id: string) {
     const supabase = createClient()
     const vinc = await vinculosParceiro(supabase, id)
-    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
+    if (vinc.length) { setDeletingId(null); setBloqueio({ id, vinculos: vinc }); return }
     const { error } = await supabase.from('parceiros').delete().eq('id', id)
     setDeletingId(null)
     if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
     toast('Parceiro excluído', 'info')
+    router.refresh()
+  }
+
+  async function handleInativar() {
+    if (!bloqueio) return
+    setInativando(true)
+    const supabase = createClient()
+    const { error } = await inativarRegistro(supabase, 'parceiros', bloqueio.id)
+    setInativando(false)
+    setBloqueio(null)
+    if (error) { toast('Não foi possível inativar.', 'error'); return }
+    toast('Parceiro inativado', 'info')
     router.refresh()
   }
 
@@ -283,6 +298,14 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
           </div>
         </div>
       )}
+
+      <BloqueioExclusaoDialog
+        vinculos={bloqueio?.vinculos ?? null}
+        podeInativar
+        inativando={inativando}
+        onInativar={handleInativar}
+        onClose={() => setBloqueio(null)}
+      />
 
       {formOpen && (
         <ParceiroFormModal

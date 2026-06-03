@@ -4,7 +4,8 @@ import { useState, useEffect, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Plus, Search, X, Pencil, Trash2, Package, Wrench, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { vinculosProduto, mensagemBloqueio } from '@/lib/exclusao'
+import { vinculosProduto, inativarRegistro, type Vinculo } from '@/lib/exclusao'
+import BloqueioExclusaoDialog from '@/app/(crm)/_components/BloqueioExclusaoDialog'
 import ProdutoFormModal from './ProdutoFormModal'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import ImportModal  from '@/app/(crm)/_components/ImportModal'
@@ -90,6 +91,8 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
   const [importOpen, setImportOpen] = useState(false)
   const [editingProduto, setEditingProduto] = useState<Produto | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [bloqueio, setBloqueio] = useState<{ id: string; vinculos: Vinculo[] } | null>(null)
+  const [inativando, setInativando] = useState(false)
 
   function updateParams(params: Record<string, string>) {
     const sp = new URLSearchParams()
@@ -114,7 +117,7 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
   async function handleDelete(id: string) {
     const supabase = createClient()
     const vinc = await vinculosProduto(supabase, id)
-    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
+    if (vinc.length) { setDeletingId(null); setBloqueio({ id, vinculos: vinc }); return }
     const { error } = await supabase.from('produtos').delete().eq('id', id)
     setDeletingId(null)
     if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
@@ -122,6 +125,18 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
     setItems((prev) => prev.filter((p) => p.id !== id))
     setTotal((t) => Math.max(0, t - 1))
     toast('Produto excluído', 'info')
+  }
+
+  async function handleInativar() {
+    if (!bloqueio) return
+    setInativando(true)
+    const supabase = createClient()
+    const { error } = await inativarRegistro(supabase, 'produtos', bloqueio.id)
+    setInativando(false)
+    setBloqueio(null)
+    if (error) { toast('Não foi possível inativar.', 'error'); return }
+    setItems((prev) => prev.map((p) => (p.id === bloqueio.id ? { ...p, ativo: false } : p)))
+    toast('Produto inativado', 'info')
   }
 
   const ativos = [
@@ -432,6 +447,14 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
           </div>
         </div>
       )}
+
+      <BloqueioExclusaoDialog
+        vinculos={bloqueio?.vinculos ?? null}
+        podeInativar
+        inativando={inativando}
+        onInativar={handleInativar}
+        onClose={() => setBloqueio(null)}
+      />
 
       {/* Modal: Criar/Editar */}
       {formOpen && (

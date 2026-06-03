@@ -5,7 +5,8 @@ import { useRouter, usePathname } from 'next/navigation'
 import { Plus, Search, X, Pencil, Trash2, MapPin, LayoutGrid, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { vinculosCliente, mensagemBloqueio } from '@/lib/exclusao'
+import { vinculosCliente, inativarRegistro, type Vinculo } from '@/lib/exclusao'
+import BloqueioExclusaoDialog from '@/app/(crm)/_components/BloqueioExclusaoDialog'
 import ClienteFormModal from './ClienteFormModal'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import ImportModal from '@/app/(crm)/_components/ImportModal'
@@ -104,6 +105,8 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
   const [deletingId, setDeletingId]       = useState<string | null>(null)
   const [expandedId, setExpandedId]       = useState<string | null>(null)
+  const [bloqueio, setBloqueio]           = useState<{ id: string; vinculos: Vinculo[] } | null>(null)
+  const [inativando, setInativando]       = useState(false)
 
   // Lookups rápidos ID → nome
   const vendedorMap = Object.fromEntries(vendedores.map(v => [v.id, v.nome]))
@@ -141,7 +144,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
   async function handleDelete(id: string) {
     const supabase = createClient()
     const vinc = await vinculosCliente(supabase, id)
-    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
+    if (vinc.length) { setDeletingId(null); setBloqueio({ id, vinculos: vinc }); return }
     const { error } = await supabase.from('clientes').delete().eq('id', id)
     setDeletingId(null)
     if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
@@ -149,6 +152,18 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
     setItems((prev) => prev.filter((c) => c.id !== id))
     setTotal((t) => Math.max(0, t - 1))
     toast('Cliente excluído', 'info')
+  }
+
+  async function handleInativar() {
+    if (!bloqueio) return
+    setInativando(true)
+    const supabase = createClient()
+    const { error } = await inativarRegistro(supabase, 'clientes', bloqueio.id)
+    setInativando(false)
+    setBloqueio(null)
+    if (error) { toast('Não foi possível inativar.', 'error'); return }
+    setItems((prev) => prev.map((c) => (c.id === bloqueio.id ? { ...c, status: 'inativo' } : c)))
+    toast('Cliente inativado', 'info')
   }
 
   function endereco(c: Cliente) {
@@ -518,6 +533,15 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
           </div>
         </div>
       )}
+
+      {/* Bloqueio de exclusão → oferece inativar */}
+      <BloqueioExclusaoDialog
+        vinculos={bloqueio?.vinculos ?? null}
+        podeInativar
+        inativando={inativando}
+        onInativar={handleInativar}
+        onClose={() => setBloqueio(null)}
+      />
 
       {/* Modal criar/editar */}
       {formOpen && (

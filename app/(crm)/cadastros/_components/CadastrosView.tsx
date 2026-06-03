@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Plus, Pencil, Trash2, Search, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { vinculosCondPagamento, mensagemBloqueio } from '@/lib/exclusao'
+import { vinculosCondPagamento, inativarRegistro, type Vinculo } from '@/lib/exclusao'
+import BloqueioExclusaoDialog from '@/app/(crm)/_components/BloqueioExclusaoDialog'
 import {
   type Ncm, type NaturezaOperacao, type Cfop, type Transportadora, type CondPagamento,
   formatDate, formaLabel, formaStyle,
@@ -55,6 +56,8 @@ export default function CadastrosView({
   const [formOpen, setFormOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deletingTable, setDeletingTable] = useState<string>('')
+  const [bloqueio, setBloqueio] = useState<{ id: string; vinculos: Vinculo[] } | null>(null)
+  const [inativando, setInativando] = useState(false)
 
   const [editNcm, setEditNcm] = useState<Ncm | null>(null)
   const [editNatureza, setEditNatureza] = useState<NaturezaOperacao | null>(null)
@@ -74,13 +77,25 @@ export default function CadastrosView({
     // Condição de pagamento é referenciada por pedidos/propostas — trava amigável
     if (deletingTable === 'cond_pagamentos') {
       const vinc = await vinculosCondPagamento(supabase, deletingId)
-      if (vinc.length) { setDeletingId(null); setDeletingTable(''); toast(mensagemBloqueio(vinc), 'error'); return }
+      if (vinc.length) { setBloqueio({ id: deletingId, vinculos: vinc }); setDeletingId(null); setDeletingTable(''); return }
     }
     const { error } = await supabase.from(deletingTable).delete().eq('id', deletingId)
     setDeletingId(null)
     setDeletingTable('')
     if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
     toast('Registro excluído', 'info')
+    router.refresh()
+  }
+
+  async function handleInativar() {
+    if (!bloqueio) return
+    setInativando(true)
+    const supabase = createClient()
+    const { error } = await inativarRegistro(supabase, 'cond_pagamentos', bloqueio.id)
+    setInativando(false)
+    setBloqueio(null)
+    if (error) { toast('Não foi possível inativar.', 'error'); return }
+    toast('Condição de pagamento inativada', 'info')
     router.refresh()
   }
 
@@ -406,6 +421,14 @@ export default function CadastrosView({
           </div>
         </div>
       )}
+
+      <BloqueioExclusaoDialog
+        vinculos={bloqueio?.vinculos ?? null}
+        podeInativar
+        inativando={inativando}
+        onInativar={handleInativar}
+        onClose={() => setBloqueio(null)}
+      />
 
       {/* ─── Modais de formulário ─────────────────────────────────────────────── */}
       {formOpen && tab === 'ncm' && (

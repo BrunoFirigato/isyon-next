@@ -149,6 +149,31 @@ export async function vinculosProduto(supabase: SupabaseClient, id: string): Pro
   return out
 }
 
+// ── Inativação (soft delete) ─────────────────────────────────────────────────
+// Mapa de como "inativar" cada dado-mãe (campo + valor que representa inativo).
+const INATIVACAO: Record<string, { campo: string; valor: unknown }> = {
+  clientes:        { campo: 'status', valor: 'inativo' },
+  vendedores:      { campo: 'status', valor: 'inativo' },
+  parceiros:       { campo: 'status', valor: 'inativo' },
+  produtos:        { campo: 'ativo',  valor: false },
+  empresas:        { campo: 'ativo',  valor: false },
+  transportadoras: { campo: 'ativo',  valor: false },
+  cond_pagamentos: { campo: 'ativo',  valor: false },
+  usuarios:        { campo: 'ativo',  valor: false },
+}
+
+/** A tabela suporta inativação (tem campo ativo/status)? */
+export function podeInativar(tabela: string): boolean {
+  return tabela in INATIVACAO
+}
+
+/** Inativa um registro (soft delete). */
+export async function inativarRegistro(supabase: SupabaseClient, tabela: string, id: string) {
+  const cfg = INATIVACAO[tabela]
+  if (!cfg) return { error: new Error('Inativação não suportada para ' + tabela) }
+  return supabase.from(tabela).update({ [cfg.campo]: cfg.valor }).eq('id', id)
+}
+
 // ── Mensagem ─────────────────────────────────────────────────────────────────
 /** "3 pedidos e 1 proposta" */
 export function descreverVinculos(vinculos: Vinculo[]): string {

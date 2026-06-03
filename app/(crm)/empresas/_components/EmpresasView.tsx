@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Pencil, Trash2, Building2, Phone, Mail, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { vinculosEmpresa, mensagemBloqueio } from '@/lib/exclusao'
+import { vinculosEmpresa, inativarRegistro, type Vinculo } from '@/lib/exclusao'
+import BloqueioExclusaoDialog from '@/app/(crm)/_components/BloqueioExclusaoDialog'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import EmpresaFormModal from './EmpresaFormModal'
 import type { Empresa } from './types'
@@ -26,11 +27,25 @@ export default function EmpresasView({ empresas }: Props) {
   const [formOpen,    setFormOpen]    = useState(false)
   const [editing,     setEditing]     = useState<Empresa | null>(null)
   const [deletingId,  setDeletingId]  = useState<string | null>(null)
+  const [bloqueio,    setBloqueio]    = useState<{ id: string; vinculos: Vinculo[] } | null>(null)
+  const [inativando,  setInativando]  = useState(false)
+
+  async function handleInativar() {
+    if (!bloqueio) return
+    setInativando(true)
+    const supabase = createClient()
+    const { error } = await inativarRegistro(supabase, 'empresas', bloqueio.id)
+    setInativando(false)
+    setBloqueio(null)
+    if (error) { toast('Não foi possível inativar.', 'error'); return }
+    toast('Empresa inativada', 'info')
+    router.refresh()
+  }
 
   async function handleDelete(id: string) {
     const supabase = createClient()
     const vinc = await vinculosEmpresa(supabase, id)
-    if (vinc.length) { setDeletingId(null); toast(mensagemBloqueio(vinc), 'error'); return }
+    if (vinc.length) { setDeletingId(null); setBloqueio({ id, vinculos: vinc }); return }
     const { error } = await supabase.from('empresas').delete().eq('id', id)
     setDeletingId(null)
     if (error) { toast('Não foi possível excluir — há registros vinculados.', 'error'); return }
@@ -167,6 +182,14 @@ export default function EmpresasView({ empresas }: Props) {
           </div>
         </div>
       )}
+
+      <BloqueioExclusaoDialog
+        vinculos={bloqueio?.vinculos ?? null}
+        podeInativar
+        inativando={inativando}
+        onInativar={handleInativar}
+        onClose={() => setBloqueio(null)}
+      />
 
       {/* Form modal */}
       {formOpen && (
