@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff } from 'lucide-react'
+import Link from 'next/link'
+import { Eye, EyeOff, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface Tenant {
@@ -210,6 +211,19 @@ export default function LoginPage() {
             </button>
           </form>
         )}
+
+        {/* Rodapé de confiança */}
+        <div className="mt-6 text-center space-y-2">
+          <p className="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+            <ShieldCheck size={13} className="text-emerald-500" />
+            Conexão segura · seus dados protegidos
+          </p>
+          <div className="flex items-center justify-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+            <Link href="/politica-privacidade" className="hover:text-gray-600 dark:hover:text-gray-300">Política de Privacidade</Link>
+            <span className="text-gray-300 dark:text-gray-700">·</span>
+            <Link href="/termos-de-uso" className="hover:text-gray-600 dark:hover:text-gray-300">Termos de Uso</Link>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -18,6 +18,7 @@ export default function CadastroPage() {
   })
   const [mostrarSenha,     setMostrarSenha]     = useState(false)
   const [mostrarConfirmar, setMostrarConfirmar] = useState(false)
+  const [aceite,   setAceite]   = useState(false)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
   const [sucesso,  setSucesso]  = useState(false)
@@ -30,8 +31,12 @@ export default function CadastroPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    if (form.senha.length < 6) { setError('Senha deve ter no mínimo 6 caracteres'); return }
+    if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(form.senha)) {
+      setError('A senha deve ter ao menos 8 caracteres, incluindo letra e número.')
+      return
+    }
     if (form.senha !== form.confirmar) { setError('As senhas não coincidem'); return }
+    if (!aceite) { setError('É preciso aceitar a Política de Privacidade e os Termos de Uso.'); return }
 
     setLoading(true)
     setError('')
@@ -175,7 +180,7 @@ export default function CadastroPage() {
                 type={mostrarSenha ? 'text' : 'password'}
                 value={form.senha}
                 onChange={e => set('senha', e.target.value)}
-                placeholder="Mín. 6 caracteres"
+                placeholder="Mín. 8 caracteres, com letra e número"
                 required
                 className={inputCls + ' pr-10'}
               />
@@ -213,6 +218,22 @@ export default function CadastroPage() {
             </div>
           </div>
 
+          {/* Aceite LGPD */}
+          <label className="flex items-start gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={aceite}
+              onChange={e => { setAceite(e.target.checked); setError('') }}
+              className="mt-0.5 w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 shrink-0"
+            />
+            <span className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+              Li e concordo com a{' '}
+              <Link href="/politica-privacidade" target="_blank" className="text-blue-600 hover:text-blue-700 font-medium">Política de Privacidade</Link>
+              {' '}e os{' '}
+              <Link href="/termos-de-uso" target="_blank" className="text-blue-600 hover:text-blue-700 font-medium">Termos de Uso</Link>.
+            </span>
+          </label>
+
           {/* Erro */}
           {error && (
             <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2.5">
@@ -222,7 +243,7 @@ export default function CadastroPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !aceite}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg text-sm transition-colors mt-2"
           >
             {loading ? 'Criando conta...' : 'Criar conta grátis'}
