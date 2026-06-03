@@ -199,15 +199,16 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
       const { error: errPed } = await supabase.from('pedidos').insert({
         tenant_id:   tenantId,
         numero,
-        cliente_id:  p.cliente_id,
-        vendedor_id: p.vendedor_id,
-        empresa_id:  p.empresa_id,
-        proposta_id: p.id,
-        segmento:    p.segmento,
-        valor:       p.valor,
+        cliente_id:       p.cliente_id,
+        vendedor_id:      p.vendedor_id,
+        cond_pagamento_id: p.cond_pagamento_id,
+        empresa_id:       p.empresa_id,
+        proposta_id:      p.id,
+        segmento:         p.segmento,
+        valor:            p.valor,
         itens,
-        status:      'aguardando',
-        aprovado:    !aprovacaoPedido,
+        status:           'aguardando',
+        aprovado:         !aprovacaoPedido,
       })
       if (errPed) { toast(`Erro ao gerar pedido: ${errPed.message}`, 'error'); return }
 

@@ -12,6 +12,8 @@ import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 
+interface ProdutoRef { id: string; nome: string; preco: number | null; ncm: string | null; unidade: string | null; tipo: string | null }
+
 interface Props {
   pedido?: Pedido
   onClose: () => void
@@ -27,6 +29,8 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
   const [clienteId, setClienteId] = useState(pedido?.cliente_id ?? '')
   const [empresaId, setEmpresaId] = useState(pedido?.empresa_id ?? '')
   const [segmento, setSegmento] = useState(pedido?.segmento ?? '')
+  const [vendedorId, setVendedorId] = useState(pedido?.vendedor_id ?? '')
+  const [condPagamentoId, setCondPagamentoId] = useState(pedido?.cond_pagamento_id ?? '')
   const [status, setStatus] = useState(pedido?.status ?? 'aguardando')
   const [obs, setObs] = useState(pedido?.obs ?? '')
   const [itens, setItens] = useState<ItemPedido[]>(
@@ -35,21 +39,38 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
 
   const [clientes, setClientes] = useState<ClienteRef[]>([])
   const [filiais,  setFiliais]  = useState<{ id: string; nome: string; sigla: string }[]>([])
+  const [produtos, setProdutos] = useState<ProdutoRef[]>([])
+  const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([])
+  const [condPagamentos, setCondPagamentos] = useState<{ id: string; nome: string }[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     const supabase = createClient()
-    Promise.all([
-      supabase.from('clientes').select('id, nome, empresa').order('nome'),
-      supabase.from('empresas').select('id, nome, sigla').order('nome'),
-    ]).then(([{ data: cls }, { data: emps }]) => {
-      if (cls)  setClientes(cls)
+    async function init() {
+      const [{ data: cls }, { data: emps }, { data: prods }, { data: vends }, { data: conds }, { data: { user } }] = await Promise.all([
+        supabase.from('clientes').select('id, nome, empresa').order('nome'),
+        supabase.from('empresas').select('id, nome, sigla').order('nome'),
+        supabase.from('produtos').select('id, nome, preco, ncm, unidade, tipo').not('ativo', 'is', false).order('nome'),
+        supabase.from('vendedores').select('id, nome').eq('status', 'ativo').order('nome'),
+        supabase.from('cond_pagamentos').select('id, nome').eq('ativo', true).order('nome'),
+        supabase.auth.getUser(),
+      ])
+      if (cls)   setClientes(cls)
+      if (prods) setProdutos(prods)
+      if (vends) setVendedores(vends)
+      if (conds) setCondPagamentos(conds)
       if (emps) {
         setFiliais(emps)
         if (emps.length === 1 && !pedido?.empresa_id) setEmpresaId(emps[0].id)
       }
-    })
+      // Auto-preenche vendedor pelo e-mail do usuário logado (pedido novo)
+      if (!pedido?.vendedor_id && user?.email) {
+        const { data: meu } = await supabase.from('vendedores').select('id').eq('email', user.email).eq('status', 'ativo').limit(1).maybeSingle()
+        if (meu) setVendedorId(meu.id)
+      }
+    }
+    init()
   }, [])
 
   function setItem(id: string, field: keyof ItemPedido, value: string | number) {
@@ -60,6 +81,18 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
 
   function removeItem(id: string) {
     setItens((prev) => prev.filter((it) => it.id !== id))
+  }
+
+  // Busca de produto na descrição: casa o texto com um produto e puxa NCM/unidade/preço
+  function onDescricaoChange(itemId: string, value: string) {
+    const prod = produtos.find((p) => p.nome.trim().toLowerCase() === value.trim().toLowerCase())
+    setItens((prev) => prev.map((it) => {
+      if (it.id !== itemId) return it
+      if (prod) {
+        return { ...it, descricao: value, produto_id: prod.id, ncm: prod.ncm, unidade: prod.unidade, valorUnitario: it.valorUnitario || (prod.preco ?? 0) }
+      }
+      return { ...it, descricao: value, produto_id: null, ncm: null, unidade: null }
+    }))
   }
 
   const total = calcTotal(itens)
@@ -77,9 +110,11 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
     const itensLimpos = itens.map(({ id: _id, ...rest }) => rest)
 
     const payload = {
-      cliente_id: clienteId  || null,
-      empresa_id: empresaId  || null,
-      segmento:   segmento   || null,
+      cliente_id:        clienteId  || null,
+      empresa_id:        empresaId  || null,
+      vendedor_id:       vendedorId || null,
+      cond_pagamento_id: condPagamentoId || null,
+      segmento:          segmento   || null,
       status,
       obs:   obs.trim() || null,
       itens: itensLimpos,
@@ -166,6 +201,24 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
               )}
 
               <div>
+                <label className={labelCls}>Vendedor</label>
+                <select value={vendedorId} onChange={(e) => setVendedorId(e.target.value)} className={selectCls}>
+                  <option value="">Selecione...</option>
+                  {vendedores.map((v) => <option key={v.id} value={v.id}>{v.nome}</option>)}
+                </select>
+              </div>
+
+              {condPagamentos.length > 0 && (
+                <div>
+                  <label className={labelCls}>Condição de pagamento</label>
+                  <select value={condPagamentoId} onChange={(e) => setCondPagamentoId(e.target.value)} className={selectCls}>
+                    <option value="">Selecione...</option>
+                    {condPagamentos.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                  </select>
+                </div>
+              )}
+
+              <div>
                 <label className={labelCls}>Status</label>
                 <select
                   value={status} onChange={(e) => setStatus(e.target.value)}
@@ -192,6 +245,17 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
                 </button>
               </div>
 
+              {/* Catálogo de produtos para autocomplete da descrição */}
+              {produtos.length > 0 && (
+                <datalist id="pedido-produtos-datalist">
+                  {produtos.map((p) => (
+                    <option key={p.id} value={p.nome}>
+                      {p.tipo === 'servico' ? 'Serviço' : 'Produto'}{p.preco != null ? ` · ${brl(p.preco)}` : ''}
+                    </option>
+                  ))}
+                </datalist>
+              )}
+
               <div className="border border-gray-200 dark:border-gray-600 rounded-xl overflow-hidden">
                 <div className="hidden md:grid grid-cols-[1fr_80px_120px_100px_36px] gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                   <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Descrição</span>
@@ -209,8 +273,9 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
                       <div>
                         <input
                           type="text" value={item.descricao}
-                          onChange={(e) => setItem(item.id, 'descricao', e.target.value)}
-                          placeholder={`Item ${idx + 1}`}
+                          onChange={(e) => onDescricaoChange(item.id, e.target.value)}
+                          list={produtos.length > 0 ? 'pedido-produtos-datalist' : undefined}
+                          placeholder={produtos.length > 0 ? `Buscar produto ou digitar item ${idx + 1}` : `Item ${idx + 1}`}
                           className={`w-full ${itemInputCls}`}
                         />
                         <div className="flex gap-2 mt-1.5 md:hidden">
