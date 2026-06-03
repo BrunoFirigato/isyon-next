@@ -178,23 +178,27 @@ export default async function DashboardPage() {
           criarHref="/leads?novo=1" criarLabel="Novo"
           valor={String(leadsDoMes ?? 0)} label="leads no mês"
           alerta={(leadsNovo ?? 0) > 0 ? { texto: `${leadsNovo} sem contato`, href: '/leads?status=novo', cor: 'red' } : undefined}
+          link={{ texto: 'Ver todos os leads', href: '/leads' }}
         />
         <CardEntidade
           tone="purple" icon={<TrendingUp size={16} />} title="Oportunidades"
           criarHref="/oportunidades?novo=1" criarLabel="Nova"
           valor={brl(valorPipeline)} label={`${opAbertas.length} abertas · conv. ${taxaConversao}%`}
           alerta={opsParadas.length > 0 ? { texto: `${opsParadas.length} parada${opsParadas.length > 1 ? 's' : ''} +${diasOpParada}d`, href: '/oportunidades', cor: 'amber' } : undefined}
+          link={{ texto: `${opGanhasDoMes.length} ganha${opGanhasDoMes.length !== 1 ? 's' : ''} no mês`, href: '/oportunidades?tab=ganhas' }}
         />
         <CardEntidade
           tone="orange" icon={<FileText size={16} />} title="Propostas"
           criarHref="/propostas?novo=1" criarLabel="Nova"
           valor={String(totalPropostas)} label="no total"
           alerta={propsAVencer.length > 0 ? { texto: `${propsAVencer.length} a vencer`, href: '/propostas?status=enviada', cor: 'orange' } : undefined}
+          link={{ texto: 'Ver propostas', href: '/propostas' }}
         />
         <CardEntidade
           tone="emerald" icon={<DollarSign size={16} />} title="Receita"
           valor={brl(receitaMes)} label="faturada no mês"
           alerta={provisaoMes > 0 ? { texto: `${brl(provisaoMes)} a faturar`, href: '/pedidos', cor: 'amber' } : undefined}
+          link={{ texto: 'Ver pedidos', href: '/pedidos' }}
         />
       </div>
 
@@ -301,7 +305,7 @@ const ALERTA_COR: Record<string, string> = {
   orange: 'text-orange-600 dark:text-orange-400',
 }
 
-function CardEntidade({ tone, icon, title, criarHref, criarLabel, valor, label, alerta }: {
+function CardEntidade({ tone, icon, title, criarHref, criarLabel, valor, label, alerta, link }: {
   tone: 'blue' | 'purple' | 'orange' | 'emerald'
   icon: React.ReactNode
   title: string
@@ -310,6 +314,7 @@ function CardEntidade({ tone, icon, title, criarHref, criarLabel, valor, label, 
   valor: string
   label: string
   alerta?: { texto: string; href: string; cor: 'red' | 'amber' | 'orange' }
+  link?: { texto: string; href: string }
 }) {
   const t = TONES[tone]
   return (
@@ -327,11 +332,15 @@ function CardEntidade({ tone, icon, title, criarHref, criarLabel, valor, label, 
       </div>
       <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-none">{valor}</p>
       <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">{label}</p>
-      {alerta && (
+      {alerta ? (
         <Link href={alerta.href} className={`mt-2.5 inline-flex items-center gap-1 text-xs font-medium hover:gap-1.5 transition-all ${ALERTA_COR[alerta.cor]}`}>
           {alerta.texto} <ArrowRight size={12} />
         </Link>
-      )}
+      ) : link ? (
+        <Link href={link.href} className="mt-2.5 inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:gap-1.5 transition-all">
+          {link.texto} <ArrowRight size={12} />
+        </Link>
+      ) : null}
     </div>
   )
 }

@@ -29,14 +29,16 @@ export default function OpsView({ ops }: Props) {
   const router = useRouter()
   const toast = useToast()
   const segmentos = useSegmentos()
+  const searchParams = useSearchParams()
 
-  const [tab, setTab] = useState<Tab>('abertas')
+  // Aba inicial pode vir do dashboard (?tab=ganhas)
+  const tabInicial = searchParams.get('tab')
+  const [tab, setTab] = useState<Tab>(tabInicial === 'ganhas' || tabInicial === 'perdidas' ? tabInicial : 'abertas')
   const [mobileEtapa, setMobileEtapa] = useState<string>(ETAPAS[0])
   const [formOpen, setFormOpen] = useState(false)
   const [editingOp, setEditingOp] = useState<Oportunidade | null>(null)
 
   // Abre o modal de nova oportunidade direto quando vem do dashboard (?novo=1)
-  const searchParams = useSearchParams()
   useEffect(() => {
     if (searchParams.get('novo') === '1') { setEditingOp(null); setFormOpen(true) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
