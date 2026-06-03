@@ -228,24 +228,32 @@ export default function OpsView({ ops }: Props) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
         <div className="divide-y divide-gray-100 dark:divide-gray-700">
-          {items.map((op) => (
-            <div key={op.id} className="px-5 py-3.5 flex items-center justify-between group">
-              <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{op.titulo}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                  {etapaCanonica(op.etapa)} · {formatDate(op.criado_em)}
-                  {op.motivo_perda && ` · ${op.motivo_perda}`}
-                </p>
+          {items.map((op) => {
+            const vendedorNome = op.vendedor_id ? vendedorMap[op.vendedor_id] : null
+            return (
+              <div key={op.id} className="px-5 py-3.5 flex items-center justify-between gap-3 group">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{op.titulo}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    {etapaCanonica(op.etapa)} · {formatDate(op.criado_em)}
+                    {op.motivo_perda && ` · ${op.motivo_perda}`}
+                  </p>
+                  {vendedorNome && (
+                    <p className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                      <User size={11} className="shrink-0" /> {vendedorNome}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{brl(op.valor)}</p>
+                  <button onClick={() => setDeletingId(op.id)} title="Excluir"
+                    className="opacity-70 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-all">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{brl(op.valor)}</p>
-                <button onClick={() => setDeletingId(op.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all">
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     )

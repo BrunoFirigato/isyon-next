@@ -220,9 +220,9 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
                     {statusLabel(p.status)}
                   </span>
 
-                  {/* Ações (hover) */}
+                  {/* Ações (sempre visíveis, como na proposta) */}
                   <div
-                    className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="shrink-0 flex items-center gap-0.5 opacity-70 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {p.status === 'aguardando' && (
