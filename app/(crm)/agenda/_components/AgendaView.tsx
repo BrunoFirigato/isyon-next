@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, CheckCircle2, Pencil, Trash2, Calendar, Search, X, TrendingUp } from 'lucide-react'
+import { Plus, CheckCircle2, Pencil, Trash2, Calendar, Search, X, TrendingUp, Building2, UserPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
   type Compromisso, TIPOS_COMPROMISSO,
@@ -86,7 +86,7 @@ export default function AgendaView({ compromissos }: Props) {
   const base = compromissos.filter(c => {
     if (tipoFiltro && c.tipo !== tipoFiltro) return false
     if (!q) return true
-    const alvo = [c.titulo, c.cliente?.empresa, c.cliente?.nome, c.lead?.nome, c.op?.titulo]
+    const alvo = [c.titulo, c.cliente?.empresa, c.cliente?.nome, c.lead?.nome, c.op?.titulo, c.op?.numero]
       .filter(Boolean).join(' ').toLowerCase()
     return alvo.includes(q)
   })
@@ -213,9 +213,6 @@ export default function AgendaView({ compromissos }: Props) {
                   const tipo   = tipoInfo(c.tipo)
                   const isDone = c.status === 'realizado'
                   const isLate = group.key === '__atrasadas'
-                  const vinculo = c.cliente
-                    ? (c.cliente.empresa ?? c.cliente.nome)
-                    : c.lead?.nome ?? null
 
                   return (
                     <div key={c.id} className={`flex items-center gap-3 px-4 py-3 group ${isDone ? 'opacity-60' : ''}`}>
@@ -237,15 +234,24 @@ export default function AgendaView({ compromissos }: Props) {
                         )}
                       </div>
 
-                      {/* Vínculo — oportunidade tem prioridade (mais específico) */}
+                      {/* Vínculo — ícone + cor por tipo (oportunidade > cliente > lead) */}
                       {c.op ? (
-                        <span className="hidden sm:flex items-center gap-1 text-xs bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-full shrink-0 max-w-[150px]">
+                        <span title={`Oportunidade: ${c.op.titulo}`}
+                          className="hidden sm:flex items-center gap-1 text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-full shrink-0 max-w-[160px]">
                           <TrendingUp size={11} className="shrink-0" />
-                          <span className="truncate">{c.op.titulo}</span>
+                          <span className="truncate">{c.op.numero ?? c.op.titulo}</span>
                         </span>
-                      ) : vinculo ? (
-                        <span className="hidden sm:block text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full shrink-0 max-w-[120px] truncate">
-                          {vinculo}
+                      ) : c.cliente ? (
+                        <span title={`Cliente: ${c.cliente.empresa ?? c.cliente.nome}`}
+                          className="hidden sm:flex items-center gap-1 text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-full shrink-0 max-w-[160px]">
+                          <Building2 size={11} className="shrink-0" />
+                          <span className="truncate">{c.cliente.empresa ?? c.cliente.nome}</span>
+                        </span>
+                      ) : c.lead ? (
+                        <span title={`Lead: ${c.lead.nome}`}
+                          className="hidden sm:flex items-center gap-1 text-xs font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-2 py-0.5 rounded-full shrink-0 max-w-[160px]">
+                          <UserPlus size={11} className="shrink-0" />
+                          <span className="truncate">{c.lead.nome}</span>
                         </span>
                       ) : null}
 

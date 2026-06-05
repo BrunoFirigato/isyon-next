@@ -27,7 +27,7 @@ export default async function AgendaPage() {
       ? supabase.from('leads').select('id, nome').in('id', leadIds)
       : Promise.resolve({ data: [] }),
     opIds.length > 0
-      ? supabase.from('oportunidades').select('id, titulo').in('id', opIds)
+      ? supabase.from('oportunidades').select('id, titulo, numero').in('id', opIds)
       : Promise.resolve({ data: [] }),
   ])
 

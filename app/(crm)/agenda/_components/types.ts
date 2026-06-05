@@ -12,7 +12,7 @@ export interface Compromisso {
   criado_em: string
   cliente?: { id: string; nome: string; empresa: string | null } | null
   lead?: { id: string; nome: string } | null
-  op?: { id: string; titulo: string } | null
+  op?: { id: string; titulo: string; numero: string | null } | null
 }
 
 export const TIPOS_COMPROMISSO = [
