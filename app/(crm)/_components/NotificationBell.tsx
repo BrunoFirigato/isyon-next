@@ -4,6 +4,13 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Bell, Clock, FileText, Calendar, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import VinculoBadge from './VinculoBadge'
+
+interface Vinc {
+  cliente?: { nome: string; empresa: string | null } | null
+  lead?: { nome: string } | null
+  op?: { titulo: string; numero: string | null } | null
+}
 
 interface Notificacao {
   id: string
@@ -12,6 +19,7 @@ interface Notificacao {
   subtitulo: string
   href: string
   urgente: boolean
+  vinculo?: Vinc
 }
 
 export default function NotificationBell() {
@@ -34,7 +42,7 @@ export default function NotificationBell() {
         // Compromissos pendentes atrasados OU com horário ainda hoje
         supabase
           .from('compromissos')
-          .select('id, titulo, tipo, data_hora, status')
+          .select('id, titulo, tipo, data_hora, status, cliente_id, lead_id, op_id')
           .eq('status', 'pendente')
           .lte('data_hora', fimHoje)
           .order('data_hora', { ascending: true })
@@ -51,8 +59,22 @@ export default function NotificationBell() {
           .limit(10),
       ])
 
+      // Resolve os vínculos dos compromissos para identificar o tipo (op/cliente/lead)
+      const compsArr = compromissos ?? []
+      const cIds = [...new Set(compsArr.filter(c => c.cliente_id).map(c => c.cliente_id as string))]
+      const lIds = [...new Set(compsArr.filter(c => c.lead_id).map(c => c.lead_id as string))]
+      const oIds = [...new Set(compsArr.filter(c => c.op_id).map(c => c.op_id as string))]
+      const [{ data: cD }, { data: lD }, { data: oD }] = await Promise.all([
+        cIds.length ? supabase.from('clientes').select('id, nome, empresa').in('id', cIds) : Promise.resolve({ data: [] as { id: string; nome: string; empresa: string | null }[] }),
+        lIds.length ? supabase.from('leads').select('id, nome').in('id', lIds) : Promise.resolve({ data: [] as { id: string; nome: string }[] }),
+        oIds.length ? supabase.from('oportunidades').select('id, titulo, numero').in('id', oIds) : Promise.resolve({ data: [] as { id: string; titulo: string; numero: string | null }[] }),
+      ])
+      const cMap = new Map((cD ?? []).map(x => [x.id, x]))
+      const lMap = new Map((lD ?? []).map(x => [x.id, x]))
+      const oMap = new Map((oD ?? []).map(x => [x.id, x]))
+
       const notifs: Notificacao[] = [
-        ...(compromissos ?? []).map(c => {
+        ...compsArr.map(c => {
           const d = new Date(c.data_hora)
           const isToday =
             d.toDateString() === now.toDateString()
@@ -66,6 +88,11 @@ export default function NotificationBell() {
               : `${diffH >= 24 ? `${Math.floor(diffH / 24)}d atrás` : `${diffH}h atrás`}`,
             href: '/agenda',
             urgente: !isToday,
+            vinculo: {
+              cliente: c.cliente_id ? (cMap.get(c.cliente_id) ?? null) : null,
+              lead:    c.lead_id    ? (lMap.get(c.lead_id)   ?? null) : null,
+              op:      c.op_id      ? (oMap.get(c.op_id)     ?? null) : null,
+            },
           }
         }),
         ...(propostas ?? []).map(p => {
@@ -173,6 +200,11 @@ export default function NotificationBell() {
                       <Clock size={10} className="inline mr-1" />
                       {item.subtitulo}
                     </p>
+                    {item.vinculo && (item.vinculo.op || item.vinculo.cliente || item.vinculo.lead) && (
+                      <div className="mt-1">
+                        <VinculoBadge cliente={item.vinculo.cliente} lead={item.vinculo.lead} op={item.vinculo.op} />
+                      </div>
+                    )}
                   </div>
                 </button>
               )

@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import {
-  Target, TrendingUp, FileText, DollarSign, Calendar,
-  ChevronRight, CheckCircle2, Clock, ArrowRight, Plus,
+  Target, TrendingUp, FileText, DollarSign,
+  ChevronRight, CheckCircle2, ArrowRight, Plus,
   Building2, Package, Rocket, Lightbulb, BarChart3,
 } from 'lucide-react'
 import DispensarOnboarding from './_components/DispensarOnboarding'
+import AgendaHojeCard from '@/app/(crm)/_components/AgendaHojeCard'
+import { type Compromisso } from '@/app/(crm)/agenda/_components/types'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function brl(value: number) {
@@ -23,10 +25,6 @@ function saudacao() {
   ) % 24
   return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'
 }
-function horaDe(iso: string) {
-  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-}
-
 const ETAPAS_PIPELINE = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação']
 const PIPE_CORES = ['#3b82f6', '#6366f1', '#8b5cf6', '#d946ef'] // azul → índigo → violeta → fúcsia
 
@@ -36,11 +34,6 @@ const DICAS = [
   'Proposta enviada? Faça o follow-up antes de vencer a validade.',
   'Cadastre o custo dos produtos — assim você acompanha a margem em cada venda.',
 ]
-
-const TIPO_COMP: Record<string, { icon: string }> = {
-  reuniao: { icon: '🤝' }, ligacao: { icon: '📞' }, visita: { icon: '📍' },
-  email: { icon: '✉️' }, whatsapp: { icon: '💬' }, tarefa: { icon: '✅' },
-}
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -69,7 +62,7 @@ export default async function DashboardPage() {
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'novo'),
     supabase.from('oportunidades').select('id, titulo, status, valor, etapa, criado_em, atualizado_em').order('criado_em', { ascending: false }),
     supabase.from('propostas').select('id, status, validade'),
-    supabase.from('compromissos').select('id, titulo, tipo, data_hora, status').gte('data_hora', hoje0.toISOString()).lte('data_hora', hojeFim.toISOString()).order('data_hora'),
+    supabase.from('compromissos').select('id, titulo, tipo, data_hora, duracao_min, descricao, cliente_id, lead_id, op_id, status, criado_em').gte('data_hora', hoje0.toISOString()).lte('data_hora', hojeFim.toISOString()).order('data_hora'),
     supabase.from('pedidos').select('valor, status, nf_numero, nfe_chave').gte('criado_em', inicio),
     supabase.from('leads').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('*', { count: 'exact', head: true }).gte('criado_em', inicio),
@@ -111,7 +104,24 @@ export default async function DashboardPage() {
   const opsParadas = opAbertas.filter(o => new Date(o.atualizado_em ?? o.criado_em).getTime() < limiteParada)
   const em7 = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)
   const propsAVencer = (props ?? []).filter(p => p.status === 'enviada' && p.validade && p.validade <= em7)
-  const compromissosHoje = (comps ?? []).filter(c => c.status !== 'concluido' && c.status !== 'cancelado')
+  const compsRaw = (comps ?? []).filter(c => c.status !== 'cancelado')
+  const compCliIds = [...new Set(compsRaw.filter(c => c.cliente_id).map(c => c.cliente_id as string))]
+  const compLeadIds = [...new Set(compsRaw.filter(c => c.lead_id).map(c => c.lead_id as string))]
+  const compOpIds = [...new Set(compsRaw.filter(c => c.op_id).map(c => c.op_id as string))]
+  const [{ data: compCli }, { data: compLead }, { data: compOp }] = await Promise.all([
+    compCliIds.length ? supabase.from('clientes').select('id, nome, empresa').in('id', compCliIds) : Promise.resolve({ data: [] as { id: string; nome: string; empresa: string | null }[] }),
+    compLeadIds.length ? supabase.from('leads').select('id, nome').in('id', compLeadIds) : Promise.resolve({ data: [] as { id: string; nome: string }[] }),
+    compOpIds.length ? supabase.from('oportunidades').select('id, titulo, numero').in('id', compOpIds) : Promise.resolve({ data: [] as { id: string; titulo: string; numero: string | null }[] }),
+  ])
+  const compCliMap = new Map((compCli ?? []).map(c => [c.id, c]))
+  const compLeadMap = new Map((compLead ?? []).map(l => [l.id, l]))
+  const compOpMap = new Map((compOp ?? []).map(o => [o.id, o]))
+  const compromissosHoje: Compromisso[] = compsRaw.map(c => ({
+    ...c,
+    cliente: c.cliente_id ? (compCliMap.get(c.cliente_id) ?? null) : null,
+    lead:    c.lead_id    ? (compLeadMap.get(c.lead_id)   ?? null) : null,
+    op:      c.op_id      ? (compOpMap.get(c.op_id)       ?? null) : null,
+  }))
   const totalPropostas = (props ?? []).length
 
   // Os números das pendências já aparecem nos cards — aqui a saudação fica contextual, sem repetir
@@ -221,33 +231,8 @@ export default async function DashboardPage() {
 
       {/* Hoje + Pipeline */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Agenda hoje */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5"><Calendar size={15} className="text-gray-400" /> Hoje</h2>
-            <Link href="/agenda?novo=1" className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"><Plus size={13} /> Agendar</Link>
-          </div>
-          {compromissosHoje.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center px-5 py-8">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-2xl mb-3">📅</div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Nenhum compromisso hoje</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 mb-4">Agenda livre — aproveite para prospectar!</p>
-              <Link href="/agenda?novo=1" className={acaoBtn}><Plus size={15} /> Nova atividade</Link>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-50 dark:divide-gray-700 max-h-80 overflow-y-auto">
-              {compromissosHoje.map(c => (
-                <div key={c.id} className="px-5 py-3 flex items-center gap-3">
-                  <span className="text-lg shrink-0">{(TIPO_COMP[c.tipo ?? '']?.icon) ?? '📌'}</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{c.titulo}</p>
-                    <p className="text-[11px] text-gray-400 flex items-center gap-1"><Clock size={10} /> {horaDe(c.data_hora)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Agenda hoje — interativa (concluir/cancelar/editar/agendar) */}
+        <AgendaHojeCard compromissos={compromissosHoje} />
 
         {/* Pipeline por etapa */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
