@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { Bell, Clock, FileText, Calendar, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -20,9 +20,9 @@ export default function NotificationBell() {
   const [open,   setOpen]   = useState(false)
   const [items,  setItems]  = useState<Notificacao[]>([])
   const [loaded, setLoaded] = useState(false)
+  const pathname = usePathname()
 
-  useEffect(() => {
-    async function load() {
+  const load = useCallback(async () => {
       const supabase = createClient()
       const now = new Date()
       const hoje = now.toISOString()
@@ -86,9 +86,15 @@ export default function NotificationBell() {
 
       setItems(notifs)
       setLoaded(true)
-    }
-    load()
   }, [])
+
+  // Recarrega ao montar, ao navegar entre páginas e quando a aba volta ao foco
+  useEffect(() => {
+    load()
+    const onFocus = () => load()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [pathname, load])
 
   // Fecha ao clicar fora
   useEffect(() => {
