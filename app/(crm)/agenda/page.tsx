@@ -7,7 +7,7 @@ export default async function AgendaPage() {
 
   const { data: rows } = await supabase
     .from('compromissos')
-    .select('id, titulo, tipo, data_hora, duracao_min, descricao, cliente_id, lead_id, status, criado_em')
+    .select('id, titulo, tipo, data_hora, duracao_min, descricao, cliente_id, lead_id, op_id, status, criado_em')
     .order('data_hora', { ascending: true })
 
   if (!rows || rows.length === 0) {
@@ -36,6 +36,7 @@ export default async function AgendaPage() {
     descricao:   r.descricao   ?? null,
     cliente_id:  r.cliente_id  ?? null,
     lead_id:     r.lead_id     ?? null,
+    op_id:       r.op_id       ?? null,
     cliente: r.cliente_id ? (clienteMap.get(r.cliente_id) ?? null) : null,
     lead:    r.lead_id    ? (leadMap.get(r.lead_id)       ?? null) : null,
   }))

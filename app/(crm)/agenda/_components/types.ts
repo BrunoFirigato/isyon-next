@@ -7,6 +7,7 @@ export interface Compromisso {
   descricao: string | null
   cliente_id: string | null
   lead_id: string | null
+  op_id: string | null
   status: string
   criado_em: string
   cliente?: { id: string; nome: string; empresa: string | null } | null

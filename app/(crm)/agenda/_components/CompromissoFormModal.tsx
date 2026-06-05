@@ -10,10 +10,11 @@ import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 interface ClienteRef { id: string; nome: string; empresa: string | null }
 interface LeadRef    { id: string; nome: string }
+interface OpRef      { id: string; titulo: string; cliente_id: string | null }
 
 interface Props {
   compromisso?: Compromisso
-  prefill?: { clienteId?: string; leadId?: string; titulo?: string }
+  prefill?: { clienteId?: string; leadId?: string; oportunidadeId?: string; titulo?: string }
   onClose: () => void
 }
 
@@ -42,15 +43,24 @@ export default function CompromissoFormModal({ compromisso, prefill, onClose }: 
     data_hora:   compromisso ? toLocalDatetime(compromisso.data_hora) : defaultDatetime(),
     duracao_min: compromisso?.duracao_min != null ? String(compromisso.duracao_min) : '60',
     descricao:   compromisso?.descricao   ?? '',
-    cliente_id:  compromisso?.cliente_id  ?? prefill?.clienteId ?? '',
-    lead_id:     compromisso?.lead_id     ?? prefill?.leadId    ?? '',
+    cliente_id:  compromisso?.cliente_id  ?? prefill?.clienteId      ?? '',
+    lead_id:     compromisso?.lead_id     ?? prefill?.leadId         ?? '',
+    op_id:       compromisso?.op_id       ?? prefill?.oportunidadeId ?? '',
     status:      compromisso?.status      ?? 'pendente',
   })
 
   const [clientes, setClientes] = useState<ClienteRef[]>([])
   const [leads,    setLeads]    = useState<LeadRef[]>([])
+  const [ops,      setOps]      = useState<OpRef[]>([])
   const [saving,   setSaving]   = useState(false)
   const [error,    setError]    = useState('')
+
+  // Contexto de origem: quando aberto de um lead/cliente/oportunidade, o vínculo é fixo.
+  const contexto: 'lead' | 'cliente' | 'op' | 'livre' =
+    prefill?.leadId ? 'lead'
+    : prefill?.oportunidadeId ? 'op'
+    : prefill?.clienteId ? 'cliente'
+    : 'livre'
 
   useEffect(() => {
     const supabase = createClient()
@@ -58,18 +68,25 @@ export default function CompromissoFormModal({ compromisso, prefill, onClose }: 
       .then(({ data }) => { if (data) setClientes(data) })
     supabase.from('leads').select('id, nome').order('nome')
       .then(({ data }) => { if (data) setLeads(data) })
+    supabase.from('oportunidades').select('id, titulo, cliente_id').eq('status', 'aberto').order('criado_em', { ascending: false })
+      .then(({ data }) => { if (data) setOps(data) })
   }, [])
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
   }
 
-  // Vincular a cliente OU lead — limpa o outro ao selecionar
+  // Vínculo livre: cliente, lead e oportunidade são mutuamente exclusivos.
   function handleClienteChange(id: string) {
-    setForm(f => ({ ...f, cliente_id: id, lead_id: id ? '' : f.lead_id }))
+    setForm(f => ({ ...f, cliente_id: id, lead_id: '', op_id: '' }))
   }
   function handleLeadChange(id: string) {
-    setForm(f => ({ ...f, lead_id: id, cliente_id: id ? '' : f.cliente_id }))
+    setForm(f => ({ ...f, lead_id: id, cliente_id: '', op_id: '' }))
+  }
+  function handleOpChange(id: string) {
+    const op = ops.find(o => o.id === id)
+    // Vincular à op também vincula ao cliente dela (aparece no 360° do cliente)
+    setForm(f => ({ ...f, op_id: id, cliente_id: id ? (op?.cliente_id ?? '') : '', lead_id: '' }))
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -87,6 +104,7 @@ export default function CompromissoFormModal({ compromisso, prefill, onClose }: 
       descricao:   form.descricao.trim() || null,
       cliente_id:  form.cliente_id || null,
       lead_id:     form.lead_id    || null,
+      op_id:       form.op_id      || null,
       status:      form.status,
     }
 
@@ -100,6 +118,22 @@ export default function CompromissoFormModal({ compromisso, prefill, onClose }: 
     router.refresh()
     onClose()
   }
+
+  const vinculoLabel = (() => {
+    if (contexto === 'lead') {
+      const l = leads.find(x => x.id === form.lead_id)
+      return `🎯 Lead${l ? ` · ${l.nome}` : ''}`
+    }
+    if (contexto === 'cliente') {
+      const c = clientes.find(x => x.id === form.cliente_id)
+      return `🏢 Cliente${c ? ` · ${c.empresa ? `${c.empresa} — ${c.nome}` : c.nome}` : ''}`
+    }
+    if (contexto === 'op') {
+      const o = ops.find(x => x.id === form.op_id)
+      return `📈 Oportunidade${o ? ` · ${o.titulo}` : ''}`
+    }
+    return ''
+  })()
 
   const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
   const selectCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
@@ -170,31 +204,43 @@ export default function CompromissoFormModal({ compromisso, prefill, onClose }: 
               </div>
             </div>
 
-            {/* Vínculo */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>Vincular a cliente</label>
-                <select value={form.cliente_id} onChange={e => handleClienteChange(e.target.value)}
-                  className={selectCls}>
-                  <option value="">Nenhum</option>
-                  {clientes.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.empresa ? `${c.empresa} — ${c.nome}` : c.nome}
-                    </option>
-                  ))}
-                </select>
+            {/* Vínculo — contextual */}
+            {contexto === 'livre' ? (
+              <div className="space-y-4">
+                <div>
+                  <label className={labelCls}>Vincular a oportunidade</label>
+                  <select value={form.op_id} onChange={e => handleOpChange(e.target.value)} className={selectCls}>
+                    <option value="">Nenhuma</option>
+                    {ops.map(o => <option key={o.id} value={o.id}>{o.titulo}</option>)}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>Vincular a cliente</label>
+                    <select value={form.cliente_id} onChange={e => handleClienteChange(e.target.value)} className={selectCls}>
+                      <option value="">Nenhum</option>
+                      {clientes.map(c => (
+                        <option key={c.id} value={c.id}>{c.empresa ? `${c.empresa} — ${c.nome}` : c.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Vincular a lead</label>
+                    <select value={form.lead_id} onChange={e => handleLeadChange(e.target.value)} className={selectCls}>
+                      <option value="">Nenhum</option>
+                      {leads.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
+                    </select>
+                  </div>
+                </div>
               </div>
+            ) : (
               <div>
-                <label className={labelCls}>Vincular a lead</label>
-                <select value={form.lead_id} onChange={e => handleLeadChange(e.target.value)}
-                  className={selectCls}>
-                  <option value="">Nenhum</option>
-                  {leads.map(l => (
-                    <option key={l.id} value={l.id}>{l.nome}</option>
-                  ))}
-                </select>
+                <label className={labelCls}>Vinculado a</label>
+                <div className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {vinculoLabel}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Status */}
             <div>

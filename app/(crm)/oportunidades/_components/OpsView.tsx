@@ -447,7 +447,7 @@ export default function OpsView({ ops }: Props) {
 
       {agendarOp && (
         <CompromissoFormModal
-          prefill={{ clienteId: agendarOp.cliente_id ?? undefined, titulo: agendarOp.titulo }}
+          prefill={{ oportunidadeId: agendarOp.id, clienteId: agendarOp.cliente_id ?? undefined, titulo: agendarOp.titulo }}
           onClose={() => setAgendarOp(null)}
         />
       )}
