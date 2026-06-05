@@ -28,12 +28,14 @@ export default async function PropostasPage({ searchParams }: Props) {
     { data: vendedores },
     { data: empresas },
     { data: pedidoLinks },
+    { data: oportunidades },
   ] = await Promise.all([
     query,
     supabase.from('clientes').select('id, nome, empresa, email').order('nome'),
     supabase.from('vendedores').select('id, nome'),
     supabase.from('empresas').select('id, nome, sigla'),
     supabase.from('pedidos').select('numero, proposta_id').not('proposta_id', 'is', null),
+    supabase.from('oportunidades').select('id, numero, titulo'),
   ])
 
   return (
@@ -43,6 +45,7 @@ export default async function PropostasPage({ searchParams }: Props) {
       vendedores={vendedores ?? []}
       empresas={empresas ?? []}
       pedidoLinks={pedidoLinks ?? []}
+      oportunidades={oportunidades ?? []}
       currentStatus={status ?? 'todos'}
     />
   )

@@ -52,13 +52,24 @@ export default function OpsView({ ops }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [agendarOp, setAgendarOp] = useState<Oportunidade | null>(null)
   const [vendedorMap, setVendedorMap] = useState<Record<string, string>>({})
+  const [propostasMap, setPropostasMap] = useState<Record<string, { numero: string | null; status: string }[]>>({})
 
-  // Mapa id→nome de vendedores, para exibir o responsável no card
+  // Mapas para o card: vendedor responsável e propostas geradas por oportunidade
   useEffect(() => {
     const supabase = createClient()
     supabase.from('vendedores').select('id, nome').then(({ data }) => {
       if (data) setVendedorMap(Object.fromEntries(data.map((v) => [v.id, v.nome])))
     })
+    supabase.from('propostas').select('numero, status, oportunidade_id').not('oportunidade_id', 'is', null)
+      .order('criado_em', { ascending: true })
+      .then(({ data }) => {
+        if (!data) return
+        const m: Record<string, { numero: string | null; status: string }[]> = {}
+        data.forEach((p) => {
+          if (p.oportunidade_id) (m[p.oportunidade_id] ??= []).push({ numero: p.numero, status: p.status })
+        })
+        setPropostasMap(m)
+      })
   }, [])
 
   const abertas = ops.filter((o) => o.status === 'aberto')
@@ -143,6 +154,7 @@ export default function OpsView({ ops }: Props) {
     const prazo = op.prazo_fechamento
       ? (() => { const [y, m, d] = op.prazo_fechamento!.slice(0, 10).split('-'); return `${d}/${m}/${y}` })()
       : null
+    const propsGeradas = propostasMap[op.id] ?? []
 
     return (
       <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3.5 shadow-sm group hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md transition-all">
@@ -161,8 +173,8 @@ export default function OpsView({ ops }: Props) {
         <p className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-snug">{op.titulo}</p>
         <p className="text-base font-bold text-gray-900 dark:text-gray-100 mt-1.5">{brl(op.valor)}</p>
 
-        {/* Meta: responsável + previsão */}
-        {(vendedorNome || prazo) && (
+        {/* Meta: responsável + previsão + propostas geradas */}
+        {(vendedorNome || prazo || propsGeradas.length > 0) && (
           <div className="mt-2 space-y-1">
             {vendedorNome && (
               <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
@@ -174,6 +186,12 @@ export default function OpsView({ ops }: Props) {
               <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                 <Calendar size={12} className="text-gray-400 shrink-0" />
                 <span>Previsão: {prazo}</span>
+              </div>
+            )}
+            {propsGeradas.length > 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-purple-600 dark:text-purple-300" title="Propostas geradas desta oportunidade">
+                <FileText size={12} className="shrink-0" />
+                <span className="truncate">{propsGeradas.map((p) => p.numero).filter(Boolean).join(', ') || `${propsGeradas.length} proposta(s)`}</span>
               </div>
             )}
           </div>
