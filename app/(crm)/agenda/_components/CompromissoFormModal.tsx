@@ -64,12 +64,34 @@ export default function CompromissoFormModal({ compromisso, prefill, onClose }: 
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.from('clientes').select('id, nome, empresa').in('status', ['ativo', 'prospect']).order('nome')
-      .then(({ data }) => { if (data) setClientes(data) })
-    supabase.from('leads').select('id, nome').order('nome')
-      .then(({ data }) => { if (data) setLeads(data) })
-    supabase.from('oportunidades').select('id, titulo, cliente_id').eq('status', 'aberto').order('criado_em', { ascending: false })
-      .then(({ data }) => { if (data) setOps(data) })
+    async function init() {
+      const linkedCliente = compromisso?.cliente_id ?? prefill?.clienteId
+      const linkedOp      = compromisso?.op_id      ?? prefill?.oportunidadeId
+
+      const [{ data: cls }, { data: lds }, { data: ops0 }] = await Promise.all([
+        supabase.from('clientes').select('id, nome, empresa').in('status', ['ativo', 'prospect']).order('nome'),
+        supabase.from('leads').select('id, nome').order('nome'),
+        supabase.from('oportunidades').select('id, titulo, cliente_id').eq('status', 'aberto').order('criado_em', { ascending: false }),
+      ])
+      let clientesList = cls ?? []
+      let opsList      = ops0 ?? []
+
+      // Garante que o vínculo atual apareça no select mesmo se o cliente estiver
+      // inativo ou a oportunidade já fechada (senão sumiria ao editar).
+      if (linkedCliente && !clientesList.some(c => c.id === linkedCliente)) {
+        const { data } = await supabase.from('clientes').select('id, nome, empresa').eq('id', linkedCliente).maybeSingle()
+        if (data) clientesList = [data, ...clientesList]
+      }
+      if (linkedOp && !opsList.some(o => o.id === linkedOp)) {
+        const { data } = await supabase.from('oportunidades').select('id, titulo, cliente_id').eq('id', linkedOp).maybeSingle()
+        if (data) opsList = [data, ...opsList]
+      }
+
+      setClientes(clientesList)
+      if (lds) setLeads(lds)
+      setOps(opsList)
+    }
+    init()
   }, [])
 
   function set(field: string, value: string) {
