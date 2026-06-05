@@ -36,7 +36,7 @@ export default function LostModal({ op, onClose }: Props) {
 
     const { error } = await supabase
       .from('oportunidades')
-      .update({ status: 'perdido' })
+      .update({ status: 'perdido', motivo_perda: motivo || null, perdido_em: new Date().toISOString() })
       .eq('id', op.id)
 
     if (error) {
@@ -44,6 +44,12 @@ export default function LostModal({ op, onClose }: Props) {
       setSaving(false)
       return
     }
+
+    // Sincroniza: propostas abertas desta oportunidade viram "Recusada"
+    await supabase.from('propostas')
+      .update({ status: 'recusada' })
+      .eq('oportunidade_id', op.id)
+      .in('status', ['rascunho', 'enviada'])
 
     toast('Oportunidade marcada como perdida', 'info')
     router.refresh()

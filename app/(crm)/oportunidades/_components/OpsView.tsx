@@ -77,6 +77,12 @@ export default function OpsView({ ops }: Props) {
   async function handleGanho(op: Oportunidade) {
     const supabase = createClient()
 
+    // Sincroniza: propostas abertas desta oportunidade viram "Aceita"
+    await supabase.from('propostas')
+      .update({ status: 'aprovada' })
+      .eq('oportunidade_id', op.id)
+      .in('status', ['rascunho', 'enviada'])
+
     // Adota o valor real da proposta aceita (mais recente), se houver — senão mantém a estimativa
     const { data: prop } = await supabase
       .from('propostas').select('valor')
