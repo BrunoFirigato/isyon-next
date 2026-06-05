@@ -26,15 +26,17 @@ export default function NotificationBell() {
       const supabase = createClient()
       const now = new Date()
       const hoje = now.toISOString()
+      // Fim do dia de hoje — pega TODAS as atividades de hoje (não só as já vencidas) + atrasadas
+      const fimHoje = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString()
       const em7dias = new Date(now.getTime() + 7 * 86_400_000).toISOString()
 
       const [{ data: compromissos }, { data: propostas }] = await Promise.all([
-        // Compromissos pendentes atrasados OU vencendo hoje
+        // Compromissos pendentes atrasados OU com horário ainda hoje
         supabase
           .from('compromissos')
           .select('id, titulo, tipo, data_hora, status')
           .eq('status', 'pendente')
-          .lte('data_hora', hoje)
+          .lte('data_hora', fimHoje)
           .order('data_hora', { ascending: true })
           .limit(10),
         // Propostas próximas de vencer (dentro de 7 dias)
