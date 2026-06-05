@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, CheckCircle2, Pencil, Trash2, Calendar } from 'lucide-react'
+import { Plus, CheckCircle2, Pencil, Trash2, Calendar, Search, X, TrendingUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
   type Compromisso, TIPOS_COMPROMISSO,
@@ -69,6 +69,7 @@ export default function AgendaView({ compromissos }: Props) {
 
   const [filtro,          setFiltro]         = useState<Filtro>('pendentes')
   const [tipoFiltro,      setTipoFiltro]      = useState('')
+  const [busca,           setBusca]          = useState('')
   const [formOpen,        setFormOpen]        = useState(false)
   const [editing,         setEditing]         = useState<Compromisso | null>(null)
   const [deletingId,      setDeletingId]      = useState<string | null>(null)
@@ -81,10 +82,15 @@ export default function AgendaView({ compromissos }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const filtered = applyFilter(
-    tipoFiltro ? compromissos.filter(c => c.tipo === tipoFiltro) : compromissos,
-    filtro,
-  )
+  const q = busca.trim().toLowerCase()
+  const base = compromissos.filter(c => {
+    if (tipoFiltro && c.tipo !== tipoFiltro) return false
+    if (!q) return true
+    const alvo = [c.titulo, c.cliente?.empresa, c.cliente?.nome, c.lead?.nome, c.op?.titulo]
+      .filter(Boolean).join(' ').toLowerCase()
+    return alvo.includes(q)
+  })
+  const filtered = applyFilter(base, filtro)
   const groups = groupByDate(filtered)
 
   async function marcarRealizado(c: Compromisso) {
@@ -120,6 +126,23 @@ export default function AgendaView({ compromissos }: Props) {
           <Plus size={15} />
           <span className="hidden sm:inline">Nova atividade</span>
         </button>
+      </div>
+
+      {/* Busca por título, cliente, lead ou oportunidade */}
+      <div className="relative mb-3">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por título, cliente, lead ou oportunidade..."
+          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg pl-9 pr-9 py-2 text-sm dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {busca && (
+          <button onClick={() => setBusca('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <X size={15} />
+          </button>
+        )}
       </div>
 
       {/* Filtro por status */}
@@ -214,12 +237,17 @@ export default function AgendaView({ compromissos }: Props) {
                         )}
                       </div>
 
-                      {/* Vínculo */}
-                      {vinculo && (
+                      {/* Vínculo — oportunidade tem prioridade (mais específico) */}
+                      {c.op ? (
+                        <span className="hidden sm:flex items-center gap-1 text-xs bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-full shrink-0 max-w-[150px]">
+                          <TrendingUp size={11} className="shrink-0" />
+                          <span className="truncate">{c.op.titulo}</span>
+                        </span>
+                      ) : vinculo ? (
                         <span className="hidden sm:block text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full shrink-0 max-w-[120px] truncate">
                           {vinculo}
                         </span>
-                      )}
+                      ) : null}
 
                       {/* Tipo badge */}
                       <span className={`hidden md:block text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${tipo.badge}`}>

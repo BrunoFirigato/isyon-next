@@ -17,18 +17,23 @@ export default async function AgendaPage() {
   // Collect unique references
   const clienteIds = [...new Set(rows.filter(r => r.cliente_id).map(r => r.cliente_id as string))]
   const leadIds    = [...new Set(rows.filter(r => r.lead_id).map(r => r.lead_id as string))]
+  const opIds      = [...new Set(rows.filter(r => r.op_id).map(r => r.op_id as string))]
 
-  const [{ data: clientesData }, { data: leadsData }] = await Promise.all([
+  const [{ data: clientesData }, { data: leadsData }, { data: opsData }] = await Promise.all([
     clienteIds.length > 0
       ? supabase.from('clientes').select('id, nome, empresa').in('id', clienteIds)
       : Promise.resolve({ data: [] }),
     leadIds.length > 0
       ? supabase.from('leads').select('id, nome').in('id', leadIds)
       : Promise.resolve({ data: [] }),
+    opIds.length > 0
+      ? supabase.from('oportunidades').select('id, titulo').in('id', opIds)
+      : Promise.resolve({ data: [] }),
   ])
 
   const clienteMap = new Map((clientesData ?? []).map(c => [c.id, c]))
   const leadMap    = new Map((leadsData ?? []).map(l => [l.id, l]))
+  const opMap      = new Map((opsData ?? []).map(o => [o.id, o]))
 
   const compromissos: Compromisso[] = rows.map(r => ({
     ...r,
@@ -39,6 +44,7 @@ export default async function AgendaPage() {
     op_id:       r.op_id       ?? null,
     cliente: r.cliente_id ? (clienteMap.get(r.cliente_id) ?? null) : null,
     lead:    r.lead_id    ? (leadMap.get(r.lead_id)       ?? null) : null,
+    op:      r.op_id      ? (opMap.get(r.op_id)           ?? null) : null,
   }))
 
   return <AgendaView compromissos={compromissos} />
