@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
-  Plus, Pencil, Trophy, XCircle, Trash2, ChevronRight, FileText, User, Calendar,
+  Plus, Pencil, Trophy, XCircle, Trash2, ChevronRight, FileText, User, Calendar, CalendarPlus,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { vinculosOportunidade, mensagemBloqueio } from '@/lib/exclusao'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import OpFormModal from './OpFormModal'
 import LostModal from './LostModal'
+import CompromissoFormModal from '@/app/(crm)/agenda/_components/CompromissoFormModal'
 import PropostaFormModal from '@/app/(crm)/propostas/_components/PropostaFormModal'
 import ClienteFormModal from '@/app/(crm)/clientes/_components/ClienteFormModal'
 import type { Cliente } from '@/app/(crm)/clientes/_components/types'
@@ -49,6 +50,7 @@ export default function OpsView({ ops }: Props) {
   const [propostaOp, setPropostaOp] = useState<Oportunidade | null>(null)
   const [completarCliente, setCompletarCliente] = useState<Cliente | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [agendarOp, setAgendarOp] = useState<Oportunidade | null>(null)
   const [vendedorMap, setVendedorMap] = useState<Record<string, string>>({})
 
   // Mapa id→nome de vendedores, para exibir o responsável no card
@@ -205,6 +207,10 @@ export default function OpsView({ ops }: Props) {
             <button onClick={() => setLostOp(op)} title="Marcar perdida"
               className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 transition-colors">
               <XCircle size={14} />
+            </button>
+            <button onClick={() => setAgendarOp(op)} title="Agendar atividade"
+              className="p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/30 text-gray-400 hover:text-amber-600 transition-colors">
+              <CalendarPlus size={14} />
             </button>
             <div className="ml-auto flex gap-1">
               <button onClick={() => openEdit(op)} title="Editar"
@@ -437,6 +443,13 @@ export default function OpsView({ ops }: Props) {
 
       {lostOp && (
         <LostModal op={lostOp} onClose={() => setLostOp(null)} />
+      )}
+
+      {agendarOp && (
+        <CompromissoFormModal
+          prefill={{ clienteId: agendarOp.cliente_id ?? undefined, titulo: agendarOp.titulo }}
+          onClose={() => setAgendarOp(null)}
+        />
       )}
 
       {propostaOp && (

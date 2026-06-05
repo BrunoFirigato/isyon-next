@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, Trash2, MapPin, LayoutGrid, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { Plus, Search, X, Pencil, Trash2, MapPin, LayoutGrid, Upload, ChevronLeft, ChevronRight, Loader2, CalendarPlus } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { vinculosCliente, inativarRegistro, type Vinculo } from '@/lib/exclusao'
 import BloqueioExclusaoDialog from '@/app/(crm)/_components/BloqueioExclusaoDialog'
+import CompromissoFormModal from '@/app/(crm)/agenda/_components/CompromissoFormModal'
 import ClienteFormModal from './ClienteFormModal'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import ImportModal from '@/app/(crm)/_components/ImportModal'
@@ -107,6 +108,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
   const [expandedId, setExpandedId]       = useState<string | null>(null)
   const [bloqueio, setBloqueio]           = useState<{ id: string; vinculos: Vinculo[] } | null>(null)
   const [inativando, setInativando]       = useState(false)
+  const [agendarCliente, setAgendarCliente] = useState<Cliente | null>(null)
 
   // Lookups rápidos ID → nome
   const vendedorMap = Object.fromEntries(vendedores.map(v => [v.id, v.nome]))
@@ -359,6 +361,10 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
                             className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors">
                             <LayoutGrid size={15} />
                           </Link>
+                          <button onClick={() => setAgendarCliente(c)} title="Agendar atividade"
+                            className="p-1.5 rounded-lg hover:bg-amber-50 text-gray-400 hover:text-amber-600 transition-colors">
+                            <CalendarPlus size={15} />
+                          </button>
                           <button onClick={() => { setEditingCliente(c); setFormOpen(true) }}
                             className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
                             <Pencil size={15} />
@@ -484,6 +490,10 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
                       className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600">
                       <LayoutGrid size={15} />
                     </Link>
+                    <button onClick={() => setAgendarCliente(c)}
+                      className="p-1.5 rounded-lg hover:bg-amber-50 text-gray-400 hover:text-amber-600">
+                      <CalendarPlus size={15} />
+                    </button>
                     <button onClick={() => { setEditingCliente(c); setFormOpen(true) }}
                       className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400">
                       <Pencil size={15} />
@@ -542,6 +552,13 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
         onInativar={handleInativar}
         onClose={() => setBloqueio(null)}
       />
+
+      {agendarCliente && (
+        <CompromissoFormModal
+          prefill={{ clienteId: agendarCliente.id, titulo: `Contato — ${agendarCliente.empresa || agendarCliente.nome}` }}
+          onClose={() => setAgendarCliente(null)}
+        />
+      )}
 
       {/* Modal criar/editar */}
       {formOpen && (

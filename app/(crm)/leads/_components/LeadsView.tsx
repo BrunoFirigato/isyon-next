@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid, Mail, MessageCircle, Send, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid, Mail, MessageCircle, Send, Upload, ChevronLeft, ChevronRight, Loader2, CalendarPlus } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import ImportModal  from '@/app/(crm)/_components/ImportModal'
 import Link from 'next/link'
@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { vinculosLead, mensagemBloqueio } from '@/lib/exclusao'
 import LeadFormModal from './LeadFormModal'
 import ConvertModal from './ConvertModal'
+import CompromissoFormModal from '@/app/(crm)/agenda/_components/CompromissoFormModal'
 import { type Lead, STATUS_LEADS, SCORE_OPTIONS, LEADS_PAGE_SIZE, LEAD_COLS, statusStyle, statusLabel, formatDate, scoreInfo } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
@@ -103,6 +104,7 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
   const [importOpen, setImportOpen] = useState(false)
   const [editingLead, setEditingLead] = useState<Lead | null>(null)
   const [convertingLead, setConvertingLead] = useState<Lead | null>(null)
+  const [agendarLead, setAgendarLead] = useState<Lead | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // Modal de compose de e-mail
@@ -397,6 +399,15 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
                       )}
                       {lead.status !== 'convertido' && (
                         <button
+                          onClick={() => setAgendarLead(lead)}
+                          title="Agendar atividade"
+                          className="p-1.5 rounded-lg hover:bg-amber-50 text-gray-400 hover:text-amber-600 transition-colors"
+                        >
+                          <CalendarPlus size={15} />
+                        </button>
+                      )}
+                      {lead.status !== 'convertido' && (
+                        <button
                           onClick={() => { setEditingLead(lead); setFormOpen(true) }}
                           title="Editar"
                           className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"
@@ -513,6 +524,14 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
                   </Link>
                   {lead.status !== 'convertido' && (
                     <button
+                      onClick={() => setAgendarLead(lead)}
+                      className="p-1.5 rounded-lg hover:bg-amber-50 text-gray-400 hover:text-amber-600"
+                    >
+                      <CalendarPlus size={15} />
+                    </button>
+                  )}
+                  {lead.status !== 'convertido' && (
+                    <button
                       onClick={() => { setEditingLead(lead); setFormOpen(true) }}
                       className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400"
                     >
@@ -585,6 +604,13 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
         <ConvertModal
           lead={convertingLead}
           onClose={() => setConvertingLead(null)}
+        />
+      )}
+
+      {agendarLead && (
+        <CompromissoFormModal
+          prefill={{ leadId: agendarLead.id, titulo: `Contato — ${agendarLead.nome}` }}
+          onClose={() => setAgendarLead(null)}
         />
       )}
 

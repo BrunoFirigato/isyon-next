@@ -13,6 +13,7 @@ interface LeadRef    { id: string; nome: string }
 
 interface Props {
   compromisso?: Compromisso
+  prefill?: { clienteId?: string; leadId?: string; titulo?: string }
   onClose: () => void
 }
 
@@ -29,20 +30,20 @@ function defaultDatetime() {
   return toLocalDatetime(d.toISOString())
 }
 
-export default function CompromissoFormModal({ compromisso, onClose }: Props) {
+export default function CompromissoFormModal({ compromisso, prefill, onClose }: Props) {
   const router   = useRouter()
   const toast    = useToast()
   const tenantId = useTenantId()
   const isEditing = !!compromisso
 
   const [form, setForm] = useState({
-    titulo:      compromisso?.titulo      ?? '',
+    titulo:      compromisso?.titulo      ?? prefill?.titulo    ?? '',
     tipo:        compromisso?.tipo        ?? 'tarefa',
     data_hora:   compromisso ? toLocalDatetime(compromisso.data_hora) : defaultDatetime(),
     duracao_min: compromisso?.duracao_min != null ? String(compromisso.duracao_min) : '60',
     descricao:   compromisso?.descricao   ?? '',
-    cliente_id:  compromisso?.cliente_id  ?? '',
-    lead_id:     compromisso?.lead_id     ?? '',
+    cliente_id:  compromisso?.cliente_id  ?? prefill?.clienteId ?? '',
+    lead_id:     compromisso?.lead_id     ?? prefill?.leadId    ?? '',
     status:      compromisso?.status      ?? 'pendente',
   })
 
