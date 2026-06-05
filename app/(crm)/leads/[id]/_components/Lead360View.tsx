@@ -13,6 +13,7 @@ import LeadFormModal from '../../_components/LeadFormModal'
 import ConvertModal from '../../_components/ConvertModal'
 import { type Lead, statusStyle, statusLabel } from '../../_components/types'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
+import AgendaVinculada, { type CompromissoData } from '@/app/(crm)/_components/AgendaVinculada'
 
 /* ─────────────── Types ── */
 
@@ -28,6 +29,7 @@ interface Props {
   lead: Lead
   oportunidades: OpData[]
   historico: HistoricoData[]
+  compromissos: CompromissoData[]
 }
 
 /* ─────────────── Helpers ── */
@@ -168,7 +170,7 @@ function formatPhone(tel: string) {
   return `55${d}`
 }
 
-export default function Lead360View({ lead, oportunidades, historico }: Props) {
+export default function Lead360View({ lead, oportunidades, historico, compromissos }: Props) {
   const router = useRouter()
   const { tenantId, whatsappTemplate, emailTemplateAssunto, emailTemplateCorpo } = useTenantConfig()
 
@@ -462,6 +464,9 @@ export default function Lead360View({ lead, oportunidades, historico }: Props) {
           </div>
         </div>
       )}
+
+      {/* Atividades da agenda vinculadas a este lead */}
+      <AgendaVinculada compromissos={compromissos} />
 
       {/* Histórico de interações */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm mb-4">

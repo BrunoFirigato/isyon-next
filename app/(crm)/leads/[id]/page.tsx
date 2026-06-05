@@ -14,6 +14,7 @@ export default async function LeadPage({ params }: Props) {
     { data: lead },
     { data: oportunidades },
     { data: historicoData, error: errHistorico },
+    { data: compromissosData, error: errCompromissos },
   ] = await Promise.all([
     supabase
       .from('leads')
@@ -31,6 +32,11 @@ export default async function LeadPage({ params }: Props) {
       .eq('lead_id', id)
       .order('criado_em', { ascending: false })
       .limit(50),
+    supabase
+      .from('compromissos')
+      .select('id, titulo, tipo, data_hora, status, descricao, duracao_min')
+      .eq('lead_id', id)
+      .order('data_hora', { ascending: false }),
   ])
 
   if (!lead) notFound()
@@ -40,6 +46,7 @@ export default async function LeadPage({ params }: Props) {
       lead={lead}
       oportunidades={oportunidades ?? []}
       historico={errHistorico ? [] : (historicoData ?? [])}
+      compromissos={errCompromissos ? [] : (compromissosData ?? [])}
     />
   )
 }
