@@ -27,7 +27,7 @@ export default function AgendaHojeCard({ compromissos, inicioHoje }: { compromis
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col lg:absolute lg:inset-0">
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
           <Calendar size={15} className="text-gray-400" /> Hoje
@@ -47,7 +47,7 @@ export default function AgendaHojeCard({ compromissos, inicioHoje }: { compromis
           </button>
         </div>
       ) : (
-        <div className="divide-y divide-gray-50 dark:divide-gray-700 max-h-[248px] overflow-y-auto">
+        <div className="divide-y divide-gray-50 dark:divide-gray-700 flex-1 min-h-0 overflow-y-auto max-h-[60vh] lg:max-h-none">
           {compromissos.map(c => {
             const tipo = tipoInfo(c.tipo)
             const isDone = c.status === 'realizado'

@@ -232,9 +232,11 @@ export default async function DashboardPage() {
       )}
 
       {/* Hoje + Pipeline */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-        {/* Agenda hoje — interativa (concluir/cancelar/editar/agendar) */}
-        <AgendaHojeCard compromissos={compromissosHoje} inicioHoje={hoje0ISO} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Agenda hoje — interativa. Wrapper relative: o card preenche a altura do pipeline. */}
+        <div className="lg:relative">
+          <AgendaHojeCard compromissos={compromissosHoje} inicioHoje={hoje0ISO} />
+        </div>
 
         {/* Pipeline por etapa */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
