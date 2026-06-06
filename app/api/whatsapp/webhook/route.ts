@@ -38,7 +38,9 @@ export async function POST(req: NextRequest) {
   }
 
   const instanceName = body?.instance
-  const data = body?.data
+  // A Evolution pode mandar a mensagem direto em data ou em data.messages[0]
+  const raw = body?.data as (WaData & { messages?: WaData[] }) | undefined
+  const data: WaData | undefined = raw?.key ? raw : (Array.isArray(raw?.messages) ? raw.messages[0] : raw)
   if (!instanceName || !data?.key) return NextResponse.json({ ok: true })
 
   const remoteJid = data.key.remoteJid ?? ''
