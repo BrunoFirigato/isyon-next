@@ -21,12 +21,13 @@ export async function POST(req: NextRequest) {
   const admin = createAdminClient()
 
   // Conversa existente (responder) ou nova (iniciar)
-  let conv: { id: string; telefone: string; instancia_id: string } | null = null
+  type ConvRef = { id: string; telefone: string; instancia_id: string }
+  let conv: ConvRef | null = null
 
   if (conversa_id) {
     const { data } = await admin.from('wa_conversas')
       .select('id, telefone, instancia_id').eq('id', conversa_id).eq('tenant_id', tenantId).maybeSingle()
-    conv = data as typeof conv
+    conv = data as ConvRef | null
   } else {
     // Iniciar: precisa de uma instância + um telefone (direto ou do lead/cliente)
     if (!instancia_id) return NextResponse.json({ error: 'Selecione o número (instância).' }, { status: 400 })
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     const { data: existente } = await admin.from('wa_conversas')
       .select('id, telefone, instancia_id').eq('instancia_id', instancia_id).eq('telefone', telefone).maybeSingle()
     if (existente) {
-      conv = existente as typeof conv
+      conv = existente as ConvRef
     } else {
       // Auto-vínculo por telefone (últimos 8 dígitos) se não veio explícito
       let linkLead: string | null = lead_id || null
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
         tenant_id: tenantId, instancia_id, telefone, contato_nome: contatoNome,
         lead_id: linkLead, cliente_id: linkCli,
       }).select('id, telefone, instancia_id').single()
-      conv = novo as typeof conv
+      conv = novo as ConvRef
     }
   }
 
