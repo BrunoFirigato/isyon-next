@@ -9,7 +9,7 @@ import VinculoBadge from './VinculoBadge'
 import CompromissoFormModal from '@/app/(crm)/agenda/_components/CompromissoFormModal'
 import { type Compromisso, tipoInfo, formatTime } from '@/app/(crm)/agenda/_components/types'
 
-export default function AgendaHojeCard({ compromissos }: { compromissos: Compromisso[] }) {
+export default function AgendaHojeCard({ compromissos, inicioHoje }: { compromissos: Compromisso[]; inicioHoje?: string }) {
   const router = useRouter()
   const toast = useToast()
   const [editing, setEditing] = useState<Compromisso | null>(null)
@@ -51,16 +51,19 @@ export default function AgendaHojeCard({ compromissos }: { compromissos: Comprom
           {compromissos.map(c => {
             const tipo = tipoInfo(c.tipo)
             const isDone = c.status === 'realizado'
+            const isLate = !isDone && !!inicioHoje && c.data_hora < inicioHoje
             const busy = loadingId === c.id
             return (
               <div key={c.id} className="px-4 py-3 flex items-start gap-2.5 group">
                 <span className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${tipo.dot}`} />
                 <div className="min-w-0 flex-1">
-                  <p className={`text-sm truncate ${isDone ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'}`}>
+                  <p className={`text-sm truncate ${isDone ? 'line-through text-gray-400 dark:text-gray-500' : isLate ? 'text-red-700 dark:text-red-400 font-medium' : 'text-gray-800 dark:text-gray-200'}`}>
                     {c.titulo}
                   </p>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className="text-[11px] text-gray-400 flex items-center gap-1"><Clock size={10} /> {formatTime(c.data_hora)}</span>
+                    <span className={`text-[11px] flex items-center gap-1 ${isLate ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                      <Clock size={10} /> {isLate ? 'Atrasada' : formatTime(c.data_hora)}
+                    </span>
                     <VinculoBadge cliente={c.cliente} lead={c.lead} op={c.op} />
                   </div>
                 </div>

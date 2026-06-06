@@ -43,8 +43,10 @@ export default async function DashboardPage() {
   const { data: usuario } = await supabase.from('usuarios').select('id, nome').eq('auth_id', user?.id ?? '').maybeSingle()
   const primeiroNome = (usuario?.nome ?? user?.email?.split('@')[0] ?? '').split(' ')[0]
 
-  const hoje0 = new Date(); hoje0.setHours(0, 0, 0, 0)
-  const hojeFim = new Date(); hojeFim.setHours(23, 59, 59, 999)
+  // Limites do dia no fuso de São Paulo (Brasil não tem horário de verão desde 2019 → UTC-3 fixo)
+  const spHoje = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date()) // 'YYYY-MM-DD'
+  const hoje0ISO = new Date(`${spHoje}T00:00:00.000-03:00`).toISOString()
+  const hojeFimISO = new Date(`${spHoje}T23:59:59.999-03:00`).toISOString()
 
   const [
     { data: config },
@@ -62,7 +64,7 @@ export default async function DashboardPage() {
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'novo'),
     supabase.from('oportunidades').select('id, titulo, status, valor, etapa, criado_em, atualizado_em').order('criado_em', { ascending: false }),
     supabase.from('propostas').select('id, status, validade'),
-    supabase.from('compromissos').select('id, titulo, tipo, data_hora, duracao_min, descricao, cliente_id, lead_id, op_id, status, criado_em').gte('data_hora', hoje0.toISOString()).lte('data_hora', hojeFim.toISOString()).order('data_hora'),
+    supabase.from('compromissos').select('id, titulo, tipo, data_hora, duracao_min, descricao, cliente_id, lead_id, op_id, status, criado_em').eq('status', 'pendente').lte('data_hora', hojeFimISO).order('data_hora'),
     supabase.from('pedidos').select('valor, status, nf_numero, nfe_chave').gte('criado_em', inicio),
     supabase.from('leads').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('*', { count: 'exact', head: true }).gte('criado_em', inicio),
@@ -232,7 +234,7 @@ export default async function DashboardPage() {
       {/* Hoje + Pipeline */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Agenda hoje — interativa (concluir/cancelar/editar/agendar) */}
-        <AgendaHojeCard compromissos={compromissosHoje} />
+        <AgendaHojeCard compromissos={compromissosHoje} inicioHoje={hoje0ISO} />
 
         {/* Pipeline por etapa */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
