@@ -47,7 +47,7 @@ export default function AgendaHojeCard({ compromissos, inicioHoje }: { compromis
           </button>
         </div>
       ) : (
-        <div className="divide-y divide-gray-50 dark:divide-gray-700 max-h-80 overflow-y-auto">
+        <div className="divide-y divide-gray-50 dark:divide-gray-700 max-h-[200px] overflow-y-auto">
           {compromissos.map(c => {
             const tipo = tipoInfo(c.tipo)
             const isDone = c.status === 'realizado'
