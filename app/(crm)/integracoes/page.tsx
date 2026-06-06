@@ -27,21 +27,23 @@ export default async function IntegracoesPage() {
   const { data: emailCfg } = await admin
     .from('sistema_config')
     .select('chave, valor')
-    .in('chave', ['resend_api_key', 'resend_from_email'])
+    .in('chave', ['resend_api_key', 'resend_from_email', 'evolution_url', 'evolution_key'])
 
   const emailMap = Object.fromEntries(
     (emailCfg ?? []).filter(r => r.valor).map(r => [r.chave, r.valor as string])
   )
   const emailConfigurado = !!(emailMap['resend_api_key'] || process.env.RESEND_API_KEY)
 
+  // WhatsApp é gerido pela plataforma (env) → sistema_config → fallback tenant
+  const whatsappDisponivel =
+    !!(process.env.EVOLUTION_API_URL && process.env.EVOLUTION_API_KEY)
+    || !!(emailMap['evolution_url'] && emailMap['evolution_key'])
+    || !!(tenant?.evolution_url && tenant?.evolution_key)
+
   return (
     <IntegracoesView
       tenantId={usuario.tenant_id}
-      evolution={{
-        url:      (tenant?.evolution_url      as string | null) ?? null,
-        key:      (tenant?.evolution_key      as string | null) ?? null,
-        instance: (tenant?.evolution_instance as string | null) ?? null,
-      }}
+      whatsappDisponivel={whatsappDisponivel}
       waTemplate={      (tenant?.whatsapp_template        as string | null) ?? null}
       emailAssunto={    (tenant?.email_template_assunto   as string | null) ?? null}
       emailCorpo={      (tenant?.email_template_corpo     as string | null) ?? null}

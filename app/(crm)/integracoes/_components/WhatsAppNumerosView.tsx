@@ -121,7 +121,7 @@ export default function WhatsAppNumerosView() {
 
       {!evolutionOk && (
         <div className="mb-4 text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-lg px-4 py-3">
-          Configure a <Link href="/integracoes" className="font-medium underline">Evolution API em Integrações</Link> antes de adicionar números.
+          O WhatsApp ainda não está disponível para a sua conta. Fale com o suporte do Isyon para liberar.
         </div>
       )}
 

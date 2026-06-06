@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createResend } from '@/lib/email/resend'
 import { sendWhatsApp } from '@/lib/whatsapp/evolution'
+import { getEvolutionServer } from '@/lib/whatsapp/config'
 
 export async function POST(req: NextRequest) {
   try {
@@ -140,25 +141,26 @@ export async function POST(req: NextRequest) {
 
     // ── WhatsApp via Evolution API ────────────────────────────────────────────
     else if (campanha.tipo === 'whatsapp') {
-      // Carregar config Evolution do tenant
-      const { data: tenantEvol } = await admin
-        .from('tenants')
-        .select('evolution_url, evolution_key, evolution_instance')
-        .eq('id', tenantId)
-        .maybeSingle()
+      // Servidor Evolution (plataforma) + um número conectado do tenant
+      const srv = await getEvolutionServer(admin, tenantId)
+      const { data: numero } = await admin
+        .from('wa_instancias')
+        .select('instance_name')
+        .eq('tenant_id', tenantId).eq('ativo', true)
+        .order('criado_em').limit(1).maybeSingle()
+      // Fallback: instância legada do tenant
+      const { data: legacy } = numero ? { data: null } : await admin
+        .from('tenants').select('evolution_instance').eq('id', tenantId).maybeSingle()
+      const instanceName = numero?.instance_name ?? legacy?.evolution_instance
 
-      if (!tenantEvol?.evolution_url || !tenantEvol?.evolution_key || !tenantEvol?.evolution_instance) {
+      if (!srv || !instanceName) {
         await admin.from('campanhas').update({ status: 'rascunho' }).eq('id', campanhaId)
         return NextResponse.json({
-          error: 'WhatsApp não configurado. Acesse Configurações → Comunicação e preencha os dados da Evolution API.',
+          error: 'WhatsApp não configurado. Conecte um número em Integrações → Gerenciar números.',
         }, { status: 400 })
       }
 
-      const evolConfig = {
-        url:      tenantEvol.evolution_url,
-        key:      tenantEvol.evolution_key,
-        instance: tenantEvol.evolution_instance,
-      }
+      const evolConfig = { url: srv.url, key: srv.key, instance: instanceName as string }
 
       const BATCH = 5
       for (let i = 0; i < destinatarios.length; i += BATCH) {

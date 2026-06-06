@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import {
-  type EvolutionServer,
   createInstance, connectInstance, connectionState,
   logoutInstance, deleteInstance, listInstances,
 } from '@/lib/whatsapp/evolution'
+import { getEvolutionServer } from '@/lib/whatsapp/config'
 
 /** Garante que o chamador é admin do seu tenant. */
 async function assertTenantAdmin() {
@@ -16,13 +16,6 @@ async function assertTenantAdmin() {
     .from('usuarios').select('id, tenant_id, perfil').eq('auth_id', user.id).maybeSingle()
   if (!usuario || usuario.perfil !== 'admin' || !usuario.tenant_id) return null
   return { userId: usuario.id, tenantId: usuario.tenant_id }
-}
-
-/** Lê as credenciais do servidor Evolution do tenant. */
-async function getServer(admin: ReturnType<typeof createAdminClient>, tenantId: string): Promise<EvolutionServer | null> {
-  const { data } = await admin.from('tenants').select('evolution_url, evolution_key').eq('id', tenantId).maybeSingle()
-  if (!data?.evolution_url || !data?.evolution_key) return null
-  return { url: data.evolution_url as string, key: data.evolution_key as string }
 }
 
 function mapEstado(state?: string | null): string {
@@ -39,7 +32,7 @@ export async function GET() {
   const { data: rows } = await admin
     .from('wa_instancias').select('*').eq('tenant_id', caller.tenantId).order('criado_em')
 
-  const srv = await getServer(admin, caller.tenantId)
+  const srv = await getEvolutionServer(admin, caller.tenantId)
   const estados = srv ? await listInstances(srv) : {}
 
   const numeros = (rows ?? []).map(r => ({
@@ -54,7 +47,7 @@ export async function POST(req: NextRequest) {
   const caller = await assertTenantAdmin()
   if (!caller) return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
   const admin = createAdminClient()
-  const srv = await getServer(admin, caller.tenantId)
+  const srv = await getEvolutionServer(admin, caller.tenantId)
   if (!srv) return NextResponse.json({ error: 'Configure a Evolution API em Integrações antes de adicionar números.' }, { status: 400 })
 
   const body = await req.json()
