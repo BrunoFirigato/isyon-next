@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { MessageCircle, Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 
 interface Conversa {
   id: string
@@ -37,6 +38,7 @@ function horaMsg(iso: string) {
 export default function ConversasView() {
   const toast = useToast()
   const supabase = createClient()
+  const tenantId = useTenantId()
   const [conversas, setConversas] = useState<Conversa[]>([])
   const [instancias, setInstancias] = useState<Instancia[]>([])
   const [ativaId, setAtivaId] = useState<string | null>(null)
@@ -48,6 +50,11 @@ export default function ConversasView() {
   const [loading, setLoading] = useState(true)
   const [novaOpen, setNovaOpen] = useState(false)
   const [nvInst, setNvInst] = useState(''); const [nvTel, setNvTel] = useState(''); const [nvTexto, setNvTexto] = useState('')
+  const [filtroSem, setFiltroSem] = useState(false)
+  const [criarOpen, setCriarOpen] = useState(false); const [novoLeadNome, setNovoLeadNome] = useState('')
+  const [vincOpen, setVincOpen] = useState(false); const [vincBusca, setVincBusca] = useState('')
+  const [vincRes, setVincRes] = useState<{ tipo: 'lead' | 'cliente'; id: string; nome: string }[]>([])
+  const [acaoBusy, setAcaoBusy] = useState(false)
   const fimRef = useRef<HTMLDivElement>(null)
 
   const ativa = conversas.find(c => c.id === ativaId) ?? null
@@ -106,14 +113,53 @@ export default function ConversasView() {
     setAtivaId(d.conversa_id)
   }
 
+  async function criarLead() {
+    if (!ativa) return
+    setAcaoBusy(true)
+    const nome = novoLeadNome.trim() || ativa.contato_nome || ativa.telefone
+    const { data: lead, error } = await supabase.from('leads')
+      .insert({ tenant_id: tenantId, nome, telefone: ativa.telefone, status: 'novo', origem: 'WhatsApp' })
+      .select('id').single()
+    if (error || !lead) { setAcaoBusy(false); toast('Erro ao criar lead', 'error'); return }
+    await supabase.from('wa_conversas').update({ lead_id: lead.id }).eq('id', ativa.id)
+    setAcaoBusy(false); setCriarOpen(false)
+    toast('Lead criado e vinculado! 🎯')
+    carregarConversas()
+  }
+
+  async function buscarVinculo(termo: string) {
+    setVincBusca(termo)
+    const t = termo.replace(/[,()]/g, '').trim()
+    if (t.length < 2) { setVincRes([]); return }
+    const [{ data: lds }, { data: cls }] = await Promise.all([
+      supabase.from('leads').select('id, nome').or(`nome.ilike.%${t}%,telefone.ilike.%${t}%`).limit(6),
+      supabase.from('clientes').select('id, nome, empresa').or(`nome.ilike.%${t}%,empresa.ilike.%${t}%,telefone.ilike.%${t}%`).limit(6),
+    ])
+    setVincRes([
+      ...(lds ?? []).map(l => ({ tipo: 'lead' as const, id: l.id, nome: l.nome })),
+      ...(cls ?? []).map(c => ({ tipo: 'cliente' as const, id: c.id, nome: c.empresa || c.nome })),
+    ])
+  }
+
+  async function vincular(tipo: 'lead' | 'cliente', id: string) {
+    if (!ativa) return
+    const patch = tipo === 'lead' ? { lead_id: id, cliente_id: null } : { cliente_id: id, lead_id: null }
+    await supabase.from('wa_conversas').update(patch).eq('id', ativa.id)
+    setVincOpen(false); setVincBusca(''); setVincRes([])
+    toast('Conversa vinculada!')
+    carregarConversas()
+  }
+
   const q = busca.trim().toLowerCase()
   const lista = conversas.filter(c => {
     if (filtroInst && c.instancia_id !== filtroInst) return false
+    if (filtroSem && (c.lead_id || c.cliente_id)) return false
     if (!q) return true
     return [nomeContato(c), c.telefone, c.ultima_mensagem].filter(Boolean).join(' ').toLowerCase().includes(q)
   })
 
-  const link360 = ativa?.cliente_id ? `/clientes/${ativa.cliente_id}` : ativa?.leads ? `/leads/${ativa.lead_id}` : null
+  const semCadastro = !!ativa && !ativa.lead_id && !ativa.cliente_id
+  const link360 = ativa?.cliente_id ? `/clientes/${ativa.cliente_id}` : ativa?.lead_id ? `/leads/${ativa.lead_id}` : null
 
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 6rem)' }}>
@@ -136,6 +182,10 @@ export default function ConversasView() {
                 {instancias.map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
               </select>
             )}
+            <button onClick={() => setFiltroSem(v => !v)}
+              className={`w-full text-xs px-2 py-1.5 rounded-lg border transition-colors ${filtroSem ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-medium' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+              {filtroSem ? '● Só sem cadastro' : 'Filtrar sem cadastro'}
+            </button>
           </div>
           <div className="flex-1 overflow-y-auto">
             {loading ? <div className="py-10 text-center"><Loader2 size={20} className="animate-spin mx-auto text-gray-300" /></div>
@@ -173,6 +223,16 @@ export default function ConversasView() {
                 </div>
                 {link360 && <Link href={link360} className="text-xs font-medium text-blue-600 hover:underline shrink-0">Ver 360°</Link>}
               </div>
+
+              {semCadastro && (
+                <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-800 flex items-center justify-between gap-2">
+                  <span className="text-xs text-amber-700 dark:text-amber-300 truncate">📇 Contato sem cadastro no CRM</span>
+                  <div className="flex gap-1.5 shrink-0">
+                    <button onClick={() => { setNovoLeadNome(ativa?.contato_nome ?? ''); setCriarOpen(true) }} className="text-xs font-medium px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white">Criar lead</button>
+                    <button onClick={() => { setVincBusca(''); setVincRes([]); setVincOpen(true) }} className="text-xs font-medium px-2.5 py-1 rounded-lg border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40">Vincular</button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-gray-50/50 dark:bg-gray-900/30">
                 {mensagens.map(m => (
@@ -217,6 +277,58 @@ export default function ConversasView() {
               <textarea value={nvTexto} onChange={e => setNvTexto(e.target.value)} rows={3} placeholder="Mensagem..." className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 resize-none" />
             </div>
             <button onClick={iniciar} disabled={enviando} className="w-full mt-4 py-2.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">{enviando ? 'Enviando...' : 'Enviar'}</button>
+          </div>
+        </div>
+      )}
+
+      {/* Criar lead a partir da conversa */}
+      {criarOpen && ativa && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => !acaoBusy && setCriarOpen(false)} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Criar lead deste contato</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Nome</label>
+                <input value={novoLeadNome} onChange={e => setNovoLeadNome(e.target.value)} autoFocus placeholder="Nome do lead"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Telefone</label>
+                <input value={ativa.telefone} disabled className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700/40 text-gray-500" />
+              </div>
+            </div>
+            <div className="flex gap-2.5 mt-5">
+              <button onClick={() => setCriarOpen(false)} disabled={acaoBusy} className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 disabled:opacity-60">Cancelar</button>
+              <button onClick={criarLead} disabled={acaoBusy} className="flex-1 py-2.5 rounded-lg text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60">{acaoBusy ? 'Criando...' : 'Criar e vincular'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Vincular a lead/cliente existente */}
+      {vincOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setVincOpen(false)} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Vincular a um cadastro</h2>
+              <button onClick={() => setVincOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+            </div>
+            <input value={vincBusca} onChange={e => buscarVinculo(e.target.value)} autoFocus placeholder="Buscar lead ou cliente..."
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
+            <div className="mt-3 max-h-64 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700">
+              {vincRes.length === 0 ? (
+                <p className="py-4 text-center text-xs text-gray-400">Digite para buscar.</p>
+              ) : vincRes.map(r => (
+                <button key={`${r.tipo}_${r.id}`} onClick={() => vincular(r.tipo, r.id)}
+                  className="w-full flex items-center gap-2 px-1 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded">
+                  {r.tipo === 'cliente' ? <Building2 size={13} className="text-blue-500 shrink-0" /> : <UserPlus size={13} className="text-amber-500 shrink-0" />}
+                  <span className="text-sm text-gray-800 dark:text-gray-100 truncate">{r.nome}</span>
+                  <span className="ml-auto text-[10px] text-gray-400 uppercase">{r.tipo}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
