@@ -3,9 +3,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import {
   createInstance, connectInstance, connectionState,
-  logoutInstance, deleteInstance, listInstances,
+  logoutInstance, deleteInstance, listInstances, setWebhook,
 } from '@/lib/whatsapp/evolution'
-import { getEvolutionServer } from '@/lib/whatsapp/config'
+import { getEvolutionServer, webhookUrl } from '@/lib/whatsapp/config'
 
 /** Garante que o chamador é admin do seu tenant. */
 async function assertTenantAdmin() {
@@ -59,6 +59,9 @@ export async function POST(req: NextRequest) {
     const instanceName = `isyon-${caller.tenantId.slice(0, 8)}-${Date.now().toString(36)}`
     const r = await createInstance(srv, instanceName)
     if (!r.ok) return NextResponse.json({ error: r.error ?? 'Falha ao criar instância' }, { status: 502 })
+    // Configura o webhook para receber as mensagens
+    const wh = webhookUrl()
+    if (wh) await setWebhook(srv, instanceName, wh)
     const { data: row, error } = await admin.from('wa_instancias').insert({
       tenant_id: caller.tenantId,
       nome: nome.trim(),
@@ -76,6 +79,8 @@ export async function POST(req: NextRequest) {
     const { id } = body
     const { data: row } = await admin.from('wa_instancias').select('instance_name').eq('id', id).eq('tenant_id', caller.tenantId).maybeSingle()
     if (!row) return NextResponse.json({ error: 'Número não encontrado' }, { status: 404 })
+    const wh = webhookUrl()
+    if (wh) await setWebhook(srv, row.instance_name as string, wh)
     const r = await connectInstance(srv, row.instance_name as string)
     return NextResponse.json({ ok: r.ok, qrBase64: r.qrBase64, code: r.code, error: r.error })
   }

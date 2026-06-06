@@ -26,3 +26,11 @@ export async function getEvolutionServer(
   }
   return null
 }
+
+/** URL pública do webhook (com token). Null se o token não estiver configurado. */
+export function webhookUrl(): string | null {
+  const token = process.env.WHATSAPP_WEBHOOK_TOKEN
+  if (!token) return null
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crm.isyon.com.br').replace(/\/+$/, '')
+  return `${appUrl}/api/whatsapp/webhook?token=${encodeURIComponent(token)}`
+}

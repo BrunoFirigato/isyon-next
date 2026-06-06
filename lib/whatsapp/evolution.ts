@@ -64,6 +64,27 @@ export async function deleteInstance(srv: EvolutionServer, instanceName: string)
   await fetch(`${base(srv.url)}/instance/delete/${encodeURIComponent(instanceName)}`, { method: 'DELETE', headers: hdrs(srv.key) }).catch(() => {})
 }
 
+/** Configura o webhook de uma instância para receber as mensagens. */
+export async function setWebhook(srv: EvolutionServer, instanceName: string, url: string): Promise<{ ok: boolean; error?: string }> {
+  const evento = ['MESSAGES_UPSERT']
+  // Tenta o formato v1.8.6; se falhar, tenta o formato alternativo.
+  try {
+    const res = await fetch(`${base(srv.url)}/webhook/set/${encodeURIComponent(instanceName)}`, {
+      method: 'POST', headers: hdrs(srv.key),
+      body: JSON.stringify({ url, webhook_by_events: false, events: evento }),
+    })
+    if (res.ok) return { ok: true }
+    const res2 = await fetch(`${base(srv.url)}/webhook/set/${encodeURIComponent(instanceName)}`, {
+      method: 'POST', headers: hdrs(srv.key),
+      body: JSON.stringify({ webhook: { url, enabled: true, events: evento } }),
+    })
+    if (res2.ok) return { ok: true }
+    return { ok: false, error: `Evolution ${res.status}` }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Erro de conexão' }
+  }
+}
+
 /** Lista todas as instâncias do servidor com seus estados (1 chamada). */
 export async function listInstances(srv: EvolutionServer): Promise<Record<string, string>> {
   try {
@@ -92,7 +113,7 @@ export async function sendWhatsApp(
   config: EvolutionConfig,
   to:     string,
   text:   string,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; id?: string | null; error?: string }> {
   try {
     const phone = to.replace(/\D/g, '')
     if (!phone) return { ok: false, error: 'Número inválido' }
@@ -117,7 +138,8 @@ export async function sendWhatsApp(
       return { ok: false, error: `Evolution API ${res.status}: ${body}` }
     }
 
-    return { ok: true }
+    const d = await res.json().catch(() => null)
+    return { ok: true, id: d?.key?.id ?? null }
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Erro desconhecido' }
   }
