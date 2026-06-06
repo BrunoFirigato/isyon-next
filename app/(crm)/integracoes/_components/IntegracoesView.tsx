@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
   Save, Wifi, Loader2, CheckCircle2, AlertCircle,
-  ChevronDown, ChevronUp, Eye, EyeOff, Info,
+  ChevronDown, ChevronUp, Eye, EyeOff, Info, Smartphone, ArrowRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
@@ -157,13 +158,20 @@ function WhatsAppCard({
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
           Envio de mensagens individuais e campanhas em massa via WhatsApp.
         </p>
-        <button
-          onClick={() => { setOpen(o => !o); setTestResult(null) }}
-          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-        >
-          {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-          {open ? 'Fechar' : isConfigured ? 'Editar' : 'Configurar'}
-        </button>
+        <div className="flex items-center gap-4 flex-wrap">
+          <button
+            onClick={() => { setOpen(o => !o); setTestResult(null) }}
+            className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+            {open ? 'Fechar' : isConfigured ? 'Editar' : 'Configurar'}
+          </button>
+          {isConfigured && (
+            <Link href="/integracoes/whatsapp" className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+              <Smartphone size={15} /> Gerenciar múltiplos números <ArrowRight size={13} />
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Expandido */}

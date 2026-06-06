@@ -9,6 +9,79 @@ export interface EvolutionConfig {
   instance: string   // nome da instância conectada
 }
 
+/** Credenciais do servidor Evolution (sem instância — várias instâncias compartilham url+key). */
+export interface EvolutionServer { url: string; key: string }
+
+const base = (url: string) => url.replace(/\/+$/, '')
+const hdrs = (key: string) => ({ apikey: key, 'Content-Type': 'application/json' })
+
+/** Cria uma nova instância (número) e já solicita o QR Code. */
+export async function createInstance(srv: EvolutionServer, instanceName: string): Promise<{ ok: boolean; qrBase64?: string | null; error?: string }> {
+  try {
+    const res = await fetch(`${base(srv.url)}/instance/create`, {
+      method: 'POST', headers: hdrs(srv.key),
+      body: JSON.stringify({ instanceName, qrcode: true }),
+    })
+    const d = await res.json().catch(() => ({}))
+    if (!res.ok) return { ok: false, error: `Evolution ${res.status}: ${JSON.stringify(d).slice(0, 200)}` }
+    return { ok: true, qrBase64: d?.qrcode?.base64 ?? d?.base64 ?? null }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Erro de conexão' }
+  }
+}
+
+/** Obtém o QR Code (ou pairing code) para conectar/reconectar uma instância existente. */
+export async function connectInstance(srv: EvolutionServer, instanceName: string): Promise<{ ok: boolean; qrBase64?: string | null; code?: string | null; error?: string }> {
+  try {
+    const res = await fetch(`${base(srv.url)}/instance/connect/${encodeURIComponent(instanceName)}`, { headers: hdrs(srv.key) })
+    const d = await res.json().catch(() => ({}))
+    if (!res.ok) return { ok: false, error: `Evolution ${res.status}` }
+    return { ok: true, qrBase64: d?.base64 ?? d?.qrcode?.base64 ?? null, code: d?.code ?? d?.pairingCode ?? null }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Erro de conexão' }
+  }
+}
+
+/** Estado da conexão de uma instância: 'open' (conectado), 'connecting', 'close'. */
+export async function connectionState(srv: EvolutionServer, instanceName: string): Promise<{ ok: boolean; state?: string; error?: string }> {
+  try {
+    const res = await fetch(`${base(srv.url)}/instance/connectionState/${encodeURIComponent(instanceName)}`, { headers: hdrs(srv.key) })
+    const d = await res.json().catch(() => ({}))
+    if (!res.ok) return { ok: false, error: `Evolution ${res.status}` }
+    return { ok: true, state: d?.instance?.state ?? d?.state ?? 'desconhecido' }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Erro de conexão' }
+  }
+}
+
+/** Desconecta a sessão (logout) de uma instância. */
+export async function logoutInstance(srv: EvolutionServer, instanceName: string): Promise<void> {
+  await fetch(`${base(srv.url)}/instance/logout/${encodeURIComponent(instanceName)}`, { method: 'DELETE', headers: hdrs(srv.key) }).catch(() => {})
+}
+
+/** Remove a instância do servidor Evolution. */
+export async function deleteInstance(srv: EvolutionServer, instanceName: string): Promise<void> {
+  await fetch(`${base(srv.url)}/instance/delete/${encodeURIComponent(instanceName)}`, { method: 'DELETE', headers: hdrs(srv.key) }).catch(() => {})
+}
+
+/** Lista todas as instâncias do servidor com seus estados (1 chamada). */
+export async function listInstances(srv: EvolutionServer): Promise<Record<string, string>> {
+  try {
+    const res = await fetch(`${base(srv.url)}/instance/fetchInstances`, { headers: { apikey: srv.key } })
+    const d = await res.json().catch(() => [])
+    const map: Record<string, string> = {}
+    if (Array.isArray(d)) {
+      d.forEach((i: { instance?: { instanceName?: string; state?: string; status?: string } }) => {
+        const n = i?.instance?.instanceName
+        if (n) map[n] = i?.instance?.state ?? i?.instance?.status ?? 'desconhecido'
+      })
+    }
+    return map
+  } catch {
+    return {}
+  }
+}
+
 /**
  * Envia uma mensagem de texto via WhatsApp.
  * @param config   Credenciais da Evolution API
