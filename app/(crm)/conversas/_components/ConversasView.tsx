@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { MessageCircle, Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -39,6 +40,7 @@ export default function ConversasView() {
   const toast = useToast()
   const supabase = createClient()
   const tenantId = useTenantId()
+  const searchParams = useSearchParams()
   const [conversas, setConversas] = useState<Conversa[]>([])
   const [instancias, setInstancias] = useState<Instancia[]>([])
   const [ativaId, setAtivaId] = useState<string | null>(null)
@@ -76,6 +78,12 @@ export default function ConversasView() {
     const t = setInterval(carregarConversas, 6000)
     return () => clearInterval(t)
   }, [carregarConversas, supabase])
+
+  // Abre direto uma conversa quando vem do 360° (?c=conversaId)
+  useEffect(() => {
+    const c = searchParams.get('c')
+    if (c) setAtivaId(c)
+  }, [searchParams])
 
   // Ao abrir uma conversa: carrega mensagens, marca como lida e faz polling do thread
   useEffect(() => {

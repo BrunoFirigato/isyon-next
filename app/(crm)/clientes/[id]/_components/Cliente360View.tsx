@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import AgendaVinculada, { type CompromissoData } from '@/app/(crm)/_components/AgendaVinculada'
+import WhatsAppConversaSection from '@/app/(crm)/_components/WhatsAppConversaSection'
 import ClienteFormModal from '../../_components/ClienteFormModal'
 import { type Cliente, tipoLabel, statusStyle, statusLabel, brl as brlCliente } from '../../_components/types'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
@@ -328,6 +329,7 @@ export default function Cliente360View({ cliente, oportunidades, propostas, pedi
       />
 
       {/* ── Atividades da Agenda ── */}
+      <WhatsAppConversaSection clienteId={cliente.id} />
       <AgendaVinculada compromissos={compromissos} />
 
       {/* ── Histórico de Interações ── */}

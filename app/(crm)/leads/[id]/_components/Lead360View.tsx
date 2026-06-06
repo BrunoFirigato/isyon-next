@@ -14,6 +14,7 @@ import ConvertModal from '../../_components/ConvertModal'
 import { type Lead, statusStyle, statusLabel } from '../../_components/types'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 import AgendaVinculada, { type CompromissoData } from '@/app/(crm)/_components/AgendaVinculada'
+import WhatsAppConversaSection from '@/app/(crm)/_components/WhatsAppConversaSection'
 
 /* ─────────────── Types ── */
 
@@ -465,7 +466,8 @@ export default function Lead360View({ lead, oportunidades, historico, compromiss
         </div>
       )}
 
-      {/* Atividades da agenda vinculadas a este lead */}
+      {/* Conversa WhatsApp + atividades da agenda vinculadas a este lead */}
+      <WhatsAppConversaSection leadId={lead.id} />
       <AgendaVinculada compromissos={compromissos} />
 
       {/* Histórico de interações */}
