@@ -5,7 +5,7 @@ import {
   createInstance, connectInstance, connectionState,
   logoutInstance, deleteInstance, listInstances, setWebhook,
 } from '@/lib/whatsapp/evolution'
-import { getEvolutionServer, webhookUrl } from '@/lib/whatsapp/config'
+import { getEvolutionServer, getWebhookToken, buildWebhookUrl } from '@/lib/whatsapp/config'
 
 /** Garante que o chamador é admin do seu tenant. */
 async function assertTenantAdmin() {
@@ -60,8 +60,8 @@ export async function POST(req: NextRequest) {
     const r = await createInstance(srv, instanceName)
     if (!r.ok) return NextResponse.json({ error: r.error ?? 'Falha ao criar instância' }, { status: 502 })
     // Configura o webhook para receber as mensagens
-    const wh = webhookUrl()
-    if (wh) await setWebhook(srv, instanceName, wh)
+    const tk = await getWebhookToken(admin)
+    if (tk) await setWebhook(srv, instanceName, buildWebhookUrl(tk))
     const { data: row, error } = await admin.from('wa_instancias').insert({
       tenant_id: caller.tenantId,
       nome: nome.trim(),
@@ -79,8 +79,8 @@ export async function POST(req: NextRequest) {
     const { id } = body
     const { data: row } = await admin.from('wa_instancias').select('instance_name').eq('id', id).eq('tenant_id', caller.tenantId).maybeSingle()
     if (!row) return NextResponse.json({ error: 'Número não encontrado' }, { status: 404 })
-    const wh = webhookUrl()
-    if (wh) await setWebhook(srv, row.instance_name as string, wh)
+    const tk = await getWebhookToken(admin)
+    if (tk) await setWebhook(srv, row.instance_name as string, buildWebhookUrl(tk))
     const r = await connectInstance(srv, row.instance_name as string)
     return NextResponse.json({ ok: r.ok, qrBase64: r.qrBase64, code: r.code, error: r.error })
   }

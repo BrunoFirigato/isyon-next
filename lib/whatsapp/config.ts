@@ -27,10 +27,15 @@ export async function getEvolutionServer(
   return null
 }
 
-/** URL pública do webhook (com token). Null se o token não estiver configurado. */
-export function webhookUrl(): string | null {
-  const token = process.env.WHATSAPP_WEBHOOK_TOKEN
-  if (!token) return null
+/** Token do webhook: env (recomendado) → sistema_config 'whatsapp_webhook_token'. */
+export async function getWebhookToken(admin: SupabaseClient): Promise<string | null> {
+  if (process.env.WHATSAPP_WEBHOOK_TOKEN) return process.env.WHATSAPP_WEBHOOK_TOKEN
+  const { data } = await admin.from('sistema_config').select('valor').eq('chave', 'whatsapp_webhook_token').maybeSingle()
+  return (data?.valor as string) || null
+}
+
+/** Monta a URL pública do webhook com o token. */
+export function buildWebhookUrl(token: string): string {
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://crm.isyon.com.br').replace(/\/+$/, '')
   return `${appUrl}/api/whatsapp/webhook?token=${encodeURIComponent(token)}`
 }

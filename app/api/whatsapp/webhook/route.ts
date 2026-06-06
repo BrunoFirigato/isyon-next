@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getWebhookToken } from '@/lib/whatsapp/config'
 
 function digits(s?: string | null) { return (s || '').replace(/\D/g, '') }
 
@@ -20,9 +21,10 @@ function extrairTexto(msg: WaMsg | undefined): string {
 }
 
 export async function POST(req: NextRequest) {
+  const admin = createAdminClient()
   // Validação do token (a Evolution chama esta URL com ?token=...)
   const token = req.nextUrl.searchParams.get('token')
-  const expected = process.env.WHATSAPP_WEBHOOK_TOKEN
+  const expected = await getWebhookToken(admin)
   if (!expected || token !== expected) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
@@ -43,8 +45,6 @@ export async function POST(req: NextRequest) {
   if (!remoteJid || remoteJid.endsWith('@g.us')) return NextResponse.json({ ok: true }) // ignora grupos
   const telefone = digits(remoteJid.split('@')[0])
   if (!telefone) return NextResponse.json({ ok: true })
-
-  const admin = createAdminClient()
 
   // Instância → tenant (isolamento multi-tenant)
   const { data: inst } = await admin
