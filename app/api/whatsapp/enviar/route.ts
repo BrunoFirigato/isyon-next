@@ -75,7 +75,24 @@ export async function POST(req: NextRequest) {
   const srv = await getEvolutionServer(admin, tenantId)
   if (!srv) return NextResponse.json({ error: 'WhatsApp indisponível' }, { status: 400 })
 
-  const r = await sendWhatsApp({ url: srv.url, key: srv.key, instance: inst.instance_name as string }, conv.telefone, texto.trim())
+  // Destino: prefere o telefone do lead/cliente vinculado.
+  // Resolve o caso de contatos que chegam via LID (WhatsApp não expõe o número):
+  // a Evolution não envia para um LID, mas envia para o telefone do cadastro.
+  let destino = conv.telefone
+  const { data: vinc } = await admin.from('wa_conversas').select('lead_id, cliente_id').eq('id', conv.id).maybeSingle()
+  if (vinc?.cliente_id) {
+    const { data: cli } = await admin.from('clientes').select('telefone').eq('id', vinc.cliente_id).maybeSingle()
+    if (cli?.telefone) destino = digits(cli.telefone as string)
+  } else if (vinc?.lead_id) {
+    const { data: ld } = await admin.from('leads').select('telefone').eq('id', vinc.lead_id).maybeSingle()
+    if (ld?.telefone) destino = digits(ld.telefone as string)
+  }
+  // Sem vínculo e número longo demais → provavelmente um LID (não enviável)
+  if (!vinc?.lead_id && !vinc?.cliente_id && destino.length > 13) {
+    return NextResponse.json({ error: 'Este contato chegou via WhatsApp sem expor o número (LID). Vincule a um lead/cliente com telefone para conseguir responder.' }, { status: 400 })
+  }
+
+  const r = await sendWhatsApp({ url: srv.url, key: srv.key, instance: inst.instance_name as string }, destino, texto.trim())
   if (!r.ok) return NextResponse.json({ error: r.error ?? 'Falha ao enviar' }, { status: 502 })
 
   const agora = new Date().toISOString()
