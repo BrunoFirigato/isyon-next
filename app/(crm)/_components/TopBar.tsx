@@ -27,6 +27,7 @@ const PAGE_LABELS: Record<string, string> = {
   '/propostas':     'Propostas',
   '/pedidos':       'Pedidos',
   '/agenda':        'Agenda',
+  '/conversas':     'Conversas',
   '/campanhas':     'Campanhas',
   '/financeiro':    'Financeiro',
   '/relatorios':    'Relatórios',

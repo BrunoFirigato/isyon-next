@@ -1,0 +1,225 @@
+'use client'
+
+import { useState, useEffect, useRef, useCallback } from 'react'
+import Link from 'next/link'
+import { MessageCircle, Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useToast } from '@/app/(crm)/_components/Toast'
+
+interface Conversa {
+  id: string
+  telefone: string
+  contato_nome: string | null
+  lead_id: string | null
+  cliente_id: string | null
+  instancia_id: string
+  nao_lidas: number
+  ultima_mensagem: string | null
+  ultima_em: string | null
+  wa_instancias?: { nome: string } | null
+  leads?: { nome: string } | null
+  clientes?: { nome: string; empresa: string | null } | null
+}
+interface Mensagem { id: string; direcao: string; texto: string | null; criado_em: string }
+interface Instancia { id: string; nome: string }
+
+const SELECT = 'id,telefone,contato_nome,lead_id,cliente_id,instancia_id,nao_lidas,ultima_mensagem,ultima_em,wa_instancias(nome),leads(nome),clientes(nome,empresa)'
+
+function nomeContato(c: Conversa) {
+  if (c.clientes) return c.clientes.empresa || c.clientes.nome
+  if (c.leads) return c.leads.nome
+  return c.contato_nome || c.telefone
+}
+function horaMsg(iso: string) {
+  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
+
+export default function ConversasView() {
+  const toast = useToast()
+  const supabase = createClient()
+  const [conversas, setConversas] = useState<Conversa[]>([])
+  const [instancias, setInstancias] = useState<Instancia[]>([])
+  const [ativaId, setAtivaId] = useState<string | null>(null)
+  const [mensagens, setMensagens] = useState<Mensagem[]>([])
+  const [busca, setBusca] = useState('')
+  const [filtroInst, setFiltroInst] = useState('')
+  const [texto, setTexto] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [novaOpen, setNovaOpen] = useState(false)
+  const [nvInst, setNvInst] = useState(''); const [nvTel, setNvTel] = useState(''); const [nvTexto, setNvTexto] = useState('')
+  const fimRef = useRef<HTMLDivElement>(null)
+
+  const ativa = conversas.find(c => c.id === ativaId) ?? null
+
+  const carregarConversas = useCallback(async () => {
+    const { data } = await supabase.from('wa_conversas').select(SELECT).order('ultima_em', { ascending: false, nullsFirst: false })
+    if (data) setConversas(data as unknown as Conversa[])
+    setLoading(false)
+  }, [supabase])
+
+  const carregarMensagens = useCallback(async (id: string) => {
+    const { data } = await supabase.from('wa_mensagens').select('id, direcao, texto, criado_em').eq('conversa_id', id).order('criado_em', { ascending: true }).limit(500)
+    if (data) setMensagens(data as Mensagem[])
+  }, [supabase])
+
+  useEffect(() => {
+    carregarConversas()
+    supabase.from('wa_instancias').select('id, nome').eq('ativo', true).order('nome').then(({ data }) => { if (data) setInstancias(data) })
+    const t = setInterval(carregarConversas, 6000)
+    return () => clearInterval(t)
+  }, [carregarConversas, supabase])
+
+  // Ao abrir uma conversa: carrega mensagens, marca como lida e faz polling do thread
+  useEffect(() => {
+    if (!ativaId) return
+    carregarMensagens(ativaId)
+    supabase.from('wa_conversas').update({ nao_lidas: 0 }).eq('id', ativaId).then(() => {
+      setConversas(prev => prev.map(c => c.id === ativaId ? { ...c, nao_lidas: 0 } : c))
+    })
+    const t = setInterval(() => carregarMensagens(ativaId), 4000)
+    return () => clearInterval(t)
+  }, [ativaId, carregarMensagens, supabase])
+
+  useEffect(() => { fimRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [mensagens])
+
+  async function enviar() {
+    if (!ativa || !texto.trim()) return
+    setEnviando(true)
+    const corpo = texto.trim()
+    setTexto('')
+    const res = await fetch('/api/whatsapp/enviar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ conversa_id: ativa.id, texto: corpo }) })
+    setEnviando(false)
+    if (!res.ok) { const d = await res.json(); toast(d.error ?? 'Falha ao enviar', 'error'); setTexto(corpo); return }
+    carregarMensagens(ativa.id); carregarConversas()
+  }
+
+  async function iniciar() {
+    if (!nvInst || !nvTel.trim() || !nvTexto.trim()) { toast('Preencha número, telefone e mensagem.', 'error'); return }
+    setEnviando(true)
+    const res = await fetch('/api/whatsapp/enviar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ instancia_id: nvInst, telefone: nvTel, texto: nvTexto }) })
+    const d = await res.json()
+    setEnviando(false)
+    if (!res.ok) { toast(d.error ?? 'Falha ao iniciar', 'error'); return }
+    setNovaOpen(false); setNvTel(''); setNvTexto('')
+    await carregarConversas()
+    setAtivaId(d.conversa_id)
+  }
+
+  const q = busca.trim().toLowerCase()
+  const lista = conversas.filter(c => {
+    if (filtroInst && c.instancia_id !== filtroInst) return false
+    if (!q) return true
+    return [nomeContato(c), c.telefone, c.ultima_mensagem].filter(Boolean).join(' ').toLowerCase().includes(q)
+  })
+
+  const link360 = ativa?.cliente_id ? `/clientes/${ativa.cliente_id}` : ativa?.leads ? `/leads/${ativa.lead_id}` : null
+
+  return (
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 6rem)' }}>
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2"><MessageCircle size={18} className="text-emerald-500" /> Conversas</h1>
+        <button onClick={() => setNovaOpen(true)} className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg"><Plus size={15} /> Nova conversa</button>
+      </div>
+
+      <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex overflow-hidden">
+        {/* Lista */}
+        <div className={`${ativa ? 'hidden md:flex' : 'flex'} w-full md:w-80 shrink-0 border-r border-gray-100 dark:border-gray-700 flex-col`}>
+          <div className="p-3 border-b border-gray-100 dark:border-gray-700 space-y-2">
+            <div className="relative">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar conversa..." className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            {instancias.length > 1 && (
+              <select value={filtroInst} onChange={e => setFiltroInst(e.target.value)} className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 dark:bg-gray-700 dark:text-gray-100">
+                <option value="">Todos os números</option>
+                {instancias.map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
+              </select>
+            )}
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {loading ? <div className="py-10 text-center"><Loader2 size={20} className="animate-spin mx-auto text-gray-300" /></div>
+            : lista.length === 0 ? <p className="py-10 text-center text-sm text-gray-400">Nenhuma conversa.</p>
+            : lista.map(c => (
+              <button key={c.id} onClick={() => setAtivaId(c.id)}
+                className={`w-full text-left px-3 py-3 border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${ativaId === c.id ? 'bg-blue-50/60 dark:bg-blue-900/20' : ''}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate flex items-center gap-1.5">
+                    {c.clientes ? <Building2 size={12} className="text-blue-500 shrink-0" /> : c.leads ? <UserPlus size={12} className="text-amber-500 shrink-0" /> : null}
+                    {nomeContato(c)}
+                  </span>
+                  {c.nao_lidas > 0 && <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center">{c.nao_lidas}</span>}
+                </div>
+                <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{c.ultima_mensagem ?? c.telefone}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Thread */}
+        <div className={`${ativa ? 'flex' : 'hidden md:flex'} flex-1 flex-col min-w-0`}>
+          {!ativa ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400 dark:text-gray-500">
+              <MessageCircle size={36} className="mb-2 text-gray-200 dark:text-gray-600" />
+              <p className="text-sm">Selecione uma conversa</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                <button onClick={() => setAtivaId(null)} className="md:hidden p-1 text-gray-400"><ArrowLeft size={18} /></button>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{nomeContato(ativa)}</p>
+                  <p className="text-[11px] text-gray-400 flex items-center gap-1"><Smartphone size={10} /> {ativa.wa_instancias?.nome ?? ''} · {ativa.telefone}</p>
+                </div>
+                {link360 && <Link href={link360} className="text-xs font-medium text-blue-600 hover:underline shrink-0">Ver 360°</Link>}
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-gray-50/50 dark:bg-gray-900/30">
+                {mensagens.map(m => (
+                  <div key={m.id} className={`flex ${m.direcao === 'out' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm ${m.direcao === 'out' ? 'bg-emerald-500 text-white rounded-br-sm' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-gray-600 rounded-bl-sm'}`}>
+                      <p className="whitespace-pre-wrap break-words">{m.texto}</p>
+                      <p className={`text-[10px] mt-1 ${m.direcao === 'out' ? 'text-emerald-50/80' : 'text-gray-400'}`}>{horaMsg(m.criado_em)}</p>
+                    </div>
+                  </div>
+                ))}
+                <div ref={fimRef} />
+              </div>
+
+              <div className="p-3 border-t border-gray-100 dark:border-gray-700 flex items-end gap-2">
+                <textarea value={texto} onChange={e => setTexto(e.target.value)} rows={1}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar() } }}
+                  placeholder="Digite uma mensagem..." className="flex-1 resize-none border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-32" />
+                <button onClick={enviar} disabled={enviando || !texto.trim()} className="p-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white shrink-0">
+                  {enviando ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Nova conversa */}
+      {novaOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setNovaOpen(false)} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Nova conversa</h2>
+              <button onClick={() => setNovaOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+            </div>
+            <div className="space-y-3">
+              <select value={nvInst} onChange={e => setNvInst(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100">
+                <option value="">Enviar pelo número...</option>
+                {instancias.map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
+              </select>
+              <input value={nvTel} onChange={e => setNvTel(e.target.value)} placeholder="Telefone (ex: 5511999999999)" className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
+              <textarea value={nvTexto} onChange={e => setNvTexto(e.target.value)} rows={3} placeholder="Mensagem..." className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 resize-none" />
+            </div>
+            <button onClick={iniciar} disabled={enviando} className="w-full mt-4 py-2.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">{enviando ? 'Enviando...' : 'Enviar'}</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
