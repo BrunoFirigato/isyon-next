@@ -9,7 +9,7 @@ import VinculoBadge from './VinculoBadge'
 import CompromissoFormModal from '@/app/(crm)/agenda/_components/CompromissoFormModal'
 import { type Compromisso, tipoInfo, formatTime } from '@/app/(crm)/agenda/_components/types'
 
-export default function AgendaHojeCard({ compromissos, inicioHoje }: { compromissos: Compromisso[]; inicioHoje?: string }) {
+export default function AgendaHojeCard({ compromissos }: { compromissos: Compromisso[] }) {
   const router = useRouter()
   const toast = useToast()
   const [editing, setEditing] = useState<Compromisso | null>(null)
@@ -51,7 +51,7 @@ export default function AgendaHojeCard({ compromissos, inicioHoje }: { compromis
           {compromissos.map(c => {
             const tipo = tipoInfo(c.tipo)
             const isDone = c.status === 'realizado'
-            const isLate = !isDone && !!inicioHoje && c.data_hora < inicioHoje
+            const isLate = !isDone && new Date(c.data_hora).getTime() < Date.now()
             const busy = loadingId === c.id
             return (
               <div key={c.id} className="px-4 py-3 flex items-start gap-2.5 group">
@@ -62,7 +62,7 @@ export default function AgendaHojeCard({ compromissos, inicioHoje }: { compromis
                   </p>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className={`text-[11px] flex items-center gap-1 ${isLate ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-                      <Clock size={10} /> {isLate ? 'Atrasada' : formatTime(c.data_hora)}
+                      <Clock size={10} /> {formatTime(c.data_hora)}{isLate ? ' · atrasada' : ''}
                     </span>
                     <VinculoBadge cliente={c.cliente} lead={c.lead} op={c.op} />
                   </div>

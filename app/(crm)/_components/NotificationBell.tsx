@@ -76,18 +76,20 @@ export default function NotificationBell() {
       const notifs: Notificacao[] = [
         ...compsArr.map(c => {
           const d = new Date(c.data_hora)
-          const isToday =
-            d.toDateString() === now.toDateString()
-          const diffH = Math.round((now.getTime() - d.getTime()) / 3_600_000)
+          const atrasada = d.getTime() < now.getTime()
+          const isToday = d.toDateString() === now.toDateString()
+          const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+          const diffMin = Math.round((now.getTime() - d.getTime()) / 60_000)
+          const haQuanto = diffMin < 60 ? `${diffMin}min` : diffMin < 1440 ? `${Math.floor(diffMin / 60)}h` : `${Math.floor(diffMin / 1440)}d`
           return {
             id: `comp_${c.id}`,
             tipo: 'compromisso' as const,
             titulo: c.titulo,
-            subtitulo: isToday
-              ? `Hoje às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
-              : `${diffH >= 24 ? `${Math.floor(diffH / 24)}d atrás` : `${diffH}h atrás`}`,
+            subtitulo: atrasada
+              ? `Atrasada · há ${haQuanto}`
+              : isToday ? `Hoje às ${hora}` : hora,
             href: '/agenda',
-            urgente: !isToday,
+            urgente: atrasada,
             vinculo: {
               cliente: c.cliente_id ? (cMap.get(c.cliente_id) ?? null) : null,
               lead:    c.lead_id    ? (lMap.get(c.lead_id)   ?? null) : null,

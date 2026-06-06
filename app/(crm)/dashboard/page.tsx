@@ -45,7 +45,6 @@ export default async function DashboardPage() {
 
   // Limites do dia no fuso de São Paulo (Brasil não tem horário de verão desde 2019 → UTC-3 fixo)
   const spHoje = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date()) // 'YYYY-MM-DD'
-  const hoje0ISO = new Date(`${spHoje}T00:00:00.000-03:00`).toISOString()
   const hojeFimISO = new Date(`${spHoje}T23:59:59.999-03:00`).toISOString()
 
   const [
@@ -235,7 +234,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Agenda hoje — interativa. Wrapper relative: o card preenche a altura do pipeline. */}
         <div className="lg:relative">
-          <AgendaHojeCard compromissos={compromissosHoje} inicioHoje={hoje0ISO} />
+          <AgendaHojeCard compromissos={compromissosHoje} />
         </div>
 
         {/* Pipeline por etapa */}
