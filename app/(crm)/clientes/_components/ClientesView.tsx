@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Plus, Search, X, Pencil, Trash2, MapPin, LayoutGrid, Upload, ChevronLeft, ChevronRight, Loader2, CalendarPlus } from 'lucide-react'
 import WhatsAppIcon from '@/app/(crm)/_components/WhatsAppIcon'
+import { isWhatsappCapable } from '@/app/(crm)/_components/PhoneInput'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { vinculosCliente, inativarRegistro, type Vinculo } from '@/lib/exclusao'
@@ -367,7 +368,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
                             className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors">
                             <LayoutGrid size={15} />
                           </Link>
-                          {c.telefone && (
+                          {isWhatsappCapable(c.telefone) && (
                             <button onClick={() => openWhatsApp(c)} title="Conversar no WhatsApp"
                               className="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 transition-colors">
                               <WhatsAppIcon size={15} />
@@ -502,7 +503,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
                       className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600">
                       <LayoutGrid size={15} />
                     </Link>
-                    {c.telefone && (
+                    {isWhatsappCapable(c.telefone) && (
                       <button onClick={() => openWhatsApp(c)} title="Conversar no WhatsApp"
                         className="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-400 hover:text-emerald-600">
                         <WhatsAppIcon size={15} />

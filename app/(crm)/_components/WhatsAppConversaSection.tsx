@@ -7,6 +7,7 @@ import { ArrowRight, Send, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import WhatsAppIcon from '@/app/(crm)/_components/WhatsAppIcon'
+import { isWhatsappCapable } from '@/app/(crm)/_components/PhoneInput'
 
 interface Conv { id: string; telefone: string; nao_lidas: number }
 interface Msg { id: string; direcao: string; texto: string | null; criado_em: string }
@@ -69,9 +70,10 @@ export default function WhatsAppConversaSection({ leadId, clienteId }: { leadId?
     router.push(`/conversas?c=${d.conversa_id}`)
   }
 
-  // Enquanto carrega, não mostra nada (evita "pisca"). Sem conversa e sem telefone: some.
+  // Enquanto carrega, não mostra nada (evita "pisca").
+  // Sem conversa e sem número de WhatsApp (celular): some — não oferece iniciar.
   if (!loaded) return null
-  if (!conv && !telefone) return null
+  if (!conv && !isWhatsappCapable(telefone)) return null
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-4">

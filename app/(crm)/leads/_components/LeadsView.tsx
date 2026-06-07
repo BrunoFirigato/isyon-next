@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Plus, Search, X, Pencil, TrendingUp, Trash2, LayoutGrid, Mail, Send, Upload, ChevronLeft, ChevronRight, Loader2, CalendarPlus } from 'lucide-react'
 import WhatsAppIcon from '@/app/(crm)/_components/WhatsAppIcon'
+import { isWhatsappCapable } from '@/app/(crm)/_components/PhoneInput'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import ImportModal  from '@/app/(crm)/_components/ImportModal'
 import Link from 'next/link'
@@ -372,7 +373,7 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
                       >
                         <LayoutGrid size={15} />
                       </Link>
-                      {lead.status !== 'convertido' && lead.telefone && (
+                      {lead.status !== 'convertido' && isWhatsappCapable(lead.telefone) && (
                         <button onClick={() => openWhatsApp(lead)} title="WhatsApp"
                           className="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 transition-colors">
                           <WhatsAppIcon size={15} />

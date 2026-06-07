@@ -15,10 +15,10 @@ const DDIS = [
   { code: '598', flag: '🇺🇾' },
 ]
 
-const onlyDigits = (s: string) => (s || '').replace(/\D/g, '')
+const onlyDigits = (s: string | null | undefined) => (s || '').replace(/\D/g, '')
 
 /** Separa um valor armazenado em DDI + dígitos locais. Assume Brasil quando não reconhece o DDI. */
-function splitStored(stored: string): { ddi: string; local: string } {
+function splitStored(stored: string | null | undefined): { ddi: string; local: string } {
   const d = onlyDigits(stored)
   if (!d) return { ddi: '55', local: '' }
   for (const { code } of [...DDIS].sort((a, b) => b.code.length - a.code.length)) {
@@ -43,10 +43,19 @@ function compose(ddi: string, localDigits: string): string {
 }
 
 /** True se o telefone tem DDD + número (10/11 dígitos no trecho local). Vazio = válido (campo opcional). */
-export function phoneIsComplete(stored: string): boolean {
+export function phoneIsComplete(stored: string | null | undefined): boolean {
   if (!onlyDigits(stored)) return true
   const { ddi, local } = splitStored(stored)
   if (ddi === '55') return local.length === 10 || local.length === 11
+  return local.length >= 8
+}
+
+/** True se o número provavelmente tem WhatsApp. No Brasil: celular = DDD + 9 dígitos (11 no total).
+ *  Fixo (10 dígitos) não tem WhatsApp. Para outros DDIs não dá pra inferir → assume possível. */
+export function isWhatsappCapable(stored: string | null | undefined): boolean {
+  if (!onlyDigits(stored)) return false
+  const { ddi, local } = splitStored(stored)
+  if (ddi === '55') return local.length === 11
   return local.length >= 8
 }
 
@@ -95,9 +104,15 @@ export default function PhoneInput({
           className={inputCls}
         />
       </div>
-      {incompleto && (
+      {incompleto ? (
         <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">Inclua DDD + número (ex.: 11 99999-9999).</p>
-      )}
+      ) : localDigits ? (
+        isWhatsappCapable(compose(ddi, localDigits)) ? (
+          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">📱 Celular · tem WhatsApp</p>
+        ) : (
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">☎️ Fixo · sem WhatsApp</p>
+        )
+      ) : null}
     </div>
   )
 }
