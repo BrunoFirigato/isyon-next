@@ -52,6 +52,10 @@ export default function AgendaHojeCard({ compromissos }: { compromissos: Comprom
             const tipo = tipoInfo(c.tipo)
             const isDone = c.status === 'realizado'
             const isLate = !isDone && new Date(c.data_hora).getTime() < Date.now()
+            // Itens atrasados de dias anteriores aparecem aqui — mostra a data pra não parecer "de hoje"
+            const dt = new Date(c.data_hora)
+            const ehHoje = dt.toDateString() === new Date().toDateString()
+            const quando = ehHoje ? formatTime(c.data_hora) : `${dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} ${formatTime(c.data_hora)}`
             const busy = loadingId === c.id
             return (
               <div key={c.id} className="px-4 py-3 flex items-start gap-2.5 group">
@@ -62,7 +66,7 @@ export default function AgendaHojeCard({ compromissos }: { compromissos: Comprom
                   </p>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className={`text-[11px] flex items-center gap-1 ${isLate ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-                      <Clock size={10} /> {formatTime(c.data_hora)}{isLate ? ' · atrasada' : ''}
+                      <Clock size={10} /> {quando}{isLate ? ' · atrasada' : ''}
                     </span>
                     <VinculoBadge cliente={c.cliente} lead={c.lead} op={c.op} />
                   </div>
