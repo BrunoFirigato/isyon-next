@@ -511,7 +511,7 @@ export default function IntegracoesView({
       </div>
 
       {/* Abas */}
-      <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
+      <div className="flex flex-wrap items-center gap-1 border-b border-gray-200 dark:border-gray-700 mb-6">
         {abas.map(({ id, label, icon: Icon }) => {
           const ativa = aba === id
           return (
