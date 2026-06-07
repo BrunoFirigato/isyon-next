@@ -157,23 +157,15 @@ const TIPOS_HISTORICO = [
 
 /* ─────────────── Main ── */
 
-const DEFAULT_WA_TEMPLATE = 'Olá {nome}, tudo bem? Gostaria de entrar em contato para conhecer melhor suas necessidades.'
-
 function applyTemplate(template: string, lead: Lead) {
   return template
     .replace(/\{nome\}/g, lead.nome)
     .replace(/\{empresa\}/g, lead.empresa ?? '')
 }
 
-function formatPhone(tel: string) {
-  const d = tel.replace(/\D/g, '')
-  if (d.startsWith('55') && d.length >= 12) return d
-  return `55${d}`
-}
-
 export default function Lead360View({ lead, oportunidades, historico, compromissos }: Props) {
   const router = useRouter()
-  const { tenantId, whatsappTemplate, emailTemplateAssunto, emailTemplateCorpo } = useTenantConfig()
+  const { tenantId, emailTemplateAssunto, emailTemplateCorpo } = useTenantConfig()
 
   const DEFAULT_EMAIL_ASSUNTO = `Olá ${lead.nome}`
   const DEFAULT_EMAIL_CORPO   = ''
@@ -223,10 +215,8 @@ export default function Lead360View({ lead, oportunidades, historico, compromiss
 
   function handleWhatsApp() {
     if (!lead.telefone) return
-    const template = whatsappTemplate ?? DEFAULT_WA_TEMPLATE
-    const msg = encodeURIComponent(applyTemplate(template, lead))
-    const tel = formatPhone(lead.telefone)
-    window.open(`https://wa.me/${tel}?text=${msg}`, '_blank')
+    // Abre a conversa interna do Isyon (existente ou nova) em vez do WhatsApp externo
+    router.push(`/conversas?lead=${lead.id}`)
     registrarPrimeiroContato('whatsapp')
   }
 
