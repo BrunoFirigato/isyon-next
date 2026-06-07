@@ -37,14 +37,8 @@ function pageNumbers(current: number, totalPages: number): (number | '…')[] {
   return out
 }
 
-const DEFAULT_WA_TEMPLATE = 'Olá {nome}, tudo bem? Gostaria de entrar em contato para conhecer melhor suas necessidades.'
-
 function applyTemplate(tpl: string, lead: Lead) {
   return tpl.replace(/\{nome\}/g, lead.nome).replace(/\{empresa\}/g, lead.empresa ?? '')
-}
-function formatPhone(tel: string) {
-  const d = tel.replace(/\D/g, '')
-  return d.startsWith('55') && d.length >= 12 ? d : `55${d}`
 }
 
 export default function LeadsView({ leads, total: totalProp, currentStatus, currentQ }: Props) {
@@ -52,7 +46,7 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
   const pathname = usePathname()
   const [, startTransition] = useTransition()
   const toast = useToast()
-  const { tenantId, whatsappTemplate, emailTemplateAssunto, emailTemplateCorpo } = useTenantConfig()
+  const { tenantId, emailTemplateAssunto, emailTemplateCorpo } = useTenantConfig()
 
   // Paginação: items é a fatia exibida; total é o universo filtrado
   const [items, setItems] = useState<Lead[]>(leads)
@@ -165,9 +159,8 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
 
   function openWhatsApp(lead: Lead) {
     if (!lead.telefone) return
-    const tpl = whatsappTemplate ?? DEFAULT_WA_TEMPLATE
-    const msg = encodeURIComponent(applyTemplate(tpl, lead))
-    window.open(`https://wa.me/${formatPhone(lead.telefone)}?text=${msg}`, '_blank')
+    // Abre a conversa interna do Isyon (existente ou nova) em vez do WhatsApp externo
+    router.push(`/conversas?lead=${lead.id}`)
     handleContato(lead, 'whatsapp')
   }
 

@@ -76,7 +76,7 @@ export default function ConversasView() {
 
   useEffect(() => {
     carregarConversas()
-    supabase.from('wa_instancias').select('id, nome').eq('ativo', true).order('nome').then(({ data }) => { if (data) setInstancias(data) })
+    supabase.from('wa_instancias').select('id, nome').eq('ativo', true).order('nome').then(({ data }) => { if (data) { setInstancias(data); if (data.length === 1) setNvInst(data[0].id) } })
     const t = setInterval(carregarConversas, 6000)
     return () => clearInterval(t)
   }, [carregarConversas, supabase])
@@ -86,6 +86,25 @@ export default function ConversasView() {
     const c = searchParams.get('c')
     if (c) setAtivaId(c)
   }, [searchParams])
+
+  // Deep-link da grid de leads/clientes (?lead= / ?cliente=): abre a conversa existente
+  // ou já prepara uma nova com o telefone do contato preenchido.
+  useEffect(() => {
+    const leadId = searchParams.get('lead')
+    const cliId  = searchParams.get('cliente')
+    if (!leadId && !cliId) return
+    ;(async () => {
+      const col = leadId ? 'lead_id' : 'cliente_id'
+      const val = (leadId ?? cliId) as string
+      const { data: existente } = await supabase.from('wa_conversas')
+        .select('id').eq(col, val).order('ultima_em', { ascending: false }).limit(1).maybeSingle()
+      if (existente) { setAtivaId(existente.id); return }
+      const tbl = leadId ? 'leads' : 'clientes'
+      const { data: ct } = await supabase.from(tbl).select('telefone').eq('id', val).maybeSingle()
+      if (ct?.telefone) { setNvTel(String(ct.telefone)); setNovaOpen(true) }
+      else toast('Este contato não tem telefone cadastrado.', 'error')
+    })()
+  }, [searchParams, supabase, toast])
 
   // Ao abrir uma conversa: carrega mensagens, marca como lida e faz polling do thread
   useEffect(() => {
