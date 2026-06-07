@@ -111,6 +111,9 @@ export async function POST(req: NextRequest) {
   const waMsgId = data.key.id ?? null
   const texto = extrairTexto(data.message)
   const pushName = data.pushName ?? null
+  // Em mensagens de saída (fromMe), o pushName é o NOSSO nome (o do número conectado),
+  // não o do contato. Só confiamos no pushName quando a mensagem é recebida.
+  const contatoNome = direcao === 'in' ? pushName : null
   const agora = new Date().toISOString()
 
   // Idempotência: se já registramos esta mensagem, não faz nada
@@ -128,13 +131,13 @@ export async function POST(req: NextRequest) {
 
   if (!conversaId) {
     // Primeiro contato → vínculo automático (telefone OU nome do WhatsApp)
-    const vinc = await autoVincular(admin, inst.tenant_id, telefone, pushName)
+    const vinc = await autoVincular(admin, inst.tenant_id, telefone, contatoNome)
 
     const { data: novo } = await admin.from('wa_conversas').insert({
       tenant_id: inst.tenant_id,
       instancia_id: inst.id,
       telefone,
-      contato_nome: pushName,
+      contato_nome: contatoNome,
       cliente_id: vinc.cliente_id,
       lead_id: vinc.lead_id,
       ultima_mensagem: texto,
@@ -151,13 +154,13 @@ export async function POST(req: NextRequest) {
     // Conversa já existe — se ainda está sem vínculo, tenta vincular de novo
     // (pega contatos LID criados antes de termos o nome cadastrado).
     const semVinculo = !conv?.lead_id && !conv?.cliente_id
-    const novoVinc = semVinculo ? await autoVincular(admin, inst.tenant_id, telefone, pushName) : null
+    const novoVinc = semVinculo ? await autoVincular(admin, inst.tenant_id, telefone, contatoNome) : null
 
     await admin.from('wa_conversas').update({
       ultima_mensagem: texto,
       ultima_em: agora,
       atualizado_em: agora,
-      contato_nome: conv?.contato_nome ?? pushName,
+      contato_nome: conv?.contato_nome ?? contatoNome,
       nao_lidas: direcao === 'in' ? (conv?.nao_lidas ?? 0) + 1 : (conv?.nao_lidas ?? 0),
       ...(novoVinc?.cliente_id ? { cliente_id: novoVinc.cliente_id } : {}),
       ...(novoVinc?.lead_id ? { lead_id: novoVinc.lead_id } : {}),
