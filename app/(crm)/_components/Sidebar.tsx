@@ -104,15 +104,19 @@ export default function Sidebar({
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
   const [waUnread,        setWaUnread]        = useState(0)
 
-  // Total de mensagens de WhatsApp não lidas (conversas não arquivadas).
+  // Nº de CONVERSAS de WhatsApp com mensagem não lida (não arquivadas) — não o total de mensagens.
   // Atualiza ao montar, ao trocar de tela e quando a aba volta ao foco.
   useEffect(() => {
     const supabase = createClient()
     let alive = true
     const load = async () => {
-      const { data } = await supabase.from('wa_conversas').select('nao_lidas').eq('arquivada', false)
+      const { count } = await supabase
+        .from('wa_conversas')
+        .select('id', { count: 'exact', head: true })
+        .eq('arquivada', false)
+        .gt('nao_lidas', 0)
       if (!alive) return
-      setWaUnread((data ?? []).reduce((s, r) => s + ((r.nao_lidas as number) || 0), 0))
+      setWaUnread(count ?? 0)
     }
     load()
     const t = setInterval(load, 10000)
