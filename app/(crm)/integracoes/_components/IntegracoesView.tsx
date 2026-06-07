@@ -67,6 +67,16 @@ const inputCls  = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg
 const labelCls  = 'block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5'
 
 // ── WhatsApp card ─────────────────────────────────────────────────────────────
+// Logo real das parceiras, num "chip" branco estilo app-icon (visível em light/dark)
+function LogoBox({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 ring-1 ring-black/5 dark:ring-white/10 p-1.5 overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="max-w-full max-h-full object-contain" />
+    </div>
+  )
+}
+
 function WhatsAppCard({
   tenantId,
   initialTemplate,
@@ -100,7 +110,7 @@ function WhatsAppCard({
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-xl shrink-0">💬</div>
+            <LogoBox src="/integracoes/whatsapp.svg" alt="WhatsApp" />
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">WhatsApp</p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Evolution API</p>
@@ -229,7 +239,7 @@ function EmailCard({
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-xl shrink-0">📧</div>
+            <LogoBox src="/integracoes/resend.svg" alt="Resend" />
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">E-mail</p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Resend</p>
@@ -338,7 +348,7 @@ function NFeProviderCard({
   tenantId,
   nome,
   descricao,
-  bgColor,
+  logo,
   tokenField,
   testEndpoint,
   initialToken,
@@ -346,7 +356,7 @@ function NFeProviderCard({
   tenantId:     string
   nome:         string
   descricao:    string
-  bgColor:      string
+  logo:         string
   tokenField:   'token_brasilnfe' | 'token_focusnfe'
   testEndpoint: string
   initialToken: string | null
@@ -404,9 +414,7 @@ function NFeProviderCard({
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 ${bgColor}`}>
-              📄
-            </div>
+            <LogoBox src={logo} alt={nome} />
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{nome}</p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Emissor NF-e</p>
@@ -514,7 +522,7 @@ export default function IntegracoesView({
             tenantId={tenantId}
             nome="BrasilNFe"
             descricao="Emissão de NF-e via BrasilNFe. Configure o token do seu painel em brasilnfe.com.br."
-            bgColor="bg-green-50 dark:bg-green-900/20"
+            logo="/integracoes/brasilnfe.png"
             tokenField="token_brasilnfe"
             testEndpoint="/api/nfe/test/brasilnfe"
             initialToken={tokenBrasilNFe}
@@ -526,7 +534,7 @@ export default function IntegracoesView({
             tenantId={tenantId}
             nome="Focus NFe"
             descricao="Emissão de NF-e via Focus NFe. Configure o token do seu painel em focusnfe.com.br."
-            bgColor="bg-blue-50 dark:bg-blue-900/20"
+            logo="/integracoes/focusnfe.png"
             tokenField="token_focusnfe"
             testEndpoint="/api/nfe/test/focusnfe"
             initialToken={tokenFocusNFe}
