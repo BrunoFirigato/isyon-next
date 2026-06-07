@@ -4,6 +4,59 @@ import { getWebhookToken } from '@/lib/whatsapp/config'
 
 function digits(s?: string | null) { return (s || '').replace(/\D/g, '') }
 
+/** Normaliza um nome para comparação: sem acento, minúsculo, só letras/números/espaço. */
+function normNome(s?: string | null): string {
+  return (s || '')
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+type AdminClient = ReturnType<typeof createAdminClient>
+
+/**
+ * Tenta vincular um contato do WhatsApp a um lead/cliente, em duas camadas:
+ *   1. Telefone (últimos 8 dígitos) — funciona para JIDs normais.
+ *   2. Nome do WhatsApp (pushName) — resolve contatos que chegam via LID, onde a
+ *      Evolution 1.8.6 NÃO expõe o telefone. Exige nome com 2+ palavras e
+ *      correspondência ÚNICA (evita vincular ao lead/cliente errado).
+ * Cliente tem prioridade sobre lead.
+ */
+async function autoVincular(
+  admin: AdminClient,
+  tenantId: string,
+  telefone: string,
+  pushName: string | null,
+): Promise<{ cliente_id: string | null; lead_id: string | null }> {
+  const [{ data: clientes }, { data: leads }] = await Promise.all([
+    admin.from('clientes').select('id, telefone, nome').eq('tenant_id', tenantId).limit(5000),
+    admin.from('leads').select('id, telefone, nome').eq('tenant_id', tenantId).limit(5000),
+  ])
+  const cls = clientes ?? []
+  const lds = leads ?? []
+
+  // Camada 1 — telefone (últimos 8 dígitos)
+  const core = telefone.slice(-8)
+  if (core.length === 8) {
+    const cli = cls.find(c => digits(c.telefone as string).slice(-8) === core)
+    if (cli) return { cliente_id: cli.id as string, lead_id: null }
+    const lead = lds.find(l => digits(l.telefone as string).slice(-8) === core)
+    if (lead) return { cliente_id: null, lead_id: lead.id as string }
+  }
+
+  // Camada 2 — nome do WhatsApp (pushName), único e com 2+ palavras
+  const np = normNome(pushName)
+  if (np && np.includes(' ')) {
+    const cliMatches = cls.filter(c => normNome(c.nome as string) === np)
+    if (cliMatches.length === 1) return { cliente_id: cliMatches[0].id as string, lead_id: null }
+    if (cliMatches.length === 0) {
+      const leadMatches = lds.filter(l => normNome(l.nome as string) === np)
+      if (leadMatches.length === 1) return { cliente_id: null, lead_id: leadMatches[0].id as string }
+    }
+  }
+
+  return { cliente_id: null, lead_id: null }
+}
+
 interface WaKey { remoteJid?: string; fromMe?: boolean; id?: string }
 interface WaMsg { conversation?: string; extendedTextMessage?: { text?: string }; imageMessage?: { caption?: string }; audioMessage?: unknown; videoMessage?: unknown; documentMessage?: unknown; stickerMessage?: unknown }
 interface WaData { key?: WaKey; message?: WaMsg; pushName?: string }
@@ -68,28 +121,22 @@ export async function POST(req: NextRequest) {
 
   // Conversa (por instância + telefone)
   const { data: conv } = await admin.from('wa_conversas')
-    .select('id, contato_nome, nao_lidas')
+    .select('id, contato_nome, nao_lidas, lead_id, cliente_id')
     .eq('instancia_id', inst.id).eq('telefone', telefone).maybeSingle()
 
   let conversaId = conv?.id as string | undefined
 
   if (!conversaId) {
-    // Primeiro contato → casa com lead/cliente pelos últimos 8 dígitos
-    const core = telefone.slice(-8)
-    const [{ data: clientes }, { data: leads }] = await Promise.all([
-      admin.from('clientes').select('id, telefone').eq('tenant_id', inst.tenant_id).not('telefone', 'is', null).limit(5000),
-      admin.from('leads').select('id, telefone').eq('tenant_id', inst.tenant_id).not('telefone', 'is', null).limit(5000),
-    ])
-    const cli = (clientes ?? []).find(c => digits(c.telefone as string).slice(-8) === core)
-    const lead = cli ? null : (leads ?? []).find(l => digits(l.telefone as string).slice(-8) === core)
+    // Primeiro contato → vínculo automático (telefone OU nome do WhatsApp)
+    const vinc = await autoVincular(admin, inst.tenant_id, telefone, pushName)
 
     const { data: novo } = await admin.from('wa_conversas').insert({
       tenant_id: inst.tenant_id,
       instancia_id: inst.id,
       telefone,
       contato_nome: pushName,
-      cliente_id: cli?.id ?? null,
-      lead_id: lead?.id ?? null,
+      cliente_id: vinc.cliente_id,
+      lead_id: vinc.lead_id,
       ultima_mensagem: texto,
       ultima_em: agora,
       nao_lidas: direcao === 'in' ? 1 : 0,
@@ -101,12 +148,19 @@ export async function POST(req: NextRequest) {
       conversaId = re?.id
     }
   } else {
+    // Conversa já existe — se ainda está sem vínculo, tenta vincular de novo
+    // (pega contatos LID criados antes de termos o nome cadastrado).
+    const semVinculo = !conv?.lead_id && !conv?.cliente_id
+    const novoVinc = semVinculo ? await autoVincular(admin, inst.tenant_id, telefone, pushName) : null
+
     await admin.from('wa_conversas').update({
       ultima_mensagem: texto,
       ultima_em: agora,
       atualizado_em: agora,
       contato_nome: conv?.contato_nome ?? pushName,
       nao_lidas: direcao === 'in' ? (conv?.nao_lidas ?? 0) + 1 : (conv?.nao_lidas ?? 0),
+      ...(novoVinc?.cliente_id ? { cliente_id: novoVinc.cliente_id } : {}),
+      ...(novoVinc?.lead_id ? { lead_id: novoVinc.lead_id } : {}),
     }).eq('id', conversaId)
   }
 
