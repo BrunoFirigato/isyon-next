@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   const { action } = body
 
   if (action === 'criar') {
-    const { nome, numero, vendedor_id } = body
+    const { nome, numero, usuario_id } = body
     if (!nome?.trim()) return NextResponse.json({ error: 'Informe um nome para o número.' }, { status: 400 })
     const instanceName = `isyon-${caller.tenantId.slice(0, 8)}-${Date.now().toString(36)}`
     const r = await createInstance(srv, instanceName)
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       numero: numero?.trim() || null,
       instance_name: instanceName,
       status: 'pareando',
-      vendedor_id: vendedor_id || null,
+      usuario_id: usuario_id || null,
       ativo: true,
     }).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -96,11 +96,11 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'atualizar') {
-    const { id, nome, numero, vendedor_id, ativo } = body
+    const { id, nome, numero, usuario_id, ativo } = body
     const patch: Record<string, unknown> = {}
     if (nome !== undefined) patch.nome = nome
     if (numero !== undefined) patch.numero = numero || null
-    if (vendedor_id !== undefined) patch.vendedor_id = vendedor_id || null
+    if (usuario_id !== undefined) patch.usuario_id = usuario_id || null
     if (ativo !== undefined) patch.ativo = ativo
     await admin.from('wa_instancias').update(patch).eq('id', id).eq('tenant_id', caller.tenantId)
     return NextResponse.json({ ok: true })

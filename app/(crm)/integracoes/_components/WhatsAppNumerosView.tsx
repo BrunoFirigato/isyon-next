@@ -12,11 +12,11 @@ interface Numero {
   numero: string | null
   instance_name: string
   status: string
-  vendedor_id: string | null
+  usuario_id: string | null
   ativo: boolean
   estado: string | null
 }
-interface VendedorRef { id: string; nome: string }
+interface UsuarioRef { id: string; nome: string }
 
 const STATUS_INFO: Record<string, { label: string; cls: string; dot: string }> = {
   conectado:    { label: 'Conectado',    cls: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300', dot: 'bg-emerald-500' },
@@ -27,14 +27,14 @@ const STATUS_INFO: Record<string, { label: string; cls: string; dot: string }> =
 export default function WhatsAppNumerosView() {
   const toast = useToast()
   const [numeros, setNumeros] = useState<Numero[]>([])
-  const [vendedores, setVendedores] = useState<VendedorRef[]>([])
+  const [usuarios, setUsuarios] = useState<UsuarioRef[]>([])
   const [loading, setLoading] = useState(true)
   const [evolutionOk, setEvolutionOk] = useState(true)
 
   const [addOpen, setAddOpen] = useState(false)
   const [addNome, setAddNome] = useState('')
   const [addNumero, setAddNumero] = useState('')
-  const [addVendedor, setAddVendedor] = useState('')
+  const [addUsuario, setAddUsuario] = useState('')
   const [adding, setAdding] = useState(false)
 
   const [qr, setQr] = useState<{ id: string; base64: string | null } | null>(null)
@@ -51,8 +51,8 @@ export default function WhatsAppNumerosView() {
   useEffect(() => {
     carregar()
     const supabase = createClient()
-    supabase.from('vendedores').select('id, nome').eq('status', 'ativo').order('nome')
-      .then(({ data }) => { if (data) setVendedores(data) })
+    supabase.from('usuarios').select('id, nome').order('nome')
+      .then(({ data }) => { if (data) setUsuarios(data) })
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [carregar])
 
@@ -77,11 +77,11 @@ export default function WhatsAppNumerosView() {
   async function adicionar() {
     if (!addNome.trim()) { toast('Informe um nome.', 'error'); return }
     setAdding(true)
-    const res = await fetch('/api/whatsapp/instancias', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'criar', nome: addNome, numero: addNumero, vendedor_id: addVendedor }) })
+    const res = await fetch('/api/whatsapp/instancias', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'criar', nome: addNome, numero: addNumero, usuario_id: addUsuario }) })
     const d = await res.json()
     setAdding(false)
     if (!res.ok) { toast(d.error ?? 'Erro ao criar número', 'error'); return }
-    setAddOpen(false); setAddNome(''); setAddNumero(''); setAddVendedor('')
+    setAddOpen(false); setAddNome(''); setAddNumero(''); setAddUsuario('')
     await carregar()
     setQr({ id: d.id, base64: d.qrBase64 ?? null })
     iniciarPoll(d.id)
@@ -162,12 +162,12 @@ export default function WhatsAppNumerosView() {
 
                 <div className="flex items-center gap-2 mt-3 flex-wrap">
                   <select
-                    value={n.vendedor_id ?? ''}
-                    onChange={(e) => atualizar(n.id, { vendedor_id: e.target.value || null })}
+                    value={n.usuario_id ?? ''}
+                    onChange={(e) => atualizar(n.id, { usuario_id: e.target.value || null })}
                     className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Sem responsável</option>
-                    {vendedores.map(v => <option key={v.id} value={v.id}>{v.nome}</option>)}
+                    {usuarios.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
                   </select>
 
                   <label className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 cursor-pointer">
@@ -213,10 +213,10 @@ export default function WhatsAppNumerosView() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Responsável (opcional)</label>
-                <select value={addVendedor} onChange={e => setAddVendedor(e.target.value)}
+                <select value={addUsuario} onChange={e => setAddUsuario(e.target.value)}
                   className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">Sem responsável</option>
-                  {vendedores.map(v => <option key={v.id} value={v.id}>{v.nome}</option>)}
+                  {usuarios.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
                 </select>
               </div>
             </div>
