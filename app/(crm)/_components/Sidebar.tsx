@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import WhatsAppIcon from './WhatsAppIcon'
 import {
   LayoutDashboard,
   Target,
@@ -22,7 +23,6 @@ import {
   Tag,
   Calendar,
   Megaphone,
-  MessageCircle,
   Plug,
   ChevronLeft,
   ChevronRight,
@@ -47,7 +47,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { href: '/oportunidades', label: 'Oportunidades',icon: Briefcase },
       { href: '/clientes',      label: 'Clientes',     icon: Building2 },
       { href: '/agenda',        label: 'Agenda',       icon: Calendar },
-      { href: '/conversas',     label: 'Conversas',    icon: MessageCircle },
+      { href: '/conversas',     label: 'Conversas',    icon: WhatsAppIcon },
       { href: '/campanhas',     label: 'Campanhas',    icon: Megaphone },
     ],
   },

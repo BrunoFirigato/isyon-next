@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { MessageCircle, ArrowRight, Send, Loader2 } from 'lucide-react'
+import { ArrowRight, Send, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
+import WhatsAppIcon from '@/app/(crm)/_components/WhatsAppIcon'
 
 interface Conv { id: string; telefone: string; nao_lidas: number }
 interface Msg { id: string; direcao: string; texto: string | null; criado_em: string }
@@ -76,7 +77,7 @@ export default function WhatsAppConversaSection({ leadId, clienteId }: { leadId?
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-4">
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center gap-2">
-          <MessageCircle size={15} className="text-emerald-500" />
+          <WhatsAppIcon size={15} className="text-emerald-500" />
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Conversa WhatsApp</h2>
           {!!conv?.nao_lidas && (
             <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center">{conv.nao_lidas}</span>

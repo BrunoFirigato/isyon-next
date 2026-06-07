@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { MessageCircle, Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2, Archive, ArchiveRestore } from 'lucide-react'
+import { Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2, Archive, ArchiveRestore } from 'lucide-react'
+import WhatsAppIcon from '@/app/(crm)/_components/WhatsAppIcon'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
@@ -203,7 +204,7 @@ export default function ConversasView() {
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 6rem)' }}>
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2"><MessageCircle size={18} className="text-emerald-500" /> Conversas</h1>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2"><WhatsAppIcon size={18} className="text-emerald-500" /> Conversas</h1>
         <button onClick={() => setNovaOpen(true)} className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg"><Plus size={15} /> Nova conversa</button>
       </div>
 
@@ -262,7 +263,7 @@ export default function ConversasView() {
         <div className={`${ativa ? 'flex' : 'hidden md:flex'} flex-1 flex-col min-w-0`}>
           {!ativa ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400 dark:text-gray-500">
-              <MessageCircle size={36} className="mb-2 text-gray-200 dark:text-gray-600" />
+              <WhatsAppIcon size={36} className="mb-2 text-gray-200 dark:text-gray-600" />
               <p className="text-sm">Selecione uma conversa</p>
             </div>
           ) : (

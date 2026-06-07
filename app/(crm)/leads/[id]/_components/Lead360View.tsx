@@ -15,6 +15,7 @@ import { type Lead, statusStyle, statusLabel } from '../../_components/types'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 import AgendaVinculada, { type CompromissoData } from '@/app/(crm)/_components/AgendaVinculada'
 import WhatsAppConversaSection from '@/app/(crm)/_components/WhatsAppConversaSection'
+import WhatsAppIcon from '@/app/(crm)/_components/WhatsAppIcon'
 
 /* ─────────────── Types ── */
 
@@ -297,8 +298,8 @@ export default function Lead360View({ lead, oportunidades, historico, compromiss
                   <>
                     {lead.telefone && (
                       <button onClick={handleWhatsApp}
-                        className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 border border-emerald-200 hover:border-emerald-300 px-2.5 py-1 rounded-lg font-medium transition-colors">
-                        💬 WhatsApp
+                        className="flex items-center gap-1.5 text-xs text-emerald-600 hover:text-emerald-700 border border-emerald-200 hover:border-emerald-300 px-2.5 py-1 rounded-lg font-medium transition-colors">
+                        <WhatsAppIcon size={13} /> WhatsApp
                       </button>
                     )}
                     {lead.email && (
