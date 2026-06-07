@@ -6,6 +6,7 @@ import Link from 'next/link'
 import {
   Save, Wifi, Loader2, CheckCircle2, AlertCircle,
   ChevronDown, ChevronUp, Eye, EyeOff, Info, Smartphone, ArrowRight,
+  MessageSquare, Receipt, Workflow,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
@@ -492,55 +493,104 @@ export default function IntegracoesView({
   emailConfigurado, resendApiKey, resendFromEmail,
   tokenBrasilNFe, tokenFocusNFe,
 }: Props) {
+  const [aba, setAba] = useState<'comerciais' | 'erp' | 'automacoes'>('comerciais')
+
+  const abas = [
+    { id: 'comerciais' as const, label: 'Comerciais',        icon: MessageSquare },
+    { id: 'erp'        as const, label: 'ERP / Faturamento',  icon: Receipt },
+    { id: 'automacoes' as const, label: 'Automações',         icon: Workflow },
+  ]
+
   return (
     <>
-      <div className="mb-6">
+      <div className="mb-5">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Integrações</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
           Conecte ferramentas externas ao Isyon CRM
         </p>
       </div>
 
-      {/* columns = masonry: cada coluna cresce independente, sem afetar as outras */}
-      <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
-        <div className="break-inside-avoid mb-4">
-          <WhatsAppCard tenantId={tenantId} disponivel={whatsappDisponivel} initialTemplate={waTemplate} />
-        </div>
-        <div className="break-inside-avoid mb-4">
-          <EmailCard
-            tenantId={tenantId}
-            plataformaConfigurada={emailConfigurado}
-            initialApiKey={resendApiKey}
-            initialFromEmail={resendFromEmail}
-            initialAssunto={emailAssunto}
-            initialCorpo={emailCorpo}
-          />
-        </div>
-        <div className="break-inside-avoid mb-4">
-          <NFeProviderCard
-            key="brasilnfe"
-            tenantId={tenantId}
-            nome="BrasilNFe"
-            descricao="Emissão de NF-e via BrasilNFe. Configure o token do seu painel em brasilnfe.com.br."
-            logo="/integracoes/brasilnfe.png"
-            tokenField="token_brasilnfe"
-            testEndpoint="/api/nfe/test/brasilnfe"
-            initialToken={tokenBrasilNFe}
-          />
-        </div>
-        <div className="break-inside-avoid mb-4">
-          <NFeProviderCard
-            key="focusnfe"
-            tenantId={tenantId}
-            nome="Focus NFe"
-            descricao="Emissão de NF-e via Focus NFe. Configure o token do seu painel em focusnfe.com.br."
-            logo="/integracoes/focusnfe.png"
-            tokenField="token_focusnfe"
-            testEndpoint="/api/nfe/test/focusnfe"
-            initialToken={tokenFocusNFe}
-          />
-        </div>
+      {/* Abas */}
+      <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
+        {abas.map(({ id, label, icon: Icon }) => {
+          const ativa = aba === id
+          return (
+            <button
+              key={id}
+              onClick={() => setAba(id)}
+              className={`relative flex items-center gap-1.5 px-3.5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${
+                ativa
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
+            >
+              <Icon size={15} /> {label}
+              {ativa && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full" />}
+            </button>
+          )
+        })}
       </div>
+
+      {/* columns = masonry: cada coluna cresce independente, sem afetar as outras */}
+      {aba === 'comerciais' && (
+        <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
+          <div className="break-inside-avoid mb-4">
+            <WhatsAppCard tenantId={tenantId} disponivel={whatsappDisponivel} initialTemplate={waTemplate} />
+          </div>
+          <div className="break-inside-avoid mb-4">
+            <EmailCard
+              tenantId={tenantId}
+              plataformaConfigurada={emailConfigurado}
+              initialApiKey={resendApiKey}
+              initialFromEmail={resendFromEmail}
+              initialAssunto={emailAssunto}
+              initialCorpo={emailCorpo}
+            />
+          </div>
+        </div>
+      )}
+
+      {aba === 'erp' && (
+        <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
+          <div className="break-inside-avoid mb-4">
+            <NFeProviderCard
+              key="brasilnfe"
+              tenantId={tenantId}
+              nome="BrasilNFe"
+              descricao="Emissão de NF-e via BrasilNFe. Configure o token do seu painel em brasilnfe.com.br."
+              logo="/integracoes/brasilnfe.png"
+              tokenField="token_brasilnfe"
+              testEndpoint="/api/nfe/test/brasilnfe"
+              initialToken={tokenBrasilNFe}
+            />
+          </div>
+          <div className="break-inside-avoid mb-4">
+            <NFeProviderCard
+              key="focusnfe"
+              tenantId={tenantId}
+              nome="Focus NFe"
+              descricao="Emissão de NF-e via Focus NFe. Configure o token do seu painel em focusnfe.com.br."
+              logo="/integracoes/focusnfe.png"
+              tokenField="token_focusnfe"
+              testEndpoint="/api/nfe/test/focusnfe"
+              initialToken={tokenFocusNFe}
+            />
+          </div>
+        </div>
+      )}
+
+      {aba === 'automacoes' && (
+        <div className="flex flex-col items-center justify-center text-center py-16 px-6">
+          <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mb-4">
+            <Workflow size={24} className="text-blue-500" />
+          </div>
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Automações chegando em breve</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 max-w-sm">
+            Aqui você vai conectar o Isyon a outras ferramentas e criar fluxos automáticos
+            entre sistemas. Estamos preparando essa área.
+          </p>
+        </div>
+      )}
     </>
   )
 }
