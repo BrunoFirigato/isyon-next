@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { MessageCircle, Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2 } from 'lucide-react'
+import { MessageCircle, Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2, Archive, ArchiveRestore } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
@@ -16,6 +16,7 @@ interface Conversa {
   cliente_id: string | null
   instancia_id: string
   nao_lidas: number
+  arquivada: boolean
   ultima_mensagem: string | null
   ultima_em: string | null
   wa_instancias?: { nome: string } | null
@@ -25,7 +26,7 @@ interface Conversa {
 interface Mensagem { id: string; direcao: string; texto: string | null; criado_em: string }
 interface Instancia { id: string; nome: string }
 
-const SELECT = 'id,telefone,contato_nome,lead_id,cliente_id,instancia_id,nao_lidas,ultima_mensagem,ultima_em,wa_instancias(nome),leads(nome),clientes(nome,empresa)'
+const SELECT = 'id,telefone,contato_nome,lead_id,cliente_id,instancia_id,nao_lidas,arquivada,ultima_mensagem,ultima_em,wa_instancias(nome),leads(nome),clientes(nome,empresa)'
 
 function nomeContato(c: Conversa) {
   if (c.clientes) return c.clientes.empresa || c.clientes.nome
@@ -53,6 +54,7 @@ export default function ConversasView() {
   const [novaOpen, setNovaOpen] = useState(false)
   const [nvInst, setNvInst] = useState(''); const [nvTel, setNvTel] = useState(''); const [nvTexto, setNvTexto] = useState('')
   const [filtroSem, setFiltroSem] = useState(false)
+  const [verArquivadas, setVerArquivadas] = useState(false)
   const [criarOpen, setCriarOpen] = useState(false); const [novoLeadNome, setNovoLeadNome] = useState('')
   const [vincOpen, setVincOpen] = useState(false); const [vincBusca, setVincBusca] = useState('')
   const [vincRes, setVincRes] = useState<{ tipo: 'lead' | 'cliente'; id: string; nome: string }[]>([])
@@ -158,8 +160,18 @@ export default function ConversasView() {
     carregarConversas()
   }
 
+  async function arquivar(conv: Conversa, valor: boolean) {
+    await supabase.from('wa_conversas')
+      .update(valor ? { arquivada: true, nao_lidas: 0 } : { arquivada: false })
+      .eq('id', conv.id)
+    toast(valor ? 'Conversa arquivada' : 'Conversa desarquivada')
+    if (valor && ativaId === conv.id) setAtivaId(null)
+    carregarConversas()
+  }
+
   const q = busca.trim().toLowerCase()
   const lista = conversas.filter(c => {
+    if (verArquivadas ? !c.arquivada : c.arquivada) return false
     if (filtroInst && c.instancia_id !== filtroInst) return false
     if (filtroSem && (c.lead_id || c.cliente_id)) return false
     if (!q) return true
@@ -190,26 +202,39 @@ export default function ConversasView() {
                 {instancias.map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
               </select>
             )}
-            <button onClick={() => setFiltroSem(v => !v)}
-              className={`w-full text-xs px-2 py-1.5 rounded-lg border transition-colors ${filtroSem ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-medium' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-              {filtroSem ? '● Só sem cadastro' : 'Filtrar sem cadastro'}
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => { setFiltroSem(v => !v); setVerArquivadas(false) }}
+                className={`flex-1 text-xs px-2 py-1.5 rounded-lg border transition-colors ${filtroSem ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-medium' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+                {filtroSem ? '● Só sem cadastro' : 'Sem cadastro'}
+              </button>
+              <button onClick={() => { setVerArquivadas(v => !v); setFiltroSem(false) }}
+                className={`flex-1 text-xs px-2 py-1.5 rounded-lg border transition-colors inline-flex items-center justify-center gap-1 ${verArquivadas ? 'bg-gray-200 dark:bg-gray-600 border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-200 font-medium' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+                <Archive size={12} /> {verArquivadas ? 'Arquivadas' : 'Arquivadas'}
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto">
             {loading ? <div className="py-10 text-center"><Loader2 size={20} className="animate-spin mx-auto text-gray-300" /></div>
             : lista.length === 0 ? <p className="py-10 text-center text-sm text-gray-400">Nenhuma conversa.</p>
             : lista.map(c => (
-              <button key={c.id} onClick={() => setAtivaId(c.id)}
-                className={`w-full text-left px-3 py-3 border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${ativaId === c.id ? 'bg-blue-50/60 dark:bg-blue-900/20' : ''}`}>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate flex items-center gap-1.5">
-                    {c.clientes ? <Building2 size={12} className="text-blue-500 shrink-0" /> : c.leads ? <UserPlus size={12} className="text-amber-500 shrink-0" /> : null}
-                    {nomeContato(c)}
-                  </span>
-                  {c.nao_lidas > 0 && <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center">{c.nao_lidas}</span>}
-                </div>
-                <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{c.ultima_mensagem ?? c.telefone}</p>
-              </button>
+              <div key={c.id}
+                className={`group relative border-b border-gray-50 dark:border-gray-700/50 ${ativaId === c.id ? 'bg-blue-50/60 dark:bg-blue-900/20' : ''}`}>
+                <button onClick={() => setAtivaId(c.id)}
+                  className="w-full text-left px-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate flex items-center gap-1.5">
+                      {c.clientes ? <Building2 size={12} className="text-blue-500 shrink-0" /> : c.leads ? <UserPlus size={12} className="text-amber-500 shrink-0" /> : null}
+                      {nomeContato(c)}
+                    </span>
+                    {c.nao_lidas > 0 && <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center group-hover:opacity-0 transition-opacity">{c.nao_lidas}</span>}
+                  </div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5 pr-6">{c.ultima_mensagem ?? c.telefone}</p>
+                </button>
+                <button onClick={() => arquivar(c, !c.arquivada)} title={c.arquivada ? 'Desarquivar' : 'Arquivar / ignorar'}
+                  className="absolute right-2 top-2.5 p-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-600 text-gray-400 hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {c.arquivada ? <ArchiveRestore size={13} /> : <Archive size={13} />}
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -230,6 +255,10 @@ export default function ConversasView() {
                   <p className="text-[11px] text-gray-400 flex items-center gap-1"><Smartphone size={10} /> {ativa.wa_instancias?.nome ?? ''} · {ativa.telefone}</p>
                 </div>
                 {link360 && <Link href={link360} className="text-xs font-medium text-blue-600 hover:underline shrink-0">Ver 360°</Link>}
+                <button onClick={() => arquivar(ativa, !ativa.arquivada)} title={ativa.arquivada ? 'Desarquivar' : 'Arquivar / ignorar'}
+                  className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  {ativa.arquivada ? <ArchiveRestore size={16} /> : <Archive size={16} />}
+                </button>
               </div>
 
               {semCadastro && (
