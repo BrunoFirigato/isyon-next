@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard,
   Target,
@@ -101,6 +102,24 @@ export default function Sidebar({
   const pathname = usePathname()
   const [collapsed,       setCollapsed]       = useState(false)
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+  const [waUnread,        setWaUnread]        = useState(0)
+
+  // Total de mensagens de WhatsApp não lidas (conversas não arquivadas).
+  // Atualiza ao montar, ao trocar de tela e quando a aba volta ao foco.
+  useEffect(() => {
+    const supabase = createClient()
+    let alive = true
+    const load = async () => {
+      const { data } = await supabase.from('wa_conversas').select('nao_lidas').eq('arquivada', false)
+      if (!alive) return
+      setWaUnread((data ?? []).reduce((s, r) => s + ((r.nao_lidas as number) || 0), 0))
+    }
+    load()
+    const t = setInterval(load, 10000)
+    const onFocus = () => load()
+    window.addEventListener('focus', onFocus)
+    return () => { alive = false; clearInterval(t); window.removeEventListener('focus', onFocus) }
+  }, [pathname])
 
   useEffect(() => {
     const stored = localStorage.getItem('sidebar_collapsed')
@@ -200,13 +219,14 @@ export default function Sidebar({
                 <div className="space-y-0.5">
                   {visibleItems.map(({ href, label, icon: Icon }) => {
                     const isActive = pathname === href || pathname.startsWith(href + '/')
+                    const badge = href === '/conversas' ? waUnread : 0
                     return (
                       <Link
                         key={href}
                         href={href}
                         title={collapsed ? label : undefined}
                         className={`
-                          flex items-center rounded-lg text-sm transition-colors
+                          relative flex items-center rounded-lg text-sm transition-colors
                           ${collapsed ? 'justify-center w-11 h-11 mx-auto' : 'gap-2.5 px-2 py-2'}
                           ${isActive
                             ? 'bg-blue-600 text-white font-medium'
@@ -218,6 +238,15 @@ export default function Sidebar({
                           className={isActive ? 'text-white shrink-0' : 'text-gray-400 dark:text-gray-500 shrink-0'}
                         />
                         {!collapsed && <span className="truncate">{label}</span>}
+                        {badge > 0 && (collapsed ? (
+                          <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-gray-900">
+                            {badge > 99 ? '99+' : badge}
+                          </span>
+                        ) : (
+                          <span className="ml-auto shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center">
+                            {badge > 99 ? '99+' : badge}
+                          </span>
+                        ))}
                       </Link>
                     )
                   })}
