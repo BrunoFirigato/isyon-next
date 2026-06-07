@@ -9,6 +9,7 @@ import {
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import PhoneInput, { phoneIsComplete } from '@/app/(crm)/_components/PhoneInput'
 
 const STATUS_OPTIONS = [
   { value: 'novo', label: 'Novo' },
@@ -79,6 +80,10 @@ export default function LeadFormModal({ lead, onClose }: Props) {
     }
     if (!form.telefone.trim() && !form.email.trim()) {
       setError('Informe ao menos um contato — telefone ou e-mail.')
+      return
+    }
+    if (form.telefone.trim() && !phoneIsComplete(form.telefone)) {
+      setError('Telefone incompleto — inclua DDD + número.')
       return
     }
 
@@ -167,13 +172,7 @@ export default function LeadFormModal({ lead, onClose }: Props) {
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
                 Telefone <span className="text-gray-400 dark:text-gray-500 font-normal">(ou e-mail)</span>
               </label>
-              <input
-                type="tel"
-                value={form.telefone}
-                onChange={(e) => set('telefone', e.target.value)}
-                placeholder="(11) 99999-9999"
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <PhoneInput value={form.telefone} onChange={(v) => set('telefone', v)} />
             </div>
 
             <div>

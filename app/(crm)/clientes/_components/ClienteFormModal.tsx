@@ -9,6 +9,7 @@ import { fetchCnpj } from '@/lib/cnpj'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import PhoneInput, { phoneIsComplete } from '@/app/(crm)/_components/PhoneInput'
 
 const ORIGEM_OPTIONS = [
   'Site', 'Indicação', 'LinkedIn', 'WhatsApp',
@@ -164,6 +165,10 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
 
     if (!form.telefone.trim() && !form.email.trim()) {
       setError('Informe ao menos um contato — telefone ou e-mail.')
+      return
+    }
+    if (form.telefone.trim() && !phoneIsComplete(form.telefone)) {
+      setError('Telefone incompleto — inclua DDD + número.')
       return
     }
     if (form.tipo === 'revenda' && !form.parceiro_id) {
@@ -342,8 +347,7 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
 
                   <div>
                     <label className={labelCls}>Telefone</label>
-                    <input type="tel" value={form.telefone} onChange={(e) => set('telefone', e.target.value)}
-                      placeholder="(11) 99999-9999" className={inputCls} />
+                    <PhoneInput value={form.telefone} onChange={(v) => set('telefone', v)} className={inputCls} />
                   </div>
 
                   <div>
