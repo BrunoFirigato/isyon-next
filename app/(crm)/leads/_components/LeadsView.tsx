@@ -141,6 +141,8 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
   }
 
   async function handleContato(lead: Lead, canal: 'whatsapp' | 'email') {
+    // WhatsApp só registra no primeiro contato — reabrir a conversa não deve gerar nova entrada
+    if (canal === 'whatsapp' && lead.status !== 'novo') return
     const supabase = createClient()
     const ops = [
       Promise.resolve(supabase.from('historico').insert({

@@ -195,6 +195,8 @@ export default function Lead360View({ lead, oportunidades, historico, compromiss
 
   /** Marca o lead como 'contato' se ainda for 'novo', e loga no histórico */
   async function registrarPrimeiroContato(tipoContato: 'whatsapp' | 'email') {
+    // WhatsApp só registra no primeiro contato — reabrir a conversa não deve gerar nova entrada
+    if (tipoContato === 'whatsapp' && lead.status !== 'novo') return
     const supabase = createClient()
     const ops = [
       Promise.resolve(supabase.from('historico').insert({
@@ -563,7 +565,7 @@ export default function Lead360View({ lead, oportunidades, historico, compromiss
                     {/* Timeline column */}
                     <div className="flex flex-col items-center shrink-0 w-9 pt-3.5">
                       <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-base leading-none shrink-0">
-                        {icon}
+                        {h.tipo === 'whatsapp' ? <WhatsAppIcon size={15} className="text-emerald-500" /> : icon}
                       </div>
                       {!isLast && <div className="w-px flex-1 bg-gray-100 dark:bg-gray-700 mt-1" />}
                     </div>

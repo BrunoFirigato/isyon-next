@@ -12,6 +12,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import AgendaVinculada, { type CompromissoData } from '@/app/(crm)/_components/AgendaVinculada'
 import WhatsAppConversaSection from '@/app/(crm)/_components/WhatsAppConversaSection'
+import WhatsAppIcon from '@/app/(crm)/_components/WhatsAppIcon'
 import ClienteFormModal from '../../_components/ClienteFormModal'
 import { type Cliente, tipoLabel, statusStyle, statusLabel, brl as brlCliente } from '../../_components/types'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
@@ -567,7 +568,7 @@ function HistoricoSection({
               const { icon, label } = tipoHistoricoIcon(h.tipo)
               return (
                 <div key={h.id} className="flex gap-3 py-3 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
-                  <span className="text-lg leading-none mt-0.5 shrink-0">{icon}</span>
+                  <span className="text-lg leading-none mt-0.5 shrink-0">{h.tipo === 'whatsapp' ? <WhatsAppIcon size={16} className="text-emerald-500" /> : icon}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
