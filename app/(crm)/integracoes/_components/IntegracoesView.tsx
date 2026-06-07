@@ -11,7 +11,6 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 
-const DEFAULT_WA_TEMPLATE    = 'Olá {nome}, tudo bem? Gostaria de entrar em contato para conhecer melhor suas necessidades.'
 const DEFAULT_EMAIL_ASSUNTO  = 'Olá {nome}, seguem informações conforme nosso contato.'
 const DEFAULT_EMAIL_CORPO    = 'Olá {nome},\n\nFico à disposição para qualquer dúvida.\n\nAtenciosamente.'
 
@@ -78,35 +77,9 @@ function LogoBox({ src, alt }: { src: string; alt: string }) {
   )
 }
 
-function WhatsAppCard({
-  tenantId,
-  initialTemplate,
-  disponivel,
-}: {
-  tenantId:        string
-  initialTemplate: string | null
-  disponivel:      boolean
-}) {
-  const router = useRouter()
-  const toast  = useToast()
-
-  const [open,      setOpen]      = useState(false)
-  const [template,  setTemplate]  = useState(initialTemplate ?? DEFAULT_WA_TEMPLATE)
-  const [savingTpl, setSavingTpl] = useState(false)
-
-  async function salvarTemplate() {
-    setSavingTpl(true)
-    const supabase = createClient()
-    await supabase.from('tenants').update({
-      whatsapp_template: template.trim() || DEFAULT_WA_TEMPLATE,
-    }).eq('id', tenantId)
-    setSavingTpl(false)
-    toast('Template WhatsApp salvo!')
-    router.refresh()
-  }
-
+function WhatsAppCard({ disponivel }: { disponivel: boolean }) {
   return (
-    <Card expanded={open}>
+    <Card>
       {/* Cabeçalho */}
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -126,35 +99,8 @@ function WhatsAppCard({
           <Link href="/integracoes/whatsapp" className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
             <Smartphone size={15} /> Conectar / gerenciar números <ArrowRight size={13} />
           </Link>
-          <button
-            onClick={() => setOpen(o => !o)}
-            className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-            {open ? 'Fechar' : 'Editar template'}
-          </button>
         </div>
       </div>
-
-      {/* Expandido — template da mensagem */}
-      {open && (
-        <div className="border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-
-          {/* Seção template */}
-          <div className="px-5 py-4 space-y-3">
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Template de mensagem</p>
-            <textarea value={template} onChange={e => setTemplate(e.target.value)} rows={4}
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-700 dark:text-gray-100" />
-            <VarsHint />
-            <button onClick={salvarTemplate} disabled={savingTpl}
-              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors">
-              <Save size={14} />
-              {savingTpl ? 'Salvando...' : 'Salvar template'}
-            </button>
-          </div>
-
-        </div>
-      )}
     </Card>
   )
 }
@@ -489,7 +435,7 @@ function NFeProviderCard({
 
 // ── View principal ────────────────────────────────────────────────────────────
 export default function IntegracoesView({
-  tenantId, whatsappDisponivel, waTemplate, emailAssunto, emailCorpo,
+  tenantId, whatsappDisponivel, emailAssunto, emailCorpo,
   emailConfigurado, resendApiKey, resendFromEmail,
   tokenBrasilNFe, tokenFocusNFe,
 }: Props) {
@@ -535,7 +481,7 @@ export default function IntegracoesView({
       {aba === 'comerciais' && (
         <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
           <div className="break-inside-avoid mb-4">
-            <WhatsAppCard tenantId={tenantId} disponivel={whatsappDisponivel} initialTemplate={waTemplate} />
+            <WhatsAppCard disponivel={whatsappDisponivel} />
           </div>
           <div className="break-inside-avoid mb-4">
             <EmailCard
