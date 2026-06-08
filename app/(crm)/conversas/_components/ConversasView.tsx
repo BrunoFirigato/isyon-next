@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2, Archive, ArchiveRestore } from 'lucide-react'
+import { Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2, Archive, ArchiveRestore, AlertTriangle } from 'lucide-react'
 import WhatsAppIcon from '@/app/(crm)/_components/WhatsAppIcon'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
@@ -56,6 +56,7 @@ export default function ConversasView() {
   const [nvInst, setNvInst] = useState(''); const [nvTel, setNvTel] = useState(''); const [nvTexto, setNvTexto] = useState('')
   const [filtroSem, setFiltroSem] = useState(false)
   const [verArquivadas, setVerArquivadas] = useState(false)
+  const [numerosOffline, setNumerosOffline] = useState<string[]>([])
   const [criarOpen, setCriarOpen] = useState(false); const [novoLeadNome, setNovoLeadNome] = useState('')
   const [vincOpen, setVincOpen] = useState(false); const [vincBusca, setVincBusca] = useState('')
   const [vincRes, setVincRes] = useState<{ tipo: 'lead' | 'cliente'; id: string; nome: string }[]>([])
@@ -81,6 +82,20 @@ export default function ConversasView() {
     const t = setInterval(carregarConversas, 6000)
     return () => clearInterval(t)
   }, [carregarConversas, supabase])
+
+  // Status de conexão (ao vivo) dos números — avisa se algum caiu
+  useEffect(() => {
+    const checar = async () => {
+      try {
+        const r = await fetch('/api/whatsapp/status')
+        const d = await r.json()
+        if (r.ok) setNumerosOffline((d.numeros ?? []).filter((n: { status: string }) => n.status !== 'conectado').map((n: { nome: string }) => n.nome))
+      } catch { /* silencioso */ }
+    }
+    checar()
+    const t = setInterval(checar, 30000)
+    return () => clearInterval(t)
+  }, [])
 
   // Abre direto uma conversa quando vem do 360° (?c=conversaId)
   useEffect(() => {
@@ -207,6 +222,19 @@ export default function ConversasView() {
         <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2"><WhatsAppIcon size={18} className="text-emerald-500" /> Conversas</h1>
         <button onClick={() => setNovaOpen(true)} className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg"><Plus size={15} /> Nova conversa</button>
       </div>
+
+      {numerosOffline.length > 0 && (
+        <div className="mb-3 flex items-center gap-2 text-sm bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 rounded-lg px-3 py-2">
+          <AlertTriangle size={15} className="shrink-0" />
+          <span className="flex-1 min-w-0">
+            {numerosOffline.length === 1
+              ? <>O número <strong>{numerosOffline[0]}</strong> está desconectado.</>
+              : <><strong>{numerosOffline.length} números</strong> estão desconectados.</>}
+            {' '}As mensagens não serão enviadas nem recebidas até reconectar.
+          </span>
+          <Link href="/integracoes/whatsapp" className="font-medium underline shrink-0 whitespace-nowrap">Reconectar</Link>
+        </div>
+      )}
 
       <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex overflow-hidden">
         {/* Lista */}
