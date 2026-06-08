@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { obterIntegracao, salvarIntegracao, definirStatus, logIntegracao } from '@/lib/integracoes/service'
-import { testarOmie, listarProdutosOmie } from '@/lib/integracoes/omie'
+import { testarOmie, listarProdutosOmie, listarClientesOmie } from '@/lib/integracoes/omie'
 
 /** Garante que o chamador é admin do seu tenant. */
 async function assertTenantAdmin() {
@@ -90,6 +90,53 @@ export async function POST(req: NextRequest) {
     if (novos.length) await admin.from('produtos').insert(novos)
     await logIntegracao(admin, { tenantId: caller.tenantId, integracaoId: integ.id, evento: 'importar_produtos', mensagem: `${importados} novos, ${atualizados} atualizados` })
     return NextResponse.json({ ok: true, importados, atualizados, total: produtos.length })
+  }
+
+  if (action === 'importar_clientes') {
+    const integ = await obterIntegracao(admin, caller.tenantId, 'omie')
+    if (!integ?.credenciais?.app_key) return NextResponse.json({ error: 'Omie não está conectado.' }, { status: 400 })
+    const res = await listarClientesOmie(integ.credenciais.app_key, integ.credenciais.app_secret)
+    if (!res.ok) return NextResponse.json({ error: res.error ?? 'Falha ao buscar clientes no Omie' }, { status: 400 })
+    const clientes = res.clientes ?? []
+
+    // Chaves dos clientes já existentes (CNPJ/CPF e e-mail) para não duplicar
+    const { data: existentes } = await admin.from('clientes')
+      .select('cpf_cnpj, email').eq('tenant_id', caller.tenantId)
+    const chaves = new Set<string>()
+    for (const e of existentes ?? []) {
+      const doc = String(e.cpf_cnpj ?? '').replace(/\D/g, '')
+      if (doc) chaves.add('doc:' + doc)
+      const em = String(e.email ?? '').trim().toLowerCase()
+      if (em) chaves.add('em:' + em)
+    }
+
+    let importados = 0, ignorados = 0
+    const novos: Record<string, unknown>[] = []
+    for (const c of clientes) {
+      if (!c.nome) continue
+      const doc = (c.cpf_cnpj ?? '').replace(/\D/g, '')
+      const em = (c.email ?? '').trim().toLowerCase()
+      const k1 = doc ? 'doc:' + doc : ''
+      const k2 = em ? 'em:' + em : ''
+      if ((k1 && chaves.has(k1)) || (k2 && chaves.has(k2))) { ignorados++; continue }
+      if (k1) chaves.add(k1)
+      if (k2) chaves.add(k2)
+      novos.push({
+        tenant_id: caller.tenantId,
+        nome: c.nome, empresa: c.empresa, email: c.email, telefone: c.telefone,
+        cpf_cnpj: c.cpf_cnpj, tipo_pessoa: c.pessoa_fisica ? 'fisica' : 'juridica',
+        inscricao_estadual: c.inscricao_estadual, indicador_ie: c.inscricao_estadual ? '1' : '9',
+        cep: c.cep, rua: c.rua, numero: c.numero, complemento: c.complemento,
+        bairro: c.bairro, cidade: c.cidade, estado: c.estado,
+        tipo: 'direto', status: 'ativo', origem: 'Omie',
+      })
+      importados++
+    }
+    for (let i = 0; i < novos.length; i += 200) {
+      await admin.from('clientes').insert(novos.slice(i, i + 200))
+    }
+    await logIntegracao(admin, { tenantId: caller.tenantId, integracaoId: integ.id, evento: 'importar_clientes', mensagem: `${importados} novos, ${ignorados} já existiam` })
+    return NextResponse.json({ ok: true, importados, ignorados, total: clientes.length })
   }
 
   if (action === 'desconectar') {
