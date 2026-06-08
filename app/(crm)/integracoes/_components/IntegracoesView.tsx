@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -434,6 +434,111 @@ function NFeProviderCard({
 }
 
 // ── View principal ────────────────────────────────────────────────────────────
+// ── Omie (ERP) card ─────────────────────────────────────────────────────────
+function OmieCard() {
+  const toast = useToast()
+  const [conectado, setConectado] = useState(false)
+  const [open,      setOpen]      = useState(false)
+  const [appKey,    setAppKey]    = useState('')
+  const [appSecret, setAppSecret] = useState('')
+  const [busy,      setBusy]      = useState(false)
+  const [result,    setResult]    = useState<{ ok: boolean; msg: string } | null>(null)
+
+  async function carregar() {
+    const r = await fetch('/api/integracoes/omie')
+    const d = await r.json().catch(() => ({}))
+    if (r.ok) setConectado(!!d.conectado)
+  }
+  useEffect(() => { carregar() }, [])
+
+  async function conectar() {
+    if (!appKey.trim() || !appSecret.trim()) { setResult({ ok: false, msg: 'Informe a App Key e a App Secret.' }); return }
+    setBusy(true); setResult(null)
+    const r = await fetch('/api/integracoes/omie', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'conectar', app_key: appKey, app_secret: appSecret }) })
+    const d = await r.json().catch(() => ({}))
+    setBusy(false)
+    if (!r.ok) { setResult({ ok: false, msg: d.error ?? 'Falha ao conectar' }); return }
+    setAppKey(''); setAppSecret(''); setConectado(true); setResult(null); toast('Omie conectado! 🎉')
+  }
+  async function testar() {
+    setBusy(true); setResult(null)
+    const r = await fetch('/api/integracoes/omie', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'testar' }) })
+    const d = await r.json().catch(() => ({}))
+    setBusy(false)
+    setResult(d.ok ? { ok: true, msg: 'Conexão OK!' } : { ok: false, msg: d.error ?? 'Falha no teste' })
+  }
+  async function desconectar() {
+    setBusy(true)
+    await fetch('/api/integracoes/omie', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'desconectar' }) })
+    setBusy(false); setConectado(false); setResult(null); setOpen(false); toast('Omie desconectado', 'info')
+  }
+
+  return (
+    <Card expanded={open}>
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            <LogoBox src="/integracoes/omie.svg" alt="Omie" />
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Omie</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">ERP</p>
+            </div>
+          </div>
+          <Badge status={conectado ? 'connected' : 'disconnected'} />
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          Conecte seu ERP Omie. Pegue a App Key e a App Secret no painel do Omie (Configurações → API).
+        </p>
+        <button onClick={() => { setOpen(o => !o); setResult(null) }}
+          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+          {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+          {open ? 'Fechar' : (conectado ? 'Gerenciar' : 'Conectar')}
+        </button>
+      </div>
+
+      {open && (
+        <div className="border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 px-5 py-4 space-y-3">
+          {conectado ? (
+            <>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5"><CheckCircle2 size={14} /> Conectado ao Omie.</p>
+              <div className="flex gap-2">
+                <button onClick={testar} disabled={busy} className="flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 disabled:opacity-60">
+                  {busy ? <Loader2 size={14} className="animate-spin" /> : <Wifi size={14} />} Testar conexão
+                </button>
+                <button onClick={desconectar} disabled={busy} className="text-sm font-medium px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-60">
+                  Desconectar
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">App Key</label>
+                <input value={appKey} onChange={e => setAppKey(e.target.value)} placeholder="App Key do Omie"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">App Secret</label>
+                <input value={appSecret} onChange={e => setAppSecret(e.target.value)} type="password" placeholder="App Secret do Omie"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <button onClick={conectar} disabled={busy}
+                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors">
+                {busy ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} {busy ? 'Conectando...' : 'Conectar'}
+              </button>
+            </>
+          )}
+          {result && (
+            <p className={`text-xs flex items-center gap-1.5 ${result.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+              {result.ok ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />} {result.msg}
+            </p>
+          )}
+        </div>
+      )}
+    </Card>
+  )
+}
+
 export default function IntegracoesView({
   tenantId, whatsappDisponivel, emailAssunto, emailCorpo,
   emailConfigurado, resendApiKey, resendFromEmail,
@@ -498,6 +603,9 @@ export default function IntegracoesView({
 
       {aba === 'erp' && (
         <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
+          <div className="break-inside-avoid mb-4">
+            <OmieCard />
+          </div>
           <div className="break-inside-avoid mb-4">
             <NFeProviderCard
               key="brasilnfe"
