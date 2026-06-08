@@ -6,7 +6,7 @@ import Link from 'next/link'
 import {
   Save, Wifi, Loader2, CheckCircle2, AlertCircle,
   ChevronDown, ChevronUp, Eye, EyeOff, Info, Smartphone, ArrowRight,
-  MessageSquare, Receipt, Workflow,
+  MessageSquare, Receipt, Workflow, Download,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
@@ -442,6 +442,7 @@ function OmieCard() {
   const [appKey,    setAppKey]    = useState('')
   const [appSecret, setAppSecret] = useState('')
   const [busy,      setBusy]      = useState(false)
+  const [importando, setImportando] = useState(false)
   const [result,    setResult]    = useState<{ ok: boolean; msg: string } | null>(null)
 
   async function carregar() {
@@ -472,6 +473,15 @@ function OmieCard() {
     await fetch('/api/integracoes/omie', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'desconectar' }) })
     setBusy(false); setConectado(false); setResult(null); setOpen(false); toast('Omie desconectado', 'info')
   }
+  async function importarProdutos() {
+    setImportando(true); setResult(null)
+    const r = await fetch('/api/integracoes/omie', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'importar_produtos' }) })
+    const d = await r.json().catch(() => ({}))
+    setImportando(false)
+    if (!r.ok) { setResult({ ok: false, msg: d.error ?? 'Falha na importação' }); return }
+    setResult({ ok: true, msg: `${d.importados} produto(s) importado(s) · ${d.atualizados} atualizado(s).` })
+    toast('Produtos importados do Omie! 🛒')
+  }
 
   return (
     <Card expanded={open}>
@@ -501,11 +511,15 @@ function OmieCard() {
           {conectado ? (
             <>
               <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5"><CheckCircle2 size={14} /> Conectado ao Omie.</p>
+              <button onClick={importarProdutos} disabled={importando || busy}
+                className="w-full flex items-center justify-center gap-1.5 text-sm font-medium px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-60">
+                {importando ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} {importando ? 'Importando...' : 'Importar produtos do Omie'}
+              </button>
               <div className="flex gap-2">
-                <button onClick={testar} disabled={busy} className="flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 disabled:opacity-60">
+                <button onClick={testar} disabled={busy || importando} className="flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 disabled:opacity-60">
                   {busy ? <Loader2 size={14} className="animate-spin" /> : <Wifi size={14} />} Testar conexão
                 </button>
-                <button onClick={desconectar} disabled={busy} className="text-sm font-medium px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-60">
+                <button onClick={desconectar} disabled={busy || importando} className="text-sm font-medium px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-60">
                   Desconectar
                 </button>
               </div>

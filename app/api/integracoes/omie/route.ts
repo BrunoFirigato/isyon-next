@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { obterIntegracao, salvarIntegracao, definirStatus } from '@/lib/integracoes/service'
-import { testarOmie } from '@/lib/integracoes/omie'
+import { obterIntegracao, salvarIntegracao, definirStatus, logIntegracao } from '@/lib/integracoes/service'
+import { testarOmie, listarProdutosOmie } from '@/lib/integracoes/omie'
 
 /** Garante que o chamador é admin do seu tenant. */
 async function assertTenantAdmin() {
@@ -52,6 +52,44 @@ export async function POST(req: NextRequest) {
     const teste = await testarOmie(integ.credenciais.app_key, integ.credenciais.app_secret)
     await definirStatus(admin, caller.tenantId, 'omie', teste.ok ? 'conectado' : 'erro')
     return NextResponse.json({ ok: teste.ok, error: teste.error })
+  }
+
+  if (action === 'importar_produtos') {
+    const integ = await obterIntegracao(admin, caller.tenantId, 'omie')
+    if (!integ?.credenciais?.app_key) return NextResponse.json({ error: 'Omie não está conectado.' }, { status: 400 })
+    const res = await listarProdutosOmie(integ.credenciais.app_key, integ.credenciais.app_secret)
+    if (!res.ok) return NextResponse.json({ error: res.error ?? 'Falha ao buscar produtos no Omie' }, { status: 400 })
+    const produtos = res.produtos ?? []
+
+    // Produtos já existentes (por código) para não duplicar na reimportação
+    const { data: existentes } = await admin.from('produtos')
+      .select('id, codigo').eq('tenant_id', caller.tenantId).not('codigo', 'is', null)
+    const mapa = new Map((existentes ?? []).map(p => [String(p.codigo), p.id as string]))
+
+    let importados = 0, atualizados = 0
+    const novos: Record<string, unknown>[] = []
+    const agora = new Date().toISOString()
+    for (const p of produtos) {
+      if (!p.descricao) continue
+      const existeId = p.codigo ? mapa.get(p.codigo) : undefined
+      if (existeId) {
+        await admin.from('produtos').update({
+          nome: p.descricao, preco: p.valor_unitario, unidade: p.unidade,
+          ncm: p.ncm, descricao: p.descr_detalhada, atualizado_em: agora,
+        }).eq('id', existeId)
+        atualizados++
+      } else {
+        novos.push({
+          tenant_id: caller.tenantId, codigo: p.codigo || null, nome: p.descricao, tipo: 'produto',
+          unidade: p.unidade, preco: p.valor_unitario, ncm: p.ncm, descricao: p.descr_detalhada,
+          origem: 0, ativo: true,
+        })
+        importados++
+      }
+    }
+    if (novos.length) await admin.from('produtos').insert(novos)
+    await logIntegracao(admin, { tenantId: caller.tenantId, integracaoId: integ.id, evento: 'importar_produtos', mensagem: `${importados} novos, ${atualizados} atualizados` })
+    return NextResponse.json({ ok: true, importados, atualizados, total: produtos.length })
   }
 
   if (action === 'desconectar') {
