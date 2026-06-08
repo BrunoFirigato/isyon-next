@@ -12,6 +12,7 @@ import BloqueioExclusaoDialog from '@/app/(crm)/_components/BloqueioExclusaoDial
 import CompromissoFormModal from '@/app/(crm)/agenda/_components/CompromissoFormModal'
 import ClienteFormModal from './ClienteFormModal'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
+import OmieImportButton from '@/app/(crm)/_components/OmieImportButton'
 import ImportModal from '@/app/(crm)/_components/ImportModal'
 import {
   type Cliente, type VendedorRef, type ParceiroRef,
@@ -192,6 +193,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <OmieImportButton tipo="clientes" />
           <ExportButton
             href={`/api/exportar/clientes?status=${currentStatus}`}
             label="Exportar"

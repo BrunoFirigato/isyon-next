@@ -8,6 +8,7 @@ import { vinculosProduto, inativarRegistro, type Vinculo } from '@/lib/exclusao'
 import BloqueioExclusaoDialog from '@/app/(crm)/_components/BloqueioExclusaoDialog'
 import ProdutoFormModal from './ProdutoFormModal'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
+import OmieImportButton from '@/app/(crm)/_components/OmieImportButton'
 import ImportModal  from '@/app/(crm)/_components/ImportModal'
 import {
   type Produto, TIPOS, PRODUTOS_PAGE_SIZE, PRODUTO_COLS, tipoStyle, brl, formatDate,
@@ -156,6 +157,7 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <OmieImportButton tipo="produtos" />
           <ExportButton href={`/api/exportar/produtos?tipo=${currentTipo}&q=${encodeURIComponent(currentQ)}`} label="Exportar" filename="produtos.xlsx" />
           <button
             onClick={() => setImportOpen(true)}
