@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./(crm)/_components/ThemeProvider";
@@ -16,6 +16,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Isyon CRM",
   description: "Sistema de gestão comercial",
+  // Abre em tela cheia (sem barra do navegador) quando adicionado à tela inicial do iPhone
+  appleWebApp: {
+    capable: true,
+    title: "Isyon",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#2563eb",
 };
 
 export default function RootLayout({
