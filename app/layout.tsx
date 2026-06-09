@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#2563eb",
+  viewportFit: "cover", // expõe env(safe-area-inset-*) no iOS (PWA tela cheia)
 };
 
 export default function RootLayout({

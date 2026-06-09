@@ -110,7 +110,10 @@ export default function BottomTabBar({ perfil }: { perfil: Perfil }) {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex h-16">
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex"
+        style={{ height: 'calc(4rem + env(safe-area-inset-bottom))', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         {tabItems.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/')
           return (
