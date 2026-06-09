@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Save, Wifi, Loader2, CheckCircle2, AlertCircle,
@@ -569,6 +569,66 @@ function OmieCard() {
   )
 }
 
+// ── Bling (ERP via OAuth) card ───────────────────────────────────────────────
+function BlingCard() {
+  const toast = useToast()
+  const searchParams = useSearchParams()
+  const [conectado, setConectado] = useState(false)
+  const [appConfigurado, setAppConfigurado] = useState(true)
+  const [busy, setBusy] = useState(false)
+
+  async function carregar() {
+    const r = await fetch('/api/integracoes/bling')
+    const d = await r.json().catch(() => ({}))
+    if (r.ok) { setConectado(!!d.conectado); setAppConfigurado(!!d.appConfigurado) }
+  }
+  useEffect(() => { carregar() }, [])
+  useEffect(() => {
+    if (searchParams.get('ok') === 'bling') toast('Bling conectado! 🎉')
+    else if (searchParams.get('erro') === 'bling') toast('Não foi possível conectar o Bling.', 'error')
+  }, [searchParams, toast])
+
+  async function desconectar() {
+    setBusy(true)
+    await fetch('/api/integracoes/bling', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'desconectar' }) })
+    setBusy(false); setConectado(false); toast('Bling desconectado', 'info')
+  }
+
+  return (
+    <Card>
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            <LogoBox src="/integracoes/bling.png" alt="Bling" />
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Bling</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">ERP</p>
+            </div>
+          </div>
+          <Badge status={conectado ? 'connected' : 'disconnected'} />
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          Conecte seu ERP Bling com login seguro (OAuth) — sem colar tokens.
+        </p>
+        {!appConfigurado ? (
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            Integração Bling ainda não liberada para a sua conta. Fale com o suporte do Isyon.
+          </p>
+        ) : conectado ? (
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5"><CheckCircle2 size={14} /> Conectado</span>
+            <button onClick={desconectar} disabled={busy} className="text-sm font-medium px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-60">Desconectar</button>
+          </div>
+        ) : (
+          <a href="/api/integracoes/bling/connect" className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors">
+            Conectar com o Bling <ArrowRight size={14} />
+          </a>
+        )}
+      </div>
+    </Card>
+  )
+}
+
 export default function IntegracoesView({
   tenantId, whatsappDisponivel, emailAssunto, emailCorpo,
   emailConfigurado, resendApiKey, resendFromEmail,
@@ -635,6 +695,9 @@ export default function IntegracoesView({
         <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
           <div className="break-inside-avoid mb-4">
             <OmieCard />
+          </div>
+          <div className="break-inside-avoid mb-4">
+            <BlingCard />
           </div>
           <div className="break-inside-avoid mb-4">
             <NFeProviderCard
