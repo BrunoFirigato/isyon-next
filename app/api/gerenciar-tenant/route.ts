@@ -54,18 +54,19 @@ export async function POST(req: NextRequest) {
 
   /* ── Criar tenant + usuário admin ── */
   if (action === 'criar_tenant') {
-    const { nome, plano, email, senha, nomeAdmin, expiracao_contrato, wa_limite } = body
+    const { nome, plano, email, senha, nomeAdmin, expiracao_contrato, wa_limite, limite_usuarios } = body
 
     if (!nome?.trim() || !email?.trim() || !senha?.trim()) {
       return NextResponse.json({ error: 'nome, email e senha são obrigatórios' }, { status: 400 })
     }
 
     const waLimite = Math.max(0, Number.parseInt(String(wa_limite ?? ''), 10) || 1)
+    const limUsuarios = Math.max(0, Number.parseInt(String(limite_usuarios ?? ''), 10) || 5)
 
     // 1. Criar tenant
     const { data: tenant, error: errTenant } = await admin
       .from('tenants')
-      .insert({ nome: nome.trim(), plano: plano ?? 'Básico', status: 'ativo', expiracao_contrato: expiracao_contrato || null, wa_limite: waLimite })
+      .insert({ nome: nome.trim(), plano: plano ?? 'Básico', status: 'ativo', expiracao_contrato: expiracao_contrato || null, wa_limite: waLimite, limite_usuarios: limUsuarios })
       .select('id, nome, plano, status, criado_em')
       .single()
 
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
 
   /* ── Atualizar dados do tenant ── */
   if (action === 'atualizar_tenant') {
-    const { id, nome, plano, expiracao_contrato, wa_limite } = body
+    const { id, nome, plano, expiracao_contrato, wa_limite, limite_usuarios } = body
 
     if (!id) return NextResponse.json({ error: 'id obrigatório' }, { status: 400 })
 
@@ -107,6 +108,7 @@ export async function POST(req: NextRequest) {
       nome: nome?.trim(), plano, expiracao_contrato: expiracao_contrato || null,
     }
     if (wa_limite !== undefined) patch.wa_limite = Math.max(0, Number.parseInt(String(wa_limite), 10) || 0)
+    if (limite_usuarios !== undefined) patch.limite_usuarios = Math.max(0, Number.parseInt(String(limite_usuarios), 10) || 0)
 
     const { error } = await admin
       .from('tenants')

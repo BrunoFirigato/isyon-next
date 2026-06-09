@@ -6,6 +6,7 @@ import {
   Plus, Pencil, X, Save, UserPlus,
   CheckCircle, XCircle, KeyRound, Copy, Check,
   Eye, EyeOff, Mail, Building2, Activity, Settings2,
+  BarChart3, Database, Users, Smartphone, CalendarClock, Clock,
 } from 'lucide-react'
 
 /* ─────────────────────────────── Types ── */
@@ -18,8 +19,12 @@ export interface TenantComContagem {
   criado_em: string
   expiracao_contrato: string | null
   total_usuarios: number
+  limite_usuarios: number
   wa_limite: number
   wa_usados: number
+  registros: number
+  ultimo_acesso: string | null
+  ultimo_usuario: string | null
 }
 
 export interface LogAcesso {
@@ -49,6 +54,7 @@ type Modal =
   | { tipo: 'editar_tenant'; tenant: TenantComContagem }
   | { tipo: 'criar_usuario'; tenant_id: string; nome_tenant: string }
   | { tipo: 'reset_link'; link: string }
+  | { tipo: 'detalhe'; tenant: TenantComContagem }
 
 /* ─────────────────────────────── Helpers ── */
 
@@ -72,6 +78,20 @@ function expInfo(data: string | null): { label: string; cls: string } | null {
   if (d < 0)   return { label: 'Expirado',        cls: 'text-red-600   bg-red-50   border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700'   }
   if (d <= 30) return { label: `Expira em ${d}d`,  cls: 'text-amber-600 bg-amber-50 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700' }
   return         { label: fmt(data),              cls: 'text-gray-500 bg-gray-100 border border-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600'   }
+}
+
+function diasRestantes(data: string | null): number | null {
+  if (!data) return null
+  return Math.ceil((new Date(data).getTime() - Date.now()) / 86_400_000)
+}
+
+function fmtNum(n: number) {
+  return new Intl.NumberFormat('pt-BR').format(n)
+}
+
+function fmtDataHora(iso: string | null) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
 function corPlano(plano: string | null) {
@@ -202,7 +222,11 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
                         {t.status ?? '—'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 hidden lg:table-cell">{t.total_usuarios}</td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <span className={`text-xs font-medium ${t.limite_usuarios > 0 && t.total_usuarios >= t.limite_usuarios ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                        {t.total_usuarios}{t.limite_usuarios > 0 ? ` / ${t.limite_usuarios}` : ''}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
                       <span className={`text-xs font-medium ${t.wa_usados >= t.wa_limite ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
                         {t.wa_usados} / {t.wa_limite}
@@ -216,6 +240,11 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => setModal({ tipo: 'detalhe', tenant: t })}
+                          title="Ver gestão"
+                          className="p-1.5 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 text-gray-400 dark:text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                          <BarChart3 size={14} />
+                        </button>
                         <button onClick={() => setModal({ tipo: 'criar_usuario', tenant_id: t.id, nome_tenant: t.nome })}
                           title="Adicionar usuário"
                           className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
@@ -314,7 +343,83 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
           </div>
         </ModalBase>
       )}
+
+      {/* ── Modal: Detalhe / gestão do tenant ── */}
+      {modal?.tipo === 'detalhe' && (
+        <ModalBase titulo={modal.tenant.nome} onClose={() => setModal(null)}>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-medium px-2 py-1 rounded-lg ${
+                modal.tenant.status === 'ativo'
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                  : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+              }`}>{modal.tenant.status ?? '—'}</span>
+              <span className={`text-xs font-medium px-2 py-1 rounded-lg ${corPlano(modal.tenant.plano)}`}>
+                {modal.tenant.plano ?? '—'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <DetalheCard Icon={Users} label="Usuários"
+                valor={`${modal.tenant.total_usuarios}${modal.tenant.limite_usuarios > 0 ? ` / ${modal.tenant.limite_usuarios}` : ''}`}
+                alerta={modal.tenant.limite_usuarios > 0 && modal.tenant.total_usuarios >= modal.tenant.limite_usuarios} />
+              <DetalheCard Icon={Smartphone} label="WhatsApp"
+                valor={`${modal.tenant.wa_usados} / ${modal.tenant.wa_limite}`}
+                alerta={modal.tenant.wa_usados >= modal.tenant.wa_limite} />
+              <DetalheCard Icon={Database} label="Volume de dados"
+                valor={`${fmtNum(modal.tenant.registros)} registros`} />
+              <ContratoCard data={modal.tenant.expiracao_contrato} />
+              <DetalheCard Icon={Clock} label="Último acesso"
+                valor={modal.tenant.ultimo_acesso ? fmtDataHora(modal.tenant.ultimo_acesso) : 'nunca'}
+                sub={modal.tenant.ultimo_usuario ?? undefined} />
+              <DetalheCard Icon={Building2} label="Cliente desde" valor={fmt(modal.tenant.criado_em)} />
+            </div>
+
+            <button
+              onClick={() => setModal({ tipo: 'editar_tenant', tenant: modal.tenant })}
+              className="w-full flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm transition-colors">
+              <Pencil size={14} /> Editar limites e contrato
+            </button>
+          </div>
+        </ModalBase>
+      )}
     </>
+  )
+}
+
+/* ──────────────────── Detalhe: cards de gestão ── */
+
+function DetalheCard({ Icon, label, valor, sub, alerta }: {
+  Icon: React.ElementType; label: string; valor: string; sub?: string; alerta?: boolean
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+      <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mb-1">
+        <Icon size={13} /> {label}
+      </div>
+      <p className={`text-sm font-semibold ${alerta ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-gray-100'}`}>{valor}</p>
+      {sub && <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate">{sub}</p>}
+    </div>
+  )
+}
+
+function ContratoCard({ data }: { data: string | null }) {
+  const dias = diasRestantes(data)
+  const alerta = dias != null && dias <= 30
+  return (
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+      <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mb-1">
+        <CalendarClock size={13} /> Contrato
+      </div>
+      <p className={`text-sm font-semibold ${alerta ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-gray-100'}`}>
+        {data ? fmt(data) : 'sem vencimento'}
+      </p>
+      {dias != null && (
+        <p className={`text-[11px] mt-0.5 ${alerta ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500'}`}>
+          {dias < 0 ? 'expirado' : `${dias} dias restantes`}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -529,16 +634,17 @@ function CriarTenantForm({ loading, erro, onSubmit, onClose }: {
   loading: boolean; erro: string
   onSubmit: (d: Record<string, string>) => void; onClose: () => void
 }) {
-  const [nome,      setNome]      = useState('')
-  const [plano,     setPlano]     = useState('Básico')
-  const [expiracao, setExpiracao] = useState('')
-  const [waLimite,  setWaLimite]  = useState('1')
-  const [nomeAdmin, setNomeAdmin] = useState('')
-  const [email,     setEmail]     = useState('')
-  const [senha,     setSenha]     = useState('')
+  const [nome,        setNome]        = useState('')
+  const [plano,       setPlano]       = useState('Básico')
+  const [expiracao,   setExpiracao]   = useState('')
+  const [waLimite,    setWaLimite]    = useState('1')
+  const [limUsuarios, setLimUsuarios] = useState('5')
+  const [nomeAdmin,   setNomeAdmin]   = useState('')
+  const [email,       setEmail]       = useState('')
+  const [senha,       setSenha]       = useState('')
 
   return (
-    <form onSubmit={e => { e.preventDefault(); onSubmit({ nome, plano, nomeAdmin, email, senha, expiracao_contrato: expiracao, wa_limite: waLimite }) }}
+    <form onSubmit={e => { e.preventDefault(); onSubmit({ nome, plano, nomeAdmin, email, senha, expiracao_contrato: expiracao, wa_limite: waLimite, limite_usuarios: limUsuarios }) }}
       className="space-y-4">
       <Field label="Nome da empresa *"      value={nome}      onChange={setNome}      placeholder="Acme Ltda" />
       <div>
@@ -548,7 +654,10 @@ function CriarTenantForm({ loading, erro, onSubmit, onClose }: {
           {['Básico', 'Profissional', 'Enterprise'].map(p => <option key={p}>{p}</option>)}
         </select>
       </div>
-      <Field label="Limite de números de WhatsApp" value={waLimite} onChange={setWaLimite} type="number" placeholder="1" />
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Limite de usuários"  value={limUsuarios} onChange={setLimUsuarios} type="number" placeholder="5" />
+        <Field label="Limite de WhatsApp"  value={waLimite}    onChange={setWaLimite}    type="number" placeholder="1" />
+      </div>
       <Field label="Expiração do contrato"  value={expiracao} onChange={setExpiracao} type="date" />
       <Field label="Nome do admin"           value={nomeAdmin} onChange={setNomeAdmin} placeholder="João Silva" />
       <Field label="E-mail do admin *"       value={email}     onChange={setEmail}     placeholder="admin@empresa.com" type="email" />
@@ -566,14 +675,15 @@ function EditarTenantForm({ tenant, loading, erro, onSubmit, onClose, onResetSen
   onSubmit: (d: Record<string, string>) => void
   onResetSenha: (email: string) => void; onClose: () => void
 }) {
-  const [nome,       setNome]       = useState(tenant.nome)
-  const [plano,      setPlano]      = useState(tenant.plano ?? 'Básico')
-  const [expiracao,  setExpiracao]  = useState(tenant.expiracao_contrato ?? '')
-  const [waLimite,   setWaLimite]   = useState(String(tenant.wa_limite ?? 1))
-  const [emailReset, setEmailReset] = useState('')
+  const [nome,        setNome]        = useState(tenant.nome)
+  const [plano,       setPlano]       = useState(tenant.plano ?? 'Básico')
+  const [expiracao,   setExpiracao]   = useState(tenant.expiracao_contrato ?? '')
+  const [waLimite,    setWaLimite]    = useState(String(tenant.wa_limite ?? 1))
+  const [limUsuarios, setLimUsuarios] = useState(String(tenant.limite_usuarios ?? 0))
+  const [emailReset,  setEmailReset]  = useState('')
 
   return (
-    <form onSubmit={e => { e.preventDefault(); onSubmit({ nome, plano, expiracao_contrato: expiracao, wa_limite: waLimite }) }}
+    <form onSubmit={e => { e.preventDefault(); onSubmit({ nome, plano, expiracao_contrato: expiracao, wa_limite: waLimite, limite_usuarios: limUsuarios }) }}
       className="space-y-4">
       <Field label="Nome da empresa *"     value={nome}      onChange={setNome} />
       <div>
@@ -583,11 +693,19 @@ function EditarTenantForm({ tenant, loading, erro, onSubmit, onClose, onResetSen
           {['Básico', 'Profissional', 'Enterprise'].map(p => <option key={p}>{p}</option>)}
         </select>
       </div>
-      <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Limite de números de WhatsApp</label>
-        <input type="number" min={0} value={waLimite} onChange={e => setWaLimite(e.target.value)}
-          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">Em uso: {tenant.wa_usados} de {tenant.wa_limite}.</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Limite de usuários</label>
+          <input type="number" min={0} value={limUsuarios} onChange={e => setLimUsuarios(e.target.value)}
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">Em uso: {tenant.total_usuarios}.</p>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Limite de WhatsApp</label>
+          <input type="number" min={0} value={waLimite} onChange={e => setWaLimite(e.target.value)}
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">Em uso: {tenant.wa_usados}.</p>
+        </div>
       </div>
       <Field label="Expiração do contrato" value={expiracao} onChange={setExpiracao} type="date" />
 
