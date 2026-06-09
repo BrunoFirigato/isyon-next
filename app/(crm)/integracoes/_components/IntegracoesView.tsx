@@ -676,43 +676,55 @@ export default function IntegracoesView({
 
       {/* columns = masonry: cada coluna cresce independente, sem afetar as outras */}
       {aba === 'comerciais' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
-          <WhatsAppCard disponivel={whatsappDisponivel} />
-          <EmailCard
-            tenantId={tenantId}
-            plataformaConfigurada={emailConfigurado}
-            initialApiKey={resendApiKey}
-            initialFromEmail={resendFromEmail}
-            initialAssunto={emailAssunto}
-            initialCorpo={emailCorpo}
-          />
+        <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
+          <div className="break-inside-avoid mb-4">
+            <WhatsAppCard disponivel={whatsappDisponivel} />
+          </div>
+          <div className="break-inside-avoid mb-4">
+            <EmailCard
+              tenantId={tenantId}
+              plataformaConfigurada={emailConfigurado}
+              initialApiKey={resendApiKey}
+              initialFromEmail={resendFromEmail}
+              initialAssunto={emailAssunto}
+              initialCorpo={emailCorpo}
+            />
+          </div>
         </div>
       )}
 
       {aba === 'erp' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
-          <OmieCard />
-          <BlingCard />
-          <NFeProviderCard
-            key="brasilnfe"
-            tenantId={tenantId}
-            nome="BrasilNFe"
-            descricao="Emissão de NF-e via BrasilNFe. Configure o token do seu painel em brasilnfe.com.br."
-            logo="/integracoes/brasilnfe.png"
-            tokenField="token_brasilnfe"
-            testEndpoint="/api/nfe/test/brasilnfe"
-            initialToken={tokenBrasilNFe}
-          />
-          <NFeProviderCard
-            key="focusnfe"
-            tenantId={tenantId}
-            nome="Focus NFe"
-            descricao="Emissão de NF-e via Focus NFe. Configure o token do seu painel em focusnfe.com.br."
-            logo="/integracoes/focusnfe.png"
-            tokenField="token_focusnfe"
-            testEndpoint="/api/nfe/test/focusnfe"
-            initialToken={tokenFocusNFe}
-          />
+        <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
+          <div className="break-inside-avoid mb-4">
+            <OmieCard />
+          </div>
+          <div className="break-inside-avoid mb-4">
+            <BlingCard />
+          </div>
+          <div className="break-inside-avoid mb-4">
+            <NFeProviderCard
+              key="brasilnfe"
+              tenantId={tenantId}
+              nome="BrasilNFe"
+              descricao="Emissão de NF-e via BrasilNFe. Configure o token do seu painel em brasilnfe.com.br."
+              logo="/integracoes/brasilnfe.png"
+              tokenField="token_brasilnfe"
+              testEndpoint="/api/nfe/test/brasilnfe"
+              initialToken={tokenBrasilNFe}
+            />
+          </div>
+          <div className="break-inside-avoid mb-4">
+            <NFeProviderCard
+              key="focusnfe"
+              tenantId={tenantId}
+              nome="Focus NFe"
+              descricao="Emissão de NF-e via Focus NFe. Configure o token do seu painel em focusnfe.com.br."
+              logo="/integracoes/focusnfe.png"
+              tokenField="token_focusnfe"
+              testEndpoint="/api/nfe/test/focusnfe"
+              initialToken={tokenFocusNFe}
+            />
+          </div>
         </div>
       )}
 
