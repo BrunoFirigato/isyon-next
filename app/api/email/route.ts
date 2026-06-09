@@ -140,5 +140,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  /* ── E-mail simples (contato direto com lead/cliente) ── */
+  if (action === 'simples' || (!action && body.to)) {
+    const { to, subject, html } = body as { to: string; subject?: string; html?: string }
+    if (!to?.trim()) {
+      return NextResponse.json({ error: 'Destinatário obrigatório' }, { status: 400 })
+    }
+    const { error } = await resend.resend.emails.send({
+      from:    resend.fromEmail,
+      to:      [to.trim()],
+      subject: subject?.trim() || `Mensagem de ${caller.nomeEmpresa}`,
+      html:    `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111827;line-height:1.6">${html || ''}</div>`,
+    })
+    if (error) {
+      console.error('[email/simples]', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json({ ok: true })
+  }
+
   return NextResponse.json({ error: 'Ação desconhecida' }, { status: 400 })
 }
