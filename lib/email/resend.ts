@@ -3,6 +3,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 const DEFAULT_FROM = 'Isyon CRM <onboarding@resend.dev>'
 
+/** Garante um remetente válido. Vazio/malformado → cai no padrão (formato 'email' ou 'Nome <email>'). */
+function normalizeFrom(v?: string | null): string {
+  const s = (v ?? '').trim()
+  return s && /@.+\..+/.test(s) ? s : DEFAULT_FROM
+}
+
 /**
  * Lê a configuração de e-mail com prioridade:
  * 1. Chave do tenant (tenants.resend_api_key)
@@ -25,7 +31,7 @@ export async function getEmailConfig(tenantId?: string): Promise<{ apiKey: strin
     if (tenant?.resend_api_key) {
       return {
         apiKey:    tenant.resend_api_key,
-        fromEmail: tenant.resend_from_email ?? DEFAULT_FROM,
+        fromEmail: normalizeFrom(tenant.resend_from_email),
       }
     }
   }
@@ -43,7 +49,7 @@ export async function getEmailConfig(tenantId?: string): Promise<{ apiKey: strin
   )
 
   const apiKey    = map['resend_api_key']    ?? process.env.RESEND_API_KEY    ?? ''
-  const fromEmail = map['resend_from_email'] ?? process.env.RESEND_FROM_EMAIL ?? DEFAULT_FROM
+  const fromEmail = normalizeFrom(map['resend_from_email'] ?? process.env.RESEND_FROM_EMAIL)
 
   if (!apiKey) throw new Error('email_not_configured')
 
