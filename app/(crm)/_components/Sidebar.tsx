@@ -169,7 +169,7 @@ export default function Sidebar({
       <div className="flex items-center justify-between px-3 h-14 border-b border-gray-100 dark:border-gray-800 shrink-0">
         {/* Logo sempre visível */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="Isyon" className="w-7 h-7 shrink-0" />
+        <img src="/logo-mark.svg" alt="Isyon" className="w-7 h-7 shrink-0" />
         {/* Texto só quando expandido */}
         {!collapsed && (
           <span className="font-bold text-gray-900 dark:text-gray-100 flex-1 truncate mx-2.5">Isyon CRM</span>

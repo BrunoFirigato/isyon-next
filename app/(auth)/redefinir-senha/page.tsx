@@ -72,7 +72,7 @@ export default function RedefinirSenhaPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Isyon" className="inline-block w-14 h-14 mb-4" />
+          <img src="/logo-mark.svg" alt="Isyon" className="inline-block w-14 h-14 mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Nova senha</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Crie uma nova senha de acesso</p>
         </div>

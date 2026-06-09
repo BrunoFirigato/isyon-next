@@ -9,7 +9,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link href="/login" className="flex items-center gap-2.5 group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Isyon" className="w-8 h-8" />
+            <img src="/logo-mark.svg" alt="Isyon" className="w-8 h-8" />
             <span className="font-semibold text-gray-800 dark:text-gray-100">Isyon CRM</span>
           </Link>
           <Link href="/login" className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
