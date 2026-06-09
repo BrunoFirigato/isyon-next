@@ -20,9 +20,6 @@ export default async function CrmLayout({
 
   if (!user) redirect('/login')
 
-  // Superadmin não tem tenant próprio — não pode ser barrado pela trava de tenant abaixo
-  const isSuperadmin = user.email === 'sa@isyon.com.br'
-
   // Busca perfil e tenant_id do usuário
   const { data: usuario } = await supabase
     .from('usuarios')
@@ -30,19 +27,18 @@ export default async function CrmLayout({
     .eq('auth_id', user.id)
     .maybeSingle()
 
-  const perfil = usuario?.perfil ?? (isSuperadmin ? 'admin' : 'vendedor')
+  const perfil = usuario?.perfil ?? 'vendedor'
   const tenantId = usuario?.tenant_id ?? ''
 
-  if (!tenantId && !isSuperadmin) redirect('/login')
+  // Superadmin não tem tenant — tem o próprio painel (layout (super))
+  if (!tenantId) redirect(user.email === 'sa@isyon.com.br' ? '/superadmin' : '/login')
 
-  // Busca segmentos configurados pelo tenant (superadmin sem tenant usa os padrões)
-  const { data: tenant } = tenantId
-    ? await supabase
-        .from('tenants')
-        .select('segmentos, whatsapp_template, email_template_assunto, email_template_corpo, divisao_carteira, aprovacao_pedido')
-        .eq('id', tenantId)
-        .maybeSingle()
-    : { data: null }
+  // Busca segmentos configurados pelo tenant
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('segmentos, whatsapp_template, email_template_assunto, email_template_corpo, divisao_carteira, aprovacao_pedido')
+    .eq('id', tenantId)
+    .maybeSingle()
 
   const segmentos = (tenant?.segmentos as typeof DEFAULT_SEGMENTOS | null) ?? DEFAULT_SEGMENTOS
   const whatsappTemplate      = (tenant?.whatsapp_template       as string | null) ?? null
