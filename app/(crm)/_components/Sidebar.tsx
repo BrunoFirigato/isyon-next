@@ -160,41 +160,28 @@ export default function Sidebar({
   return (
     <aside
       className={`
-        hidden md:flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 h-full shrink-0
+        relative hidden md:flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 h-full shrink-0
         transition-all duration-200 ease-in-out
         ${collapsed ? 'w-[68px]' : 'w-56'}
       `}
     >
-      {/* ── Brand + Toggle ─────────────────────────────────────────────── */}
-      <div className="border-b border-gray-100 dark:border-gray-800 shrink-0">
-        {collapsed ? (
-          // Recolhido: logo centralizado (mesmo tamanho dos ícones) + expandir abaixo
-          <div className="flex flex-col items-center gap-1 py-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-mark.svg" alt="Isyon" className="w-10 h-10" />
-            <button
-              onClick={toggle}
-              title="Expandir menu"
-              className="w-7 h-5 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between px-3 h-14">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-mark.svg" alt="Isyon" className="w-8 h-8 shrink-0" />
-            <span className="font-bold text-gray-900 dark:text-gray-100 flex-1 truncate mx-2.5">Isyon CRM</span>
-            <button
-              onClick={toggle}
-              title="Recolher menu"
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
-            >
-              <ChevronLeft size={14} />
-            </button>
-          </div>
+      {/* ── Marca (mesma altura do topbar) ─────────────────────────────── */}
+      <div className="h-14 flex items-center px-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-mark.svg" alt="Isyon" className={collapsed ? 'w-10 h-10 mx-auto' : 'w-8 h-8 shrink-0'} />
+        {!collapsed && (
+          <span className="font-bold text-gray-900 dark:text-gray-100 truncate ml-2.5">Isyon CRM</span>
         )}
       </div>
+
+      {/* Recolher/expandir — botão flutuante na borda lateral */}
+      <button
+        onClick={toggle}
+        title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+        className="absolute top-4 -right-3 z-20 w-6 h-6 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+      >
+        {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+      </button>
 
       {/* ── Navegação ──────────────────────────────────────────────────── */}
       <nav className="sidebar-nav flex-1 overflow-y-auto py-3 space-y-4 px-2">
