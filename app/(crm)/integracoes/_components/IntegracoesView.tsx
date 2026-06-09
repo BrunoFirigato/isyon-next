@@ -38,7 +38,7 @@ function Badge({ status }: { status: 'connected' | 'disconnected' | 'soon' }) {
 
 function Card({ children, expanded }: { children: React.ReactNode; expanded?: boolean }) {
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden transition-all h-full flex flex-col ${
+    <div className={`bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden transition-all flex flex-col ${
       expanded
         ? 'border-blue-200 dark:border-blue-800 ring-1 ring-blue-200 dark:ring-blue-800'
         : 'border-gray-100 dark:border-gray-700'
@@ -81,7 +81,7 @@ function WhatsAppCard({ disponivel }: { disponivel: boolean }) {
   return (
     <Card>
       {/* Cabeçalho */}
-      <div className="p-5 flex-1 flex flex-col">
+      <div className="p-5 flex flex-col min-h-[188px]">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <LogoBox src="/integracoes/whatsapp.svg" alt="WhatsApp" />
@@ -183,7 +183,7 @@ function EmailCard({
 
   return (
     <Card expanded={open}>
-      <div className="p-5 flex-1 flex flex-col">
+      <div className="p-5 flex flex-col min-h-[188px]">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <LogoBox src="/integracoes/resend.svg" alt="Resend" />
@@ -358,7 +358,7 @@ function NFeProviderCard({
   return (
     <Card expanded={open}>
       {/* Cabeçalho */}
-      <div className="p-5 flex-1 flex flex-col">
+      <div className="p-5 flex flex-col min-h-[188px]">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <LogoBox src={logo} alt={nome} />
@@ -494,7 +494,7 @@ function OmieCard() {
 
   return (
     <Card expanded={open}>
-      <div className="p-5 flex-1 flex flex-col">
+      <div className="p-5 flex flex-col min-h-[188px]">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <LogoBox src="/integracoes/omie.svg" alt="Omie" />
@@ -596,7 +596,7 @@ function BlingCard() {
 
   return (
     <Card>
-      <div className="p-5 flex-1 flex flex-col">
+      <div className="p-5 flex flex-col min-h-[188px]">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <LogoBox src="/integracoes/bling.png" alt="Bling" />
@@ -676,7 +676,7 @@ export default function IntegracoesView({
 
       {/* columns = masonry: cada coluna cresce independente, sem afetar as outras */}
       {aba === 'comerciais' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
           <WhatsAppCard disponivel={whatsappDisponivel} />
           <EmailCard
             tenantId={tenantId}
@@ -690,7 +690,7 @@ export default function IntegracoesView({
       )}
 
       {aba === 'erp' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
           <OmieCard />
           <BlingCard />
           <NFeProviderCard
