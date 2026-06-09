@@ -64,7 +64,7 @@ export default async function DashboardPage() {
     supabase.from('oportunidades').select('id, titulo, status, valor, etapa, criado_em, atualizado_em').order('criado_em', { ascending: false }),
     supabase.from('propostas').select('id, status, validade'),
     supabase.from('compromissos').select('id, titulo, tipo, data_hora, duracao_min, descricao, cliente_id, lead_id, op_id, status, criado_em').eq('status', 'pendente').lte('data_hora', hojeFimISO).order('data_hora'),
-    supabase.from('pedidos').select('valor, status, nf_numero, nfe_chave').gte('criado_em', inicio),
+    supabase.from('pedidos').select('valor, status, omie_pedido_id').gte('criado_em', inicio),
     supabase.from('leads').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('*', { count: 'exact', head: true }).gte('criado_em', inicio),
     supabase.from('produtos').select('*', { count: 'exact', head: true }),
@@ -82,8 +82,8 @@ export default async function DashboardPage() {
   const taxaConversao = opDoMes.length > 0 ? Math.round((opGanhasDoMes.length / opDoMes.length) * 100) : 0
   const valorPipeline = opAbertas.reduce((s, o) => s + (o.valor ?? 0), 0)
 
-  // Receita = pedidos FATURADOS (com NF-e) e não cancelados; sem nota é só provisão
-  const faturado = (p: { nf_numero?: string | null; nfe_chave?: string | null }) => !!(p?.nf_numero || p?.nfe_chave)
+  // Receita = pedidos enviados ao ERP (onde são faturados); os demais são provisão
+  const faturado = (p: { omie_pedido_id?: string | null }) => !!p?.omie_pedido_id
   const pedidosMes = (pedidos ?? []).filter(p => p.status !== 'cancelado')
   const receitaMes  = pedidosMes.filter(faturado).reduce((s, p) => s + (p.valor ?? 0), 0)
   const provisaoMes = pedidosMes.filter(p => !faturado(p)).reduce((s, p) => s + (p.valor ?? 0), 0)

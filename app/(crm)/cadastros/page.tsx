@@ -1,13 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import CadastrosView from './_components/CadastrosView'
 
-type Tab = 'ncm' | 'naturezas' | 'cfop' | 'transportadoras' | 'cond_pagamentos'
+type Tab = 'ncm' | 'transportadoras' | 'cond_pagamentos'
 
 interface Props {
   searchParams: Promise<{ tab?: string }>
 }
 
-const VALID_TABS: Tab[] = ['ncm', 'naturezas', 'cfop', 'transportadoras', 'cond_pagamentos']
+const VALID_TABS: Tab[] = ['ncm', 'transportadoras', 'cond_pagamentos']
 
 export default async function CadastrosPage({ searchParams }: Props) {
   const { tab: tabParam } = await searchParams
@@ -19,14 +19,10 @@ export default async function CadastrosPage({ searchParams }: Props) {
 
   const [
     { data: ncms },
-    { data: naturezas },
-    { data: cfops },
     { data: transportadoras },
     { data: condPagamentos },
   ] = await Promise.all([
     supabase.from('ncms').select('*').order('codigo'),
-    supabase.from('naturezas_operacao').select('*').order('codigo'),
-    supabase.from('cfops').select('*').order('codigo'),
     supabase.from('transportadoras').select('*').order('nome'),
     supabase.from('cond_pagamentos').select('*').order('nome'),
   ])
@@ -34,8 +30,6 @@ export default async function CadastrosPage({ searchParams }: Props) {
   return (
     <CadastrosView
       ncms={ncms ?? []}
-      naturezas={naturezas ?? []}
-      cfops={cfops ?? []}
       transportadoras={transportadoras ?? []}
       condPagamentos={condPagamentos ?? []}
       activeTab={activeTab}

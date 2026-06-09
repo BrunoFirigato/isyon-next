@@ -4,11 +4,10 @@ import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
-  CheckCircle, XCircle, PackageCheck, FileText, Clock, ShieldCheck, Printer,
+  CheckCircle, XCircle, PackageCheck, Clock, ShieldCheck, Printer,
   Send, Loader2, Check,
 } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
-import EmitirNFeModal from './EmitirNFeModal'
 import { createClient } from '@/lib/supabase/client'
 import { vinculosPedido, mensagemBloqueio } from '@/lib/exclusao'
 import PedidoFormModal from './PedidoFormModal'
@@ -52,7 +51,6 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
   const [editingPedido, setEditingPedido] = useState<Pedido | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [nfePedido, setNfePedido] = useState<Pedido | null>(null)
   const [enviandoOmie, setEnviandoOmie] = useState<string | null>(null)
 
   function clienteNome(id: string | null) {
@@ -385,19 +383,6 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
                         ) : null
                       )}
 
-                      {p.aprovado ? (
-                        <button
-                          onClick={() => setNfePedido(p)}
-                          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
-                        >
-                          <FileText size={15} />
-                          Emitir NF-e
-                        </button>
-                      ) : (
-                        <span className="flex items-center gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 px-3 py-2 rounded-lg">
-                          <Clock size={13} /> Emissão de NF-e liberada após a aprovação do gestor
-                        </span>
-                      )}
                     </div>
                   </div>
                 )}
@@ -435,12 +420,6 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
         />
       )}
 
-      {nfePedido && (
-        <EmitirNFeModal
-          pedido={nfePedido}
-          onClose={() => setNfePedido(null)}
-        />
-      )}
     </>
   )
 }
