@@ -239,7 +239,7 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
                       }
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-0.5 justify-end">
                         <button onClick={() => setModal({ tipo: 'detalhe', tenant: t })}
                           title="Ver gestão"
                           className="p-1.5 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 text-gray-400 dark:text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
