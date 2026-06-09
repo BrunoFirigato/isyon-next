@@ -56,6 +56,8 @@ export default function WhatsAppNumerosView() {
   const [usuarios, setUsuarios] = useState<UsuarioRef[]>([])
   const [loading, setLoading] = useState(true)
   const [evolutionOk, setEvolutionOk] = useState(true)
+  const [limite, setLimite] = useState(0)
+  const [usados, setUsados] = useState(0)
 
   const [addOpen, setAddOpen] = useState(false)
   const [addNome, setAddNome] = useState('')
@@ -70,7 +72,7 @@ export default function WhatsAppNumerosView() {
   const carregar = useCallback(async () => {
     const res = await fetch('/api/whatsapp/instancias')
     const data = await res.json()
-    if (res.ok) { setNumeros(data.numeros ?? []); setCarga(data.carga ?? []); setEvolutionOk(data.evolutionConfigurada) }
+    if (res.ok) { setNumeros(data.numeros ?? []); setCarga(data.carga ?? []); setEvolutionOk(data.evolutionConfigurada); setLimite(data.limite ?? 0); setUsados(data.usados ?? 0) }
     setLoading(false)
   }, [])
 
@@ -151,9 +153,19 @@ export default function WhatsAppNumerosView() {
         </div>
       )}
 
-      <div className="flex justify-end mb-3">
-        <button onClick={() => setAddOpen(true)} disabled={!evolutionOk}
-          className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        {!loading && limite > 0 && (
+          <span className={`text-xs font-medium px-2.5 py-1 rounded-lg ${
+            usados >= limite
+              ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300'
+              : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+          }`}>
+            {usados} de {limite} número{limite !== 1 ? 's' : ''} usado{usados !== 1 ? 's' : ''}
+          </span>
+        )}
+        <button onClick={() => setAddOpen(true)} disabled={!evolutionOk || (limite > 0 && usados >= limite)}
+          title={limite > 0 && usados >= limite ? 'Limite do plano atingido — remova um número ou fale com o suporte.' : undefined}
+          className="ml-auto inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors">
           <Plus size={15} /> Adicionar número
         </button>
       </div>

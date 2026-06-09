@@ -54,16 +54,18 @@ export async function POST(req: NextRequest) {
 
   /* ── Criar tenant + usuário admin ── */
   if (action === 'criar_tenant') {
-    const { nome, plano, email, senha, nomeAdmin, expiracao_contrato } = body
+    const { nome, plano, email, senha, nomeAdmin, expiracao_contrato, wa_limite } = body
 
     if (!nome?.trim() || !email?.trim() || !senha?.trim()) {
       return NextResponse.json({ error: 'nome, email e senha são obrigatórios' }, { status: 400 })
     }
 
+    const waLimite = Math.max(0, Number.parseInt(String(wa_limite ?? ''), 10) || 1)
+
     // 1. Criar tenant
     const { data: tenant, error: errTenant } = await admin
       .from('tenants')
-      .insert({ nome: nome.trim(), plano: plano ?? 'Básico', status: 'ativo', expiracao_contrato: expiracao_contrato || null })
+      .insert({ nome: nome.trim(), plano: plano ?? 'Básico', status: 'ativo', expiracao_contrato: expiracao_contrato || null, wa_limite: waLimite })
       .select('id, nome, plano, status, criado_em')
       .single()
 
@@ -97,13 +99,18 @@ export async function POST(req: NextRequest) {
 
   /* ── Atualizar dados do tenant ── */
   if (action === 'atualizar_tenant') {
-    const { id, nome, plano, expiracao_contrato } = body
+    const { id, nome, plano, expiracao_contrato, wa_limite } = body
 
     if (!id) return NextResponse.json({ error: 'id obrigatório' }, { status: 400 })
 
+    const patch: Record<string, unknown> = {
+      nome: nome?.trim(), plano, expiracao_contrato: expiracao_contrato || null,
+    }
+    if (wa_limite !== undefined) patch.wa_limite = Math.max(0, Number.parseInt(String(wa_limite), 10) || 0)
+
     const { error } = await admin
       .from('tenants')
-      .update({ nome: nome?.trim(), plano, expiracao_contrato: expiracao_contrato || null })
+      .update(patch)
       .eq('id', id)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

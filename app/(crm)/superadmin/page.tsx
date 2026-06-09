@@ -18,11 +18,13 @@ export default async function SuperadminPage() {
     { data: usuarios },
     { data: ultimosAcessos },
     { data: configs },
+    { data: waInst },
   ] = await Promise.all([
-    admin.from('tenants').select('id, nome, plano, status, criado_em, expiracao_contrato').order('nome'),
+    admin.from('tenants').select('id, nome, plano, status, criado_em, expiracao_contrato, wa_limite').order('nome'),
     admin.from('usuarios').select('tenant_id'),
     admin.from('usuarios').select('tenant_id, nome, ultimo_acesso').order('ultimo_acesso', { ascending: false }),
     admin.from('sistema_config').select('chave, valor, atualizado_em'),
+    admin.from('wa_instancias').select('tenant_id'),
   ])
 
   /* ── Contagem de usuários por tenant ── */
@@ -31,10 +33,19 @@ export default async function SuperadminPage() {
     return acc
   }, {})
 
+  /* ── Contagem de números de WhatsApp por tenant ── */
+  const waCount = (waInst ?? []).reduce<Record<string, number>>((acc, r) => {
+    const tid = (r as { tenant_id: string | null }).tenant_id
+    if (tid) acc[tid] = (acc[tid] ?? 0) + 1
+    return acc
+  }, {})
+
   const tenantsComContagem = (tenants ?? []).map((t) => ({
     ...t,
     expiracao_contrato: (t as Record<string, unknown>).expiracao_contrato as string | null ?? null,
     total_usuarios: contagem[t.id] ?? 0,
+    wa_limite: ((t as Record<string, unknown>).wa_limite as number | null) ?? 1,
+    wa_usados: waCount[t.id] ?? 0,
   }))
 
   /* ── Último acesso por tenant ── */

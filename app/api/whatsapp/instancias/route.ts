@@ -29,13 +29,17 @@ export async function GET() {
   if (!caller) return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
   const admin = createAdminClient()
 
-  const [{ data: rows }, { data: usuarios }, { data: convs }] = await Promise.all([
+  const [{ data: rows }, { data: usuarios }, { data: convs }, { data: tenantRow }] = await Promise.all([
     admin.from('wa_instancias').select('*').eq('tenant_id', caller.tenantId).order('criado_em'),
     admin.from('usuarios').select('id, nome').eq('tenant_id', caller.tenantId),
     admin.from('wa_conversas')
       .select('instancia_id, nao_lidas, ultima_em, ultima_direcao, arquivada, responsavel_id')
       .eq('tenant_id', caller.tenantId),
+    admin.from('tenants').select('wa_limite').eq('id', caller.tenantId).maybeSingle(),
   ])
+
+  const limite = (tenantRow?.wa_limite as number | null) ?? 1
+  const usados = (rows ?? []).length
 
   const srv = await getEvolutionServer(admin, caller.tenantId)
   const estados = srv ? await listInstances(srv) : {}
@@ -87,7 +91,7 @@ export async function GET() {
 
   const carga = [...cargaMap.values()].sort((x, y) => y.n_conversas - x.n_conversas)
 
-  return NextResponse.json({ numeros, carga, evolutionConfigurada: !!srv })
+  return NextResponse.json({ numeros, carga, evolutionConfigurada: !!srv, limite, usados })
 }
 
 export async function POST(req: NextRequest) {
@@ -103,6 +107,20 @@ export async function POST(req: NextRequest) {
   if (action === 'criar') {
     const { nome, numero, usuario_id } = body
     if (!nome?.trim()) return NextResponse.json({ error: 'Informe um nome para o número.' }, { status: 400 })
+
+    // Trava de licenças por plano: nº atual de instâncias < limite do tenant
+    const [{ count }, { data: tRow }] = await Promise.all([
+      admin.from('wa_instancias').select('id', { count: 'exact', head: true }).eq('tenant_id', caller.tenantId),
+      admin.from('tenants').select('wa_limite').eq('id', caller.tenantId).maybeSingle(),
+    ])
+    const limite = (tRow?.wa_limite as number | null) ?? 1
+    if ((count ?? 0) >= limite) {
+      return NextResponse.json({
+        error: `Você atingiu o limite do seu plano (${limite} número${limite !== 1 ? 's' : ''} de WhatsApp). `
+          + 'Remova um número existente ou fale com o suporte para aumentar o limite.',
+      }, { status: 400 })
+    }
+
     const instanceName = `isyon-${caller.tenantId.slice(0, 8)}-${Date.now().toString(36)}`
     const r = await createInstance(srv, instanceName)
     if (!r.ok) return NextResponse.json({ error: r.error ?? 'Falha ao criar instância' }, { status: 502 })

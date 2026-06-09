@@ -18,6 +18,8 @@ export interface TenantComContagem {
   criado_em: string
   expiracao_contrato: string | null
   total_usuarios: number
+  wa_limite: number
+  wa_usados: number
 }
 
 export interface LogAcesso {
@@ -172,6 +174,7 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Plano</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">Usuários</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">WhatsApp</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">Contrato</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -200,6 +203,11 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400 hidden lg:table-cell">{t.total_usuarios}</td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <span className={`text-xs font-medium ${t.wa_usados >= t.wa_limite ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                        {t.wa_usados} / {t.wa_limite}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
                       {exp
                         ? <span className={`text-xs font-medium px-2 py-1 rounded-lg ${exp.cls}`}>{exp.label}</span>
@@ -230,7 +238,7 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
               })}
               {tenants.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400 dark:text-gray-500">
+                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-400 dark:text-gray-500">
                     Nenhum tenant cadastrado.
                   </td>
                 </tr>
@@ -524,12 +532,13 @@ function CriarTenantForm({ loading, erro, onSubmit, onClose }: {
   const [nome,      setNome]      = useState('')
   const [plano,     setPlano]     = useState('Básico')
   const [expiracao, setExpiracao] = useState('')
+  const [waLimite,  setWaLimite]  = useState('1')
   const [nomeAdmin, setNomeAdmin] = useState('')
   const [email,     setEmail]     = useState('')
   const [senha,     setSenha]     = useState('')
 
   return (
-    <form onSubmit={e => { e.preventDefault(); onSubmit({ nome, plano, nomeAdmin, email, senha, expiracao_contrato: expiracao }) }}
+    <form onSubmit={e => { e.preventDefault(); onSubmit({ nome, plano, nomeAdmin, email, senha, expiracao_contrato: expiracao, wa_limite: waLimite }) }}
       className="space-y-4">
       <Field label="Nome da empresa *"      value={nome}      onChange={setNome}      placeholder="Acme Ltda" />
       <div>
@@ -539,6 +548,7 @@ function CriarTenantForm({ loading, erro, onSubmit, onClose }: {
           {['Básico', 'Profissional', 'Enterprise'].map(p => <option key={p}>{p}</option>)}
         </select>
       </div>
+      <Field label="Limite de números de WhatsApp" value={waLimite} onChange={setWaLimite} type="number" placeholder="1" />
       <Field label="Expiração do contrato"  value={expiracao} onChange={setExpiracao} type="date" />
       <Field label="Nome do admin"           value={nomeAdmin} onChange={setNomeAdmin} placeholder="João Silva" />
       <Field label="E-mail do admin *"       value={email}     onChange={setEmail}     placeholder="admin@empresa.com" type="email" />
@@ -559,10 +569,11 @@ function EditarTenantForm({ tenant, loading, erro, onSubmit, onClose, onResetSen
   const [nome,       setNome]       = useState(tenant.nome)
   const [plano,      setPlano]      = useState(tenant.plano ?? 'Básico')
   const [expiracao,  setExpiracao]  = useState(tenant.expiracao_contrato ?? '')
+  const [waLimite,   setWaLimite]   = useState(String(tenant.wa_limite ?? 1))
   const [emailReset, setEmailReset] = useState('')
 
   return (
-    <form onSubmit={e => { e.preventDefault(); onSubmit({ nome, plano, expiracao_contrato: expiracao }) }}
+    <form onSubmit={e => { e.preventDefault(); onSubmit({ nome, plano, expiracao_contrato: expiracao, wa_limite: waLimite }) }}
       className="space-y-4">
       <Field label="Nome da empresa *"     value={nome}      onChange={setNome} />
       <div>
@@ -571,6 +582,12 @@ function EditarTenantForm({ tenant, loading, erro, onSubmit, onClose, onResetSen
           className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
           {['Básico', 'Profissional', 'Enterprise'].map(p => <option key={p}>{p}</option>)}
         </select>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Limite de números de WhatsApp</label>
+        <input type="number" min={0} value={waLimite} onChange={e => setWaLimite(e.target.value)}
+          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">Em uso: {tenant.wa_usados} de {tenant.wa_limite}.</p>
       </div>
       <Field label="Expiração do contrato" value={expiracao} onChange={setExpiracao} type="date" />
 
