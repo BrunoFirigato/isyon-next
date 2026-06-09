@@ -38,7 +38,7 @@ function Badge({ status }: { status: 'connected' | 'disconnected' | 'soon' }) {
 
 function Card({ children, expanded }: { children: React.ReactNode; expanded?: boolean }) {
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden transition-all ${
+    <div className={`bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden transition-all h-full flex flex-col ${
       expanded
         ? 'border-blue-200 dark:border-blue-800 ring-1 ring-blue-200 dark:ring-blue-800'
         : 'border-gray-100 dark:border-gray-700'
@@ -81,7 +81,7 @@ function WhatsAppCard({ disponivel }: { disponivel: boolean }) {
   return (
     <Card>
       {/* Cabeçalho */}
-      <div className="p-5">
+      <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <LogoBox src="/integracoes/whatsapp.svg" alt="WhatsApp" />
@@ -95,7 +95,7 @@ function WhatsAppCard({ disponivel }: { disponivel: boolean }) {
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
           Conecte seus números e dispare mensagens individuais e campanhas pelo WhatsApp.
         </p>
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="mt-auto flex items-center gap-4 flex-wrap">
           <Link href="/integracoes/whatsapp" className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
             <Smartphone size={15} /> Conectar / gerenciar números <ArrowRight size={13} />
           </Link>
@@ -183,7 +183,7 @@ function EmailCard({
 
   return (
     <Card expanded={open}>
-      <div className="p-5">
+      <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <LogoBox src="/integracoes/resend.svg" alt="Resend" />
@@ -201,7 +201,7 @@ function EmailCard({
 
         <button
           onClick={() => { setOpen(o => !o); setTestResult(null) }}
-          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          className="mt-auto flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
         >
           {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           {open ? 'Fechar' : isConfigured ? 'Editar' : 'Configurar'}
@@ -358,7 +358,7 @@ function NFeProviderCard({
   return (
     <Card expanded={open}>
       {/* Cabeçalho */}
-      <div className="p-5">
+      <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <LogoBox src={logo} alt={nome} />
@@ -372,7 +372,7 @@ function NFeProviderCard({
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{descricao}</p>
         <button
           onClick={() => { setOpen(o => !o); setTestResult(null) }}
-          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          className="mt-auto flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
         >
           {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           {open ? 'Fechar' : isConfigured ? 'Editar token' : 'Configurar'}
@@ -494,7 +494,7 @@ function OmieCard() {
 
   return (
     <Card expanded={open}>
-      <div className="p-5">
+      <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <LogoBox src="/integracoes/omie.svg" alt="Omie" />
@@ -509,7 +509,7 @@ function OmieCard() {
           Conecte seu ERP Omie. Pegue a App Key e a App Secret no painel do Omie (Configurações → API).
         </p>
         <button onClick={() => { setOpen(o => !o); setResult(null) }}
-          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+          className="mt-auto flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
           {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           {open ? 'Fechar' : (conectado ? 'Gerenciar' : 'Conectar')}
         </button>
@@ -596,7 +596,7 @@ function BlingCard() {
 
   return (
     <Card>
-      <div className="p-5">
+      <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <LogoBox src="/integracoes/bling.png" alt="Bling" />
@@ -610,20 +610,22 @@ function BlingCard() {
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
           Conecte seu ERP Bling com login seguro (OAuth) — sem colar tokens.
         </p>
-        {!appConfigurado ? (
-          <p className="text-xs text-amber-600 dark:text-amber-400">
-            Integração Bling ainda não liberada para a sua conta. Fale com o suporte do Isyon.
-          </p>
-        ) : conectado ? (
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5"><CheckCircle2 size={14} /> Conectado</span>
-            <button onClick={desconectar} disabled={busy} className="text-sm font-medium px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-60">Desconectar</button>
-          </div>
-        ) : (
-          <a href="/api/integracoes/bling/connect" className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors">
-            Conectar com o Bling <ArrowRight size={14} />
-          </a>
-        )}
+        <div className="mt-auto">
+          {!appConfigurado ? (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Integração Bling ainda não liberada para a sua conta. Fale com o suporte do Isyon.
+            </p>
+          ) : conectado ? (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5"><CheckCircle2 size={14} /> Conectado</span>
+              <button onClick={desconectar} disabled={busy} className="text-sm font-medium px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-60">Desconectar</button>
+            </div>
+          ) : (
+            <a href="/api/integracoes/bling/connect" className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors">
+              Conectar com o Bling <ArrowRight size={14} />
+            </a>
+          )}
+        </div>
       </div>
     </Card>
   )
@@ -674,55 +676,43 @@ export default function IntegracoesView({
 
       {/* columns = masonry: cada coluna cresce independente, sem afetar as outras */}
       {aba === 'comerciais' && (
-        <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
-          <div className="break-inside-avoid mb-4">
-            <WhatsAppCard disponivel={whatsappDisponivel} />
-          </div>
-          <div className="break-inside-avoid mb-4">
-            <EmailCard
-              tenantId={tenantId}
-              plataformaConfigurada={emailConfigurado}
-              initialApiKey={resendApiKey}
-              initialFromEmail={resendFromEmail}
-              initialAssunto={emailAssunto}
-              initialCorpo={emailCorpo}
-            />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
+          <WhatsAppCard disponivel={whatsappDisponivel} />
+          <EmailCard
+            tenantId={tenantId}
+            plataformaConfigurada={emailConfigurado}
+            initialApiKey={resendApiKey}
+            initialFromEmail={resendFromEmail}
+            initialAssunto={emailAssunto}
+            initialCorpo={emailCorpo}
+          />
         </div>
       )}
 
       {aba === 'erp' && (
-        <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
-          <div className="break-inside-avoid mb-4">
-            <OmieCard />
-          </div>
-          <div className="break-inside-avoid mb-4">
-            <BlingCard />
-          </div>
-          <div className="break-inside-avoid mb-4">
-            <NFeProviderCard
-              key="brasilnfe"
-              tenantId={tenantId}
-              nome="BrasilNFe"
-              descricao="Emissão de NF-e via BrasilNFe. Configure o token do seu painel em brasilnfe.com.br."
-              logo="/integracoes/brasilnfe.png"
-              tokenField="token_brasilnfe"
-              testEndpoint="/api/nfe/test/brasilnfe"
-              initialToken={tokenBrasilNFe}
-            />
-          </div>
-          <div className="break-inside-avoid mb-4">
-            <NFeProviderCard
-              key="focusnfe"
-              tenantId={tenantId}
-              nome="Focus NFe"
-              descricao="Emissão de NF-e via Focus NFe. Configure o token do seu painel em focusnfe.com.br."
-              logo="/integracoes/focusnfe.png"
-              tokenField="token_focusnfe"
-              testEndpoint="/api/nfe/test/focusnfe"
-              initialToken={tokenFocusNFe}
-            />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
+          <OmieCard />
+          <BlingCard />
+          <NFeProviderCard
+            key="brasilnfe"
+            tenantId={tenantId}
+            nome="BrasilNFe"
+            descricao="Emissão de NF-e via BrasilNFe. Configure o token do seu painel em brasilnfe.com.br."
+            logo="/integracoes/brasilnfe.png"
+            tokenField="token_brasilnfe"
+            testEndpoint="/api/nfe/test/brasilnfe"
+            initialToken={tokenBrasilNFe}
+          />
+          <NFeProviderCard
+            key="focusnfe"
+            tenantId={tenantId}
+            nome="Focus NFe"
+            descricao="Emissão de NF-e via Focus NFe. Configure o token do seu painel em focusnfe.com.br."
+            logo="/integracoes/focusnfe.png"
+            tokenField="token_focusnfe"
+            testEndpoint="/api/nfe/test/focusnfe"
+            initialToken={tokenFocusNFe}
+          />
         </div>
       )}
 
