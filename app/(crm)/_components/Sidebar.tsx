@@ -166,22 +166,34 @@ export default function Sidebar({
       `}
     >
       {/* ── Brand + Toggle ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-3 h-14 border-b border-gray-100 dark:border-gray-800 shrink-0">
-        {/* Logo sempre visível */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-mark.svg" alt="Isyon" className="w-7 h-7 shrink-0" />
-        {/* Texto só quando expandido */}
-        {!collapsed && (
-          <span className="font-bold text-gray-900 dark:text-gray-100 flex-1 truncate mx-2.5">Isyon CRM</span>
+      <div className="border-b border-gray-100 dark:border-gray-800 shrink-0">
+        {collapsed ? (
+          // Recolhido: logo centralizado (mesmo tamanho dos ícones) + expandir abaixo
+          <div className="flex flex-col items-center gap-1 py-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-mark.svg" alt="Isyon" className="w-10 h-10" />
+            <button
+              onClick={toggle}
+              title="Expandir menu"
+              className="w-7 h-5 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between px-3 h-14">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-mark.svg" alt="Isyon" className="w-8 h-8 shrink-0" />
+            <span className="font-bold text-gray-900 dark:text-gray-100 flex-1 truncate mx-2.5">Isyon CRM</span>
+            <button
+              onClick={toggle}
+              title="Recolher menu"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+            >
+              <ChevronLeft size={14} />
+            </button>
+          </div>
         )}
-        {/* Toggle */}
-        <button
-          onClick={toggle}
-          title={collapsed ? 'Expandir menu' : 'Recolher menu'}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
-        >
-          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
       </div>
 
       {/* ── Navegação ──────────────────────────────────────────────────── */}
