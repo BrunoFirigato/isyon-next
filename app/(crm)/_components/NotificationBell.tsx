@@ -191,10 +191,8 @@ export default function NotificationBell() {
                   onClick={() => navegar(item.href)}
                   className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left border-b border-gray-50 dark:border-gray-700 last:border-0"
                 >
-                  <span className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                    item.urgente ? 'bg-red-50' : 'bg-blue-50'
-                  }`}>
-                    <Icon size={13} className={item.urgente ? 'text-red-500' : 'text-blue-500'} />
+                  <span className="mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-gray-100 dark:bg-gray-700">
+                    <Icon size={13} className="text-gray-400 dark:text-gray-500" />
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{item.titulo}</p>
