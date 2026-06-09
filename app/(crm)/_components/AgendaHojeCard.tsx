@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Calendar, Plus, Clock, CheckCircle2, XCircle, Pencil, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -15,6 +15,9 @@ export default function AgendaHojeCard({ compromissos }: { compromissos: Comprom
   const [editing, setEditing] = useState<Compromisso | null>(null)
   const [novo, setNovo] = useState(false)
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  // Hora/data dependem do fuso do cliente — só renderiza após montar (evita mismatch de hidratação)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
   async function mudarStatus(c: Compromisso, status: string) {
     setLoadingId(c.id)
@@ -51,7 +54,7 @@ export default function AgendaHojeCard({ compromissos }: { compromissos: Comprom
           {compromissos.map(c => {
             const tipo = tipoInfo(c.tipo)
             const isDone = c.status === 'realizado'
-            const isLate = !isDone && new Date(c.data_hora).getTime() < Date.now()
+            const isLate = mounted && !isDone && new Date(c.data_hora).getTime() < Date.now()
             // Itens atrasados de dias anteriores aparecem aqui — mostra a data pra não parecer "de hoje"
             const dt = new Date(c.data_hora)
             const ehHoje = dt.toDateString() === new Date().toDateString()
@@ -65,9 +68,11 @@ export default function AgendaHojeCard({ compromissos }: { compromissos: Comprom
                     {c.titulo}
                   </p>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className={`text-[11px] flex items-center gap-1 ${isLate ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-                      <Clock size={10} /> {quando}{isLate ? ' · atrasada' : ''}
-                    </span>
+                    {mounted && (
+                      <span className={`text-[11px] flex items-center gap-1 ${isLate ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                        <Clock size={10} /> {quando}{isLate ? ' · atrasada' : ''}
+                      </span>
+                    )}
                     <VinculoBadge cliente={c.cliente} lead={c.lead} op={c.op} />
                   </div>
                 </div>
