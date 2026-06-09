@@ -26,7 +26,7 @@ function saudacao() {
   return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'
 }
 const ETAPAS_PIPELINE = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação']
-const PIPE_CORES = ['#3b82f6', '#6366f1', '#8b5cf6', '#d946ef'] // azul → índigo → violeta → fúcsia
+const PIPE_CORES = ['#93c5fd', '#60a5fa', '#3b82f6', '#2563eb'] // azul monocromático (claro → escuro por etapa)
 
 const DICAS = [
   'Leads respondidos em até 1h convertem muito mais. Priorize os "sem contato".',
@@ -293,13 +293,13 @@ export default async function DashboardPage() {
       </div>
 
       {/* Dica de vendas */}
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-900/40 rounded-xl p-4 flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-white/70 dark:bg-gray-800 text-indigo-500 shrink-0"><Lightbulb size={18} /></div>
+      <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-4 flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-500 shrink-0"><Lightbulb size={18} /></div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">Dica para vender mais</p>
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Dica para vender mais</p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{dica}</p>
         </div>
-        <Link href="/relatorios" className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:gap-2 transition-all shrink-0">
+        <Link href="/relatorios" className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:gap-2 transition-all shrink-0">
           <BarChart3 size={14} /> Relatórios
         </Link>
       </div>
@@ -308,11 +308,10 @@ export default async function DashboardPage() {
 }
 
 // ─── Card unificado de entidade (métrica + alerta + criar) ────────────────────
+// Visual calmo: ícone em tom neutro único + azul de marca nas ações/links (cor só onde importa).
+const TONE_CALMO = { iconBg: 'bg-gray-100 dark:bg-gray-700/60', iconText: 'text-gray-500 dark:text-gray-400', link: 'text-blue-600 hover:text-blue-700' }
 const TONES: Record<string, { iconBg: string; iconText: string; link: string }> = {
-  blue:    { iconBg: 'bg-blue-50 dark:bg-blue-900/20',    iconText: 'text-blue-600 dark:text-blue-400',    link: 'text-blue-600 hover:text-blue-700' },
-  purple:  { iconBg: 'bg-purple-50 dark:bg-purple-900/20', iconText: 'text-purple-600 dark:text-purple-400', link: 'text-purple-600 hover:text-purple-700' },
-  orange:  { iconBg: 'bg-orange-50 dark:bg-orange-900/20', iconText: 'text-orange-600 dark:text-orange-400', link: 'text-orange-600 hover:text-orange-700' },
-  emerald: { iconBg: 'bg-emerald-50 dark:bg-emerald-900/20', iconText: 'text-emerald-600 dark:text-emerald-400', link: 'text-emerald-600 hover:text-emerald-700' },
+  blue: TONE_CALMO, purple: TONE_CALMO, orange: TONE_CALMO, emerald: TONE_CALMO,
 }
 const ALERTA_COR: Record<string, string> = {
   red:    'text-red-600 dark:text-red-400',
