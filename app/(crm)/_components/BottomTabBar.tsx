@@ -161,7 +161,8 @@ export default function BottomTabBar({ perfil }: { perfil: Perfil }) {
 
           {/* Sheet */}
           <div
-            className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-2xl pb-safe"
+            className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-2xl"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) / 2)' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Handle */}
