@@ -29,18 +29,65 @@ export async function GET() {
   if (!caller) return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
   const admin = createAdminClient()
 
-  const { data: rows } = await admin
-    .from('wa_instancias').select('*').eq('tenant_id', caller.tenantId).order('criado_em')
+  const [{ data: rows }, { data: usuarios }, { data: convs }] = await Promise.all([
+    admin.from('wa_instancias').select('*').eq('tenant_id', caller.tenantId).order('criado_em'),
+    admin.from('usuarios').select('id, nome').eq('tenant_id', caller.tenantId),
+    admin.from('wa_conversas')
+      .select('instancia_id, nao_lidas, ultima_em, ultima_direcao, arquivada, responsavel_id')
+      .eq('tenant_id', caller.tenantId),
+  ])
 
   const srv = await getEvolutionServer(admin, caller.tenantId)
   const estados = srv ? await listInstances(srv) : {}
 
-  const numeros = (rows ?? []).map(r => ({
-    ...r,
-    estado: estados[r.instance_name as string] ?? null,
-    status: estados[r.instance_name as string] ? mapEstado(estados[r.instance_name as string]) : r.status,
-  }))
-  return NextResponse.json({ numeros, evolutionConfigurada: !!srv })
+  const nomePorUsuario = new Map((usuarios ?? []).map(u => [u.id as string, u.nome as string]))
+  const ownerByInst = new Map((rows ?? []).map(r => [r.id as string, (r.usuario_id as string | null) ?? null]))
+
+  // Agregados por número
+  type Agg = { n_conversas: number; nao_lidas: number; sem_resposta: number; ultima_atividade: string | null }
+  const aggInst = new Map<string, Agg>()
+  // Carga por responsável (efetivo = responsavel_id da conversa OU dono do número; null = compartilhado)
+  type Carga = { usuario_id: string | null; nome: string; n_conversas: number; nao_lidas: number; sem_resposta: number }
+  const cargaMap = new Map<string, Carga>()
+
+  for (const c of convs ?? []) {
+    if (c.arquivada) continue
+    const inst = c.instancia_id as string
+    const a = aggInst.get(inst) ?? { n_conversas: 0, nao_lidas: 0, sem_resposta: 0, ultima_atividade: null }
+    a.n_conversas++
+    a.nao_lidas += (c.nao_lidas as number) ?? 0
+    if (c.ultima_direcao === 'in') a.sem_resposta++
+    const ue = c.ultima_em as string | null
+    if (ue && (!a.ultima_atividade || ue > a.ultima_atividade)) a.ultima_atividade = ue
+    aggInst.set(inst, a)
+
+    const resp = (c.responsavel_id as string | null) ?? ownerByInst.get(inst) ?? null
+    const key = resp ?? '__none__'
+    const cg = cargaMap.get(key) ?? {
+      usuario_id: resp,
+      nome: resp ? (nomePorUsuario.get(resp) ?? '—') : 'Compartilhado / sem responsável',
+      n_conversas: 0, nao_lidas: 0, sem_resposta: 0,
+    }
+    cg.n_conversas++
+    cg.nao_lidas += (c.nao_lidas as number) ?? 0
+    if (c.ultima_direcao === 'in') cg.sem_resposta++
+    cargaMap.set(key, cg)
+  }
+
+  const numeros = (rows ?? []).map(r => {
+    const a = aggInst.get(r.id as string) ?? { n_conversas: 0, nao_lidas: 0, sem_resposta: 0, ultima_atividade: null }
+    return {
+      ...r,
+      estado: estados[r.instance_name as string] ?? null,
+      status: estados[r.instance_name as string] ? mapEstado(estados[r.instance_name as string]) : r.status,
+      responsavel_nome: r.usuario_id ? (nomePorUsuario.get(r.usuario_id as string) ?? null) : null,
+      ...a,
+    }
+  })
+
+  const carga = [...cargaMap.values()].sort((x, y) => y.n_conversas - x.n_conversas)
+
+  return NextResponse.json({ numeros, carga, evolutionConfigurada: !!srv })
 }
 
 export async function POST(req: NextRequest) {

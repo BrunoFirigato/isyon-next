@@ -17,13 +17,15 @@ export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-  const { data: usuario } = await supabase.from('usuarios').select('tenant_id').eq('auth_id', user.id).maybeSingle()
+  const { data: usuario } = await supabase.from('usuarios').select('id, tenant_id').eq('auth_id', user.id).maybeSingle()
   if (!usuario?.tenant_id) return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
 
   const admin = createAdminClient()
+  // Só os números acessíveis ao usuário (dele ou compartilhados) — respeita a privacidade.
   const { data: insts } = await admin
     .from('wa_instancias').select('id, nome, instance_name, status')
     .eq('tenant_id', usuario.tenant_id).eq('ativo', true)
+    .or(`usuario_id.is.null,usuario_id.eq.${usuario.id}`)
 
   const srv = await getEvolutionServer(admin, usuario.tenant_id)
   const estados = srv ? await listInstances(srv) : {}

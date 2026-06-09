@@ -15,8 +15,33 @@ interface Numero {
   usuario_id: string | null
   ativo: boolean
   estado: string | null
+  responsavel_nome: string | null
+  n_conversas: number
+  nao_lidas: number
+  sem_resposta: number
+  ultima_atividade: string | null
 }
 interface UsuarioRef { id: string; nome: string }
+interface Carga { usuario_id: string | null; nome: string; n_conversas: number; nao_lidas: number; sem_resposta: number }
+
+const DIAS_PARADO = 3 // sem atividade há 3+ dias = "parado"
+
+function tempoRelativo(iso: string | null): string {
+  if (!iso) return 'sem atividade'
+  const ms = Date.now() - new Date(iso).getTime()
+  const min = Math.floor(ms / 60000)
+  if (min < 1) return 'agora há pouco'
+  if (min < 60) return `há ${min} min`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `há ${h}h`
+  const d = Math.floor(h / 24)
+  return `há ${d} dia${d > 1 ? 's' : ''}`
+}
+/** Em atividade = teve mensagem nos últimos DIAS_PARADO dias. */
+function emAtividade(iso: string | null): boolean {
+  if (!iso) return false
+  return Date.now() - new Date(iso).getTime() < DIAS_PARADO * 86400000
+}
 
 const STATUS_INFO: Record<string, { label: string; cls: string; dot: string }> = {
   conectado:    { label: 'Conectado',    cls: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300', dot: 'bg-emerald-500' },
@@ -27,6 +52,7 @@ const STATUS_INFO: Record<string, { label: string; cls: string; dot: string }> =
 export default function WhatsAppNumerosView() {
   const toast = useToast()
   const [numeros, setNumeros] = useState<Numero[]>([])
+  const [carga, setCarga] = useState<Carga[]>([])
   const [usuarios, setUsuarios] = useState<UsuarioRef[]>([])
   const [loading, setLoading] = useState(true)
   const [evolutionOk, setEvolutionOk] = useState(true)
@@ -44,7 +70,7 @@ export default function WhatsAppNumerosView() {
   const carregar = useCallback(async () => {
     const res = await fetch('/api/whatsapp/instancias')
     const data = await res.json()
-    if (res.ok) { setNumeros(data.numeros ?? []); setEvolutionOk(data.evolutionConfigurada) }
+    if (res.ok) { setNumeros(data.numeros ?? []); setCarga(data.carga ?? []); setEvolutionOk(data.evolutionConfigurada) }
     setLoading(false)
   }, [])
 
@@ -132,6 +158,24 @@ export default function WhatsAppNumerosView() {
         </button>
       </div>
 
+      {!loading && carga.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Carga por responsável</p>
+          <div className="space-y-1.5">
+            {carga.map(c => (
+              <div key={c.usuario_id ?? 'none'} className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-gray-700 dark:text-gray-300 truncate">{c.nome}</span>
+                <span className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                  <span>{c.n_conversas} conversa{c.n_conversas !== 1 ? 's' : ''}</span>
+                  {c.nao_lidas > 0 && <span className="text-blue-600 dark:text-blue-300 font-medium">{c.nao_lidas} não lidas</span>}
+                  {c.sem_resposta > 0 && <span className="text-amber-600 dark:text-amber-300 font-medium">{c.sem_resposta} sem resposta</span>}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="py-16 text-center text-gray-400"><Loader2 size={22} className="animate-spin mx-auto" /></div>
       ) : numeros.length === 0 ? (
@@ -155,9 +199,23 @@ export default function WhatsAppNumerosView() {
                       <p className="text-xs text-gray-400 dark:text-gray-500">{n.numero || 'sem número informado'}</p>
                     </div>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full shrink-0 ${st.cls}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} /> {st.label}
-                  </span>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${st.cls}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} /> {st.label}
+                    </span>
+                    {n.status === 'conectado' && (
+                      emAtividade(n.ultima_atividade)
+                        ? <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-300">Em atividade</span>
+                        : <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">Parado</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-x-3 gap-y-1 mt-2.5 flex-wrap text-xs text-gray-500 dark:text-gray-400">
+                  <span>{n.n_conversas} conversa{n.n_conversas !== 1 ? 's' : ''}</span>
+                  {n.nao_lidas > 0 && <span className="text-blue-600 dark:text-blue-300 font-medium">{n.nao_lidas} não lida{n.nao_lidas !== 1 ? 's' : ''}</span>}
+                  {n.sem_resposta > 0 && <span className="text-amber-600 dark:text-amber-300 font-medium">{n.sem_resposta} sem resposta</span>}
+                  <span className="text-gray-400 dark:text-gray-500">· última atividade {tempoRelativo(n.ultima_atividade)}</span>
                 </div>
 
                 <div className="flex items-center gap-2 mt-3 flex-wrap">

@@ -6,13 +6,23 @@ import { getEvolutionServer } from '@/lib/whatsapp/config'
 
 function digits(s?: string | null) { return (s || '').replace(/\D/g, '') }
 
+type AdminCli = ReturnType<typeof createAdminClient>
+/** Acesso (privacidade): responsável da conversa = eu, ou conversa sem responsável num número meu/compartilhado. */
+async function podeAcessar(admin: AdminCli, meId: string, instanciaId: string, responsavelId: string | null): Promise<boolean> {
+  if (responsavelId) return responsavelId === meId
+  const { data } = await admin.from('wa_instancias').select('usuario_id').eq('id', instanciaId).maybeSingle()
+  const owner = data?.usuario_id as string | null | undefined
+  return !owner || owner === meId
+}
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-  const { data: usuario } = await supabase.from('usuarios').select('tenant_id').eq('auth_id', user.id).maybeSingle()
+  const { data: usuario } = await supabase.from('usuarios').select('id, tenant_id').eq('auth_id', user.id).maybeSingle()
   if (!usuario?.tenant_id) return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
   const tenantId = usuario.tenant_id
+  const meId = usuario.id as string
 
   const body = await req.json()
   const { conversa_id, instancia_id, lead_id, cliente_id, texto } = body
@@ -26,11 +36,17 @@ export async function POST(req: NextRequest) {
 
   if (conversa_id) {
     const { data } = await admin.from('wa_conversas')
-      .select('id, telefone, instancia_id').eq('id', conversa_id).eq('tenant_id', tenantId).maybeSingle()
+      .select('id, telefone, instancia_id, responsavel_id').eq('id', conversa_id).eq('tenant_id', tenantId).maybeSingle()
     conv = data as ConvRef | null
+    if (data && !(await podeAcessar(admin, meId, data.instancia_id as string, data.responsavel_id as string | null))) {
+      return NextResponse.json({ error: 'Você não tem acesso a esta conversa.' }, { status: 403 })
+    }
   } else {
     // Iniciar: precisa de uma instância + um telefone (direto ou do lead/cliente)
     if (!instancia_id) return NextResponse.json({ error: 'Selecione o número (instância).' }, { status: 400 })
+    if (!(await podeAcessar(admin, meId, instancia_id, null))) {
+      return NextResponse.json({ error: 'Você não pode enviar por este número.' }, { status: 403 })
+    }
     let telefone = digits(body.telefone)
     let contatoNome: string | null = null
     if (!telefone && (lead_id || cliente_id)) {
@@ -102,7 +118,7 @@ export async function POST(req: NextRequest) {
     wa_message_id: r.id ?? null, criado_em: agora,
   })
   await admin.from('wa_conversas').update({
-    ultima_mensagem: texto.trim(), ultima_em: agora, atualizado_em: agora,
+    ultima_mensagem: texto.trim(), ultima_em: agora, ultima_direcao: 'out', atualizado_em: agora,
   }).eq('id', conv.id)
 
   return NextResponse.json({ ok: true, conversa_id: conv.id })

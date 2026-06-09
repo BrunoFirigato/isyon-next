@@ -142,6 +142,7 @@ export async function POST(req: NextRequest) {
       lead_id: vinc.lead_id,
       ultima_mensagem: texto,
       ultima_em: agora,
+      ultima_direcao: direcao,
       nao_lidas: direcao === 'in' ? 1 : 0,
     }).select('id').single()
     conversaId = novo?.id
@@ -159,6 +160,7 @@ export async function POST(req: NextRequest) {
     await admin.from('wa_conversas').update({
       ultima_mensagem: texto,
       ultima_em: agora,
+      ultima_direcao: direcao,
       atualizado_em: agora,
       contato_nome: conv?.contato_nome ?? contatoNome,
       nao_lidas: direcao === 'in' ? (conv?.nao_lidas ?? 0) + 1 : (conv?.nao_lidas ?? 0),

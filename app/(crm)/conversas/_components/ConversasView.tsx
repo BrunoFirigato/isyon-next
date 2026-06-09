@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2, Archive, ArchiveRestore, AlertTriangle } from 'lucide-react'
+import { Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2, Archive, ArchiveRestore, AlertTriangle, Clock, Users } from 'lucide-react'
 import WhatsAppIcon from '@/app/(crm)/_components/WhatsAppIcon'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
@@ -20,14 +20,17 @@ interface Conversa {
   arquivada: boolean
   ultima_mensagem: string | null
   ultima_em: string | null
+  ultima_direcao: string | null
+  responsavel_id: string | null
   wa_instancias?: { nome: string } | null
   leads?: { nome: string } | null
   clientes?: { nome: string; empresa: string | null } | null
 }
 interface Mensagem { id: string; direcao: string; texto: string | null; criado_em: string }
 interface Instancia { id: string; nome: string }
+interface UsuarioRef { id: string; nome: string }
 
-const SELECT = 'id,telefone,contato_nome,lead_id,cliente_id,instancia_id,nao_lidas,arquivada,ultima_mensagem,ultima_em,wa_instancias(nome),leads(nome),clientes(nome,empresa)'
+const SELECT = 'id,telefone,contato_nome,lead_id,cliente_id,instancia_id,nao_lidas,arquivada,ultima_mensagem,ultima_em,ultima_direcao,responsavel_id,wa_instancias(nome),leads(nome),clientes(nome,empresa)'
 
 function nomeContato(c: Conversa) {
   if (c.clientes) return c.clientes.empresa || c.clientes.nome
@@ -55,7 +58,10 @@ export default function ConversasView() {
   const [novaOpen, setNovaOpen] = useState(false)
   const [nvInst, setNvInst] = useState(''); const [nvTel, setNvTel] = useState(''); const [nvTexto, setNvTexto] = useState('')
   const [filtroSem, setFiltroSem] = useState(false)
+  const [filtroSemResposta, setFiltroSemResposta] = useState(false)
   const [verArquivadas, setVerArquivadas] = useState(false)
+  const [usuarios, setUsuarios] = useState<UsuarioRef[]>([])
+  const [transfOpen, setTransfOpen] = useState(false)
   const [numerosOffline, setNumerosOffline] = useState<string[]>([])
   const [criarOpen, setCriarOpen] = useState(false); const [novoLeadNome, setNovoLeadNome] = useState('')
   const [vincOpen, setVincOpen] = useState(false); const [vincBusca, setVincBusca] = useState('')
@@ -79,6 +85,7 @@ export default function ConversasView() {
   useEffect(() => {
     carregarConversas()
     supabase.from('wa_instancias').select('id, nome').eq('ativo', true).order('nome').then(({ data }) => { if (data) { setInstancias(data); if (data.length === 1) setNvInst(data[0].id) } })
+    supabase.from('usuarios').select('id, nome').order('nome').then(({ data }) => { if (data) setUsuarios(data) })
     const t = setInterval(carregarConversas, 6000)
     return () => clearInterval(t)
   }, [carregarConversas, supabase])
@@ -204,11 +211,27 @@ export default function ConversasView() {
     carregarConversas()
   }
 
+  async function transferir(usuarioId: string) {
+    if (!ativa) return
+    setAcaoBusy(true)
+    const res = await fetch('/api/whatsapp/transferir', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversa_id: ativa.id, usuario_id: usuarioId || null }),
+    })
+    const d = await res.json().catch(() => ({}))
+    setAcaoBusy(false); setTransfOpen(false)
+    if (!res.ok) { toast(d.error ?? 'Falha ao transferir', 'error'); return }
+    toast('Conversa transferida!')
+    setAtivaId(null)
+    carregarConversas()
+  }
+
   const q = busca.trim().toLowerCase()
   const lista = conversas.filter(c => {
     if (verArquivadas ? !c.arquivada : c.arquivada) return false
     if (filtroInst && c.instancia_id !== filtroInst) return false
     if (filtroSem && (c.lead_id || c.cliente_id)) return false
+    if (filtroSemResposta && c.ultima_direcao !== 'in') return false
     if (!q) return true
     return [nomeContato(c), c.telefone, c.ultima_mensagem].filter(Boolean).join(' ').toLowerCase().includes(q)
   })
@@ -250,14 +273,18 @@ export default function ConversasView() {
                 {instancias.map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
               </select>
             )}
+            <button onClick={() => { setFiltroSemResposta(v => !v); setFiltroSem(false); setVerArquivadas(false) }}
+              className={`w-full text-xs px-2 py-1.5 rounded-lg border transition-colors inline-flex items-center justify-center gap-1.5 ${filtroSemResposta ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-medium' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+              <Clock size={12} /> Aguardando resposta
+            </button>
             <div className="flex gap-2">
-              <button onClick={() => { setFiltroSem(v => !v); setVerArquivadas(false) }}
+              <button onClick={() => { setFiltroSem(v => !v); setFiltroSemResposta(false); setVerArquivadas(false) }}
                 className={`flex-1 text-xs px-2 py-1.5 rounded-lg border transition-colors ${filtroSem ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-medium' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
                 {filtroSem ? '● Só sem cadastro' : 'Sem cadastro'}
               </button>
-              <button onClick={() => { setVerArquivadas(v => !v); setFiltroSem(false) }}
+              <button onClick={() => { setVerArquivadas(v => !v); setFiltroSem(false); setFiltroSemResposta(false) }}
                 className={`flex-1 text-xs px-2 py-1.5 rounded-lg border transition-colors inline-flex items-center justify-center gap-1 ${verArquivadas ? 'bg-gray-200 dark:bg-gray-600 border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-200 font-medium' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
-                <Archive size={12} /> {verArquivadas ? 'Arquivadas' : 'Arquivadas'}
+                <Archive size={12} /> Arquivadas
               </button>
             </div>
           </div>
@@ -274,6 +301,7 @@ export default function ConversasView() {
                       {c.clientes ? <Building2 size={12} className="text-blue-500 shrink-0" /> : c.leads ? <UserPlus size={12} className="text-amber-500 shrink-0" /> : null}
                       {nomeContato(c)}
                     </span>
+                    {c.ultima_direcao === 'in' && c.nao_lidas === 0 && <Clock size={12} className="text-amber-500 shrink-0" />}
                     {c.nao_lidas > 0 && <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center group-hover:opacity-0 transition-opacity">{c.nao_lidas}</span>}
                   </div>
                   <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5 pr-6">{c.ultima_mensagem ?? c.telefone}</p>
@@ -303,6 +331,10 @@ export default function ConversasView() {
                   <p className="text-[11px] text-gray-400 flex items-center gap-1"><Smartphone size={10} /> {ativa.wa_instancias?.nome ?? ''} · {ativa.telefone}</p>
                 </div>
                 {link360 && <Link href={link360} className="text-xs font-medium text-blue-600 hover:underline shrink-0">Ver 360°</Link>}
+                <button onClick={() => setTransfOpen(true)} title="Transferir conversa para outro responsável"
+                  className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <Users size={16} />
+                </button>
                 <button onClick={() => arquivar(ativa, !ativa.arquivada)} title={ativa.arquivada ? 'Desarquivar' : 'Arquivar / ignorar'}
                   className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                   {ativa.arquivada ? <ArchiveRestore size={16} /> : <Archive size={16} />}
@@ -411,6 +443,36 @@ export default function ConversasView() {
                   {r.tipo === 'cliente' ? <Building2 size={13} className="text-blue-500 shrink-0" /> : <UserPlus size={13} className="text-amber-500 shrink-0" />}
                   <span className="text-sm text-gray-800 dark:text-gray-100 truncate">{r.nome}</span>
                   <span className="ml-auto text-[10px] text-gray-400 uppercase">{r.tipo}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transferir conversa */}
+      {transfOpen && ativa && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => !acaoBusy && setTransfOpen(false)} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Transferir conversa</h2>
+              <button onClick={() => setTransfOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              Escolha o novo responsável. Se não for você, esta conversa sairá da sua lista.
+            </p>
+            <div className="max-h-72 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700">
+              <button onClick={() => transferir('')} disabled={acaoBusy}
+                className="w-full flex items-center gap-2 px-1 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded disabled:opacity-60">
+                <Smartphone size={13} className="text-gray-400 shrink-0" />
+                <span className="text-sm text-gray-600 dark:text-gray-300">Seguir o responsável do número</span>
+              </button>
+              {usuarios.map(u => (
+                <button key={u.id} onClick={() => transferir(u.id)} disabled={acaoBusy}
+                  className="w-full flex items-center gap-2 px-1 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded disabled:opacity-60">
+                  <Users size={13} className="text-blue-500 shrink-0" />
+                  <span className="text-sm text-gray-800 dark:text-gray-100 truncate">{u.nome}</span>
                 </button>
               ))}
             </div>
