@@ -251,10 +251,9 @@ export default async function DashboardPage() {
                     const cor = PIPE_CORES[i % PIPE_CORES.length]
                     return (
                       <Link key={p.etapa} href="/oportunidades"
-                        className="relative rounded-xl border border-gray-100 dark:border-gray-700 p-3.5 pt-4 overflow-hidden hover:shadow-sm hover:-translate-y-0.5 transition-all">
-                        <span className="absolute top-0 inset-x-0 h-1" style={{ backgroundColor: cor }} />
+                        className="rounded-xl p-3 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
                         <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cor }} />
+                          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cor }} />
                           <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 truncate">{p.etapa}</p>
                         </div>
                         <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1.5 leading-none">{p.count}</p>
