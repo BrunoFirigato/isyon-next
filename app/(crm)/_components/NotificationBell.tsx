@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Bell, Clock, FileText, Calendar, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import VinculoBadge from './VinculoBadge'
 
 interface Vinc {
   cliente?: { nome: string; empresa: string | null } | null
@@ -200,11 +199,6 @@ export default function NotificationBell() {
                       <Clock size={10} className="inline mr-1" />
                       {item.subtitulo}
                     </p>
-                    {item.vinculo && (item.vinculo.op || item.vinculo.cliente || item.vinculo.lead) && (
-                      <div className="mt-1">
-                        <VinculoBadge cliente={item.vinculo.cliente} lead={item.vinculo.lead} op={item.vinculo.op} />
-                      </div>
-                    )}
                   </div>
                 </button>
               )

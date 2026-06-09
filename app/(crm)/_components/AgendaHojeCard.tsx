@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Calendar, Plus, Clock, CheckCircle2, XCircle, Pencil, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from './Toast'
-import VinculoBadge from './VinculoBadge'
 import CompromissoFormModal from '@/app/(crm)/agenda/_components/CompromissoFormModal'
 import { type Compromisso, tipoInfo, formatTime } from '@/app/(crm)/agenda/_components/types'
 
@@ -74,7 +73,6 @@ export default function AgendaHojeCard({ compromissos }: { compromissos: Comprom
                         {isLate && <span className="text-red-500 font-medium">· atrasada</span>}
                       </span>
                     )}
-                    <VinculoBadge cliente={c.cliente} lead={c.lead} op={c.op} />
                   </div>
                 </div>
                 {/* Ações */}
