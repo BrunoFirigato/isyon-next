@@ -25,6 +25,9 @@ export interface Pedido {
   itens: ItemPedido[] | null
   criado_em: string
   atualizado_em: string | null
+  omie_pedido_id?: string | null
+  omie_numero?: string | null
+  omie_enviado_em?: string | null
 }
 
 export interface ClienteRef {

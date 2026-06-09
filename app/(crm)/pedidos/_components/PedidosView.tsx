@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
   CheckCircle, XCircle, PackageCheck, FileText, Clock, ShieldCheck, Printer,
+  Send, Loader2, Check,
 } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import EmitirNFeModal from './EmitirNFeModal'
@@ -30,9 +31,10 @@ interface Props {
   empresas: EmpresaRef[]
   propostaLinks: PropostaLink[]
   currentStatus: string
+  omieConectado: boolean
 }
 
-export default function PedidosView({ pedidos, clientes, vendedores, empresas, propostaLinks, currentStatus }: Props) {
+export default function PedidosView({ pedidos, clientes, vendedores, empresas, propostaLinks, currentStatus, omieConectado }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [, startTransition] = useTransition()
@@ -51,6 +53,7 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [nfePedido, setNfePedido] = useState<Pedido | null>(null)
+  const [enviandoOmie, setEnviandoOmie] = useState<string | null>(null)
 
   function clienteNome(id: string | null) {
     if (!id) return null
@@ -83,6 +86,26 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
     await supabase.from('pedidos').update({ aprovado: true }).eq('id', id)
     toast('Pedido aprovado e liberado para faturamento. ✅')
     router.refresh()
+  }
+
+  async function enviarAoOmie(p: Pedido) {
+    setEnviandoOmie(p.id)
+    try {
+      const res = await fetch('/api/integracoes/omie/pedido', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pedido_id: p.id }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { toast(data.error ?? 'Falha ao enviar ao Omie', 'error'); return }
+      if (data.jaEnviado) toast('Este pedido já foi enviado ao Omie.', 'info')
+      else toast(`Pedido enviado ao Omie${data.numero ? ` · nº ${data.numero}` : ''} ✅`)
+      router.refresh()
+    } catch {
+      toast('Erro de conexão ao enviar ao Omie', 'error')
+    } finally {
+      setEnviandoOmie(null)
+    }
   }
 
   async function handleDelete(id: string) {
@@ -338,7 +361,30 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
                     )}
 
                     {/* Ações fiscais */}
-                    <div className="px-4 pb-4 pt-1 flex justify-end">
+                    <div className="px-4 pb-4 pt-1 flex flex-wrap justify-end items-center gap-2">
+                      {/* Enviar ao Omie (só se conectado) */}
+                      {omieConectado && (
+                        p.omie_pedido_id ? (
+                          <span
+                            title={p.omie_enviado_em ? `Enviado em ${formatDate(p.omie_enviado_em)}` : 'Enviado ao Omie'}
+                            className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 px-3 py-2 rounded-lg"
+                          >
+                            <Check size={14} /> Enviado ao Omie{p.omie_numero ? ` · nº ${p.omie_numero}` : ''}
+                          </span>
+                        ) : p.aprovado ? (
+                          <button
+                            onClick={() => enviarAoOmie(p)}
+                            disabled={enviandoOmie === p.id}
+                            className="flex items-center gap-1.5 border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-sm font-medium px-3.5 py-2 rounded-lg transition-colors disabled:opacity-60"
+                          >
+                            {enviandoOmie === p.id
+                              ? <Loader2 size={15} className="animate-spin" />
+                              : <Send size={15} />}
+                            {enviandoOmie === p.id ? 'Enviando…' : 'Enviar ao Omie'}
+                          </button>
+                        ) : null
+                      )}
+
                       {p.aprovado ? (
                         <button
                           onClick={() => setNfePedido(p)}

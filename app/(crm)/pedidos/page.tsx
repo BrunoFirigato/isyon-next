@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getCarteiraScope } from '@/lib/carteira'
 import PedidosView from './_components/PedidosView'
 
@@ -13,7 +14,7 @@ export default async function PedidosPage({ searchParams }: Props) {
 
   let query = supabase
     .from('pedidos')
-    .select('id, numero, status, aprovado, valor, obs, cliente_id, vendedor_id, cond_pagamento_id, tabela_preco_id, proposta_id, empresa_id, segmento, itens, criado_em, atualizado_em')
+    .select('id, numero, status, aprovado, valor, obs, cliente_id, vendedor_id, cond_pagamento_id, tabela_preco_id, proposta_id, empresa_id, segmento, itens, criado_em, atualizado_em, omie_pedido_id, omie_numero, omie_enviado_em')
     .order('criado_em', { ascending: false })
 
   if (status && status !== 'todos') {
@@ -36,6 +37,21 @@ export default async function PedidosPage({ searchParams }: Props) {
     supabase.from('propostas').select('id, numero'),
   ])
 
+  // Omie conectado? (server-side, vale p/ qualquer perfil) — habilita "Enviar ao Omie"
+  let omieConectado = false
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: usuario } = await supabase
+      .from('usuarios').select('tenant_id').eq('auth_id', user.id).maybeSingle()
+    if (usuario?.tenant_id) {
+      const admin = createAdminClient()
+      const { data: integ } = await admin
+        .from('integracoes').select('status')
+        .eq('tenant_id', usuario.tenant_id).eq('provider', 'omie').maybeSingle()
+      omieConectado = integ?.status === 'conectado'
+    }
+  }
+
   return (
     <PedidosView
       pedidos={pedidos ?? []}
@@ -44,6 +60,7 @@ export default async function PedidosPage({ searchParams }: Props) {
       empresas={empresas ?? []}
       propostaLinks={propostaLinks ?? []}
       currentStatus={status ?? 'todos'}
+      omieConectado={omieConectado}
     />
   )
 }

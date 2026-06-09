@@ -134,6 +134,128 @@ export async function listarClientesOmie(
   }
 }
 
+// ───────────────────────────────────────────────────────────────────────────
+// ESCRITA: Pedido Isyon → Omie (resolve cliente + cria pedido de venda)
+// ───────────────────────────────────────────────────────────────────────────
+
+/** Acha o codigo_cliente_omie por CNPJ/CPF. null se não encontrar. */
+export async function acharClienteOmiePorDoc(
+  appKey: string, appSecret: string, doc: string,
+): Promise<number | null> {
+  const digits = (doc ?? '').replace(/\D/g, '')
+  if (!digits) return null
+  const r = await omieCall(appKey, appSecret, 'geral/clientes/', 'ListarClientes', {
+    pagina: 1, registros_por_pagina: 1, clientesFiltro: { cnpj_cpf: digits },
+  })
+  const found = (r.data?.clientes_cadastro as Array<Record<string, unknown>>)?.[0]
+  const cod = found?.codigo_cliente_omie
+  return cod ? Number(cod) : null
+}
+
+export interface ClienteParaOmie {
+  id: string
+  nome: string
+  empresa?: string | null
+  cpf_cnpj?: string | null
+  email?: string | null
+  pessoa_fisica?: boolean
+  cep?: string | null
+  rua?: string | null
+  numero?: string | null
+  complemento?: string | null
+  bairro?: string | null
+  cidade?: string | null
+  estado?: string | null
+  ddd?: string | null
+  fone?: string | null
+}
+
+/** Cria um cliente no Omie e devolve o codigo_cliente_omie (ou erro). */
+export async function incluirClienteOmie(
+  appKey: string, appSecret: string, c: ClienteParaOmie,
+): Promise<{ codigo?: number; error?: string }> {
+  const nome = (c.empresa || c.nome || '').trim()
+  const param: Record<string, unknown> = {
+    codigo_cliente_integracao: c.id,
+    razao_social: nome.slice(0, 60),
+    nome_fantasia: nome.slice(0, 60),
+    pessoa_fisica: c.pessoa_fisica ? 'S' : 'N',
+  }
+  const doc = (c.cpf_cnpj ?? '').replace(/\D/g, '')
+  if (doc) param.cnpj_cpf = doc
+  if (c.email) param.email = c.email
+  if (c.cep) param.cep = c.cep.replace(/\D/g, '')
+  if (c.rua) param.endereco = c.rua
+  if (c.numero) param.endereco_numero = c.numero
+  if (c.complemento) param.complemento = c.complemento
+  if (c.bairro) param.bairro = c.bairro
+  if (c.cidade) param.cidade = c.cidade
+  if (c.estado) param.estado = c.estado
+  if (c.ddd) param.telefone1_ddd = c.ddd
+  if (c.fone) param.telefone1_numero = c.fone
+
+  const r = await omieCall(appKey, appSecret, 'geral/clientes/', 'IncluirCliente', param)
+  const fault = r.data?.faultstring
+  if (fault) {
+    // CNPJ/CPF já cadastrado → recupera o código existente
+    if (doc && /cadastrad|exist|duplic|já/i.test(fault)) {
+      const ja = await acharClienteOmiePorDoc(appKey, appSecret, doc)
+      if (ja) return { codigo: ja }
+    }
+    return { error: fault }
+  }
+  const cod = r.data?.codigo_cliente_omie
+  return cod ? { codigo: Number(cod) } : { error: 'Omie não retornou o código do cliente.' }
+}
+
+export interface ItemParaOmie {
+  codigo: string          // código/SKU do produto (precisa existir no Omie)
+  descricao: string
+  quantidade: number
+  valor_unitario: number
+}
+
+/** Cria o Pedido de Venda no Omie (etapa 10). Devolve número/código gerado ou erro. */
+export async function incluirPedidoOmie(
+  appKey: string, appSecret: string,
+  args: { codigoCliente: number; codigoIntegracao: string; itens: ItemParaOmie[] },
+): Promise<{ numero?: string; codigoOmie?: string; error?: string }> {
+  const hoje = new Date()
+  const dd = String(hoje.getDate()).padStart(2, '0')
+  const mm = String(hoje.getMonth() + 1).padStart(2, '0')
+  const dataPrev = `${dd}/${mm}/${hoje.getFullYear()}`
+
+  const det = args.itens.map((it, i) => ({
+    ide: { codigo_item_integracao: `${args.codigoIntegracao}-${i + 1}` },
+    produto: {
+      codigo: it.codigo,
+      descricao: it.descricao,
+      quantidade: it.quantidade,
+      valor_unitario: it.valor_unitario,
+    },
+  }))
+
+  const param = {
+    cabecalho: {
+      codigo_cliente: args.codigoCliente,
+      codigo_pedido_integracao: args.codigoIntegracao,  // evita duplicidade no reenvio
+      data_previsao: dataPrev,
+      etapa: '10',           // 10 = pedido de venda (00 = orçamento)
+      codigo_parcela: '000', // 000 = à vista (ajustável por tenant no futuro)
+      quantidade_itens: args.itens.length,
+    },
+    det,
+  }
+
+  const r = await omieCall(appKey, appSecret, 'produtos/pedido/', 'IncluirPedido', param)
+  const fault = r.data?.faultstring
+  if (fault) return { error: fault }
+  return {
+    numero:    r.data?.numero_pedido != null ? String(r.data.numero_pedido) : undefined,
+    codigoOmie: r.data?.codigo_pedido != null ? String(r.data.codigo_pedido) : undefined,
+  }
+}
+
 /**
  * Valida as credenciais do Omie chamando um endpoint leve (ListarClientes, 1 registro).
  * "Não existem registros" conta como SUCESSO (chave válida, base apenas vazia).
