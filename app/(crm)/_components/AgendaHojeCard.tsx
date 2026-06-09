@@ -64,13 +64,14 @@ export default function AgendaHojeCard({ compromissos }: { compromissos: Comprom
               <div key={c.id} className="px-4 py-3 flex items-start gap-2.5 group">
                 <span className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${tipo.dot}`} />
                 <div className="min-w-0 flex-1">
-                  <p className={`text-sm truncate ${isDone ? 'line-through text-gray-400 dark:text-gray-500' : isLate ? 'text-red-700 dark:text-red-400 font-medium' : 'text-gray-800 dark:text-gray-200'}`}>
+                  <p className={`text-sm truncate ${isDone ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'}`}>
                     {c.titulo}
                   </p>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     {mounted && (
-                      <span className={`text-[11px] flex items-center gap-1 ${isLate ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-                        <Clock size={10} /> {quando}{isLate ? ' · atrasada' : ''}
+                      <span className="text-[11px] flex items-center gap-1 text-gray-400">
+                        <Clock size={10} /> {quando}
+                        {isLate && <span className="text-red-500 font-medium">· atrasada</span>}
                       </span>
                     )}
                     <VinculoBadge cliente={c.cliente} lead={c.lead} op={c.op} />
