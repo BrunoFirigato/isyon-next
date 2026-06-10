@@ -347,7 +347,7 @@ export default function OpsView({ ops }: Props) {
               const cards = abertas.filter((o) => etapaCanonica(o.etapa) === etapa)
               const total = cards.reduce((s, o) => s + (o.valor ?? 0), 0)
               return (
-                <div key={etapa} className="min-w-[260px] max-w-[260px] flex flex-col">
+                <div key={etapa} className="flex-1 min-w-[240px] flex flex-col">
                   {/* Column header */}
                   <div className="flex items-center justify-between mb-3 px-1">
                     <div>
