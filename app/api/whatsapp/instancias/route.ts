@@ -15,7 +15,7 @@ async function assertTenantAdmin() {
   const { data: usuario } = await supabase
     .from('usuarios').select('id, tenant_id, perfil').eq('auth_id', user.id).maybeSingle()
   if (!usuario || usuario.perfil !== 'admin' || !usuario.tenant_id) return null
-  return { userId: usuario.id, tenantId: usuario.tenant_id }
+  return { userId: usuario.id, tenantId: usuario.tenant_id, email: user.email ?? '' }
 }
 
 function mapEstado(state?: string | null): string {
@@ -161,6 +161,10 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'diagnostico') {
+    // Diagnóstico técnico — restrito ao suporte do Isyon (superadmin)
+    if (caller.email !== 'sa@isyon.com.br') {
+      return NextResponse.json({ error: 'Recurso de suporte.' }, { status: 403 })
+    }
     // Reaplica o webhook e lê de volta a config — diagnostica recebimento de mensagens
     const { id } = body
     const { data: row } = await admin.from('wa_instancias').select('instance_name').eq('id', id).eq('tenant_id', caller.tenantId).maybeSingle()

@@ -12,5 +12,8 @@ export default async function WhatsAppNumerosPage() {
   if (!usuario?.tenant_id) redirect('/dashboard')
   if (usuario.perfil !== 'admin') redirect('/integracoes')
 
-  return <WhatsAppNumerosView />
+  // Diagnóstico técnico de recebimento fica só para o suporte do Isyon (superadmin).
+  const isSuperadmin = user.email === 'sa@isyon.com.br'
+
+  return <WhatsAppNumerosView isSuperadmin={isSuperadmin} />
 }

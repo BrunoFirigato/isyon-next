@@ -59,7 +59,7 @@ const STATUS_INFO: Record<string, { label: string; cls: string; dot: string }> =
   desconectado: { label: 'Desconectado', cls: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',                dot: 'bg-gray-400' },
 }
 
-export default function WhatsAppNumerosView() {
+export default function WhatsAppNumerosView({ isSuperadmin = false }: { isSuperadmin?: boolean }) {
   const toast = useToast()
   const [numeros, setNumeros] = useState<Numero[]>([])
   const [carga, setCarga] = useState<Carga[]>([])
@@ -271,12 +271,14 @@ export default function WhatsAppNumerosView() {
                   </label>
 
                   <div className="ml-auto flex items-center gap-1">
-                    <button onClick={() => testarRecebimento(n.id, n.nome)} disabled={diagBusy === n.id}
-                      title="Verifica e reaplica o webhook (recebimento de mensagens)"
-                      className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors disabled:opacity-60">
-                      {diagBusy === n.id ? <Loader2 size={13} className="animate-spin" /> : <Webhook size={13} />}
-                      <span className="hidden sm:inline">Testar recebimento</span>
-                    </button>
+                    {isSuperadmin && (
+                      <button onClick={() => testarRecebimento(n.id, n.nome)} disabled={diagBusy === n.id}
+                        title="Diagnóstico técnico do webhook (suporte Isyon)"
+                        className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors disabled:opacity-60">
+                        {diagBusy === n.id ? <Loader2 size={13} className="animate-spin" /> : <Webhook size={13} />}
+                        <span className="hidden sm:inline">Testar recebimento</span>
+                      </button>
+                    )}
                     <button onClick={() => reconectar(n.id)} title={n.status === 'conectado' ? 'Reconectar' : 'Conectar (QR)'}
                       className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 transition-colors">
                       {n.status === 'conectado' ? <RefreshCw size={13} /> : <QrCode size={13} />}
