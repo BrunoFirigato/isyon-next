@@ -85,28 +85,28 @@ export const COLS_PRODUTOS: ColDef[] = [
   { header: 'Tipo',         key: 'tipo',        width: 12 }, // produto | servico
   { header: 'Unidade',      key: 'unidade',     width: 10 },
   { header: 'Custo',        key: 'custo',       width: 12 },
-  { header: 'Preço',        key: 'preco',       width: 12 },
+  { header: 'Categoria',    key: 'categoria',   width: 20 }, // cria se não existir
+  { header: 'Família',      key: 'familia',     width: 20 }, // cria se não existir
   { header: 'NCM',          key: 'ncm',         width: 12 },
   { header: 'CEST',         key: 'cest',        width: 12 },
   { header: 'Cód. Serviço', key: 'cod_servico', width: 14 },
-  { header: 'Origem',       key: 'origem',      width: 10 }, // 0..8
   { header: 'Segmento',     key: 'segmento',    width: 16 },
   { header: 'Descrição',    key: 'descricao',   width: 40 },
 ]
 
 export const EXEMPLO_PRODUTO = {
-  nome:        'Notebook Dell Latitude',
-  codigo:      'NB001',
+  nome:        'Açúcar Refinado União 1kg',
+  codigo:      'AC001',
   tipo:        'produto',
-  unidade:     'un',
-  custo:       '3.000,00',
-  preco:       '4.500,00',
-  ncm:         '84713012',
+  unidade:     'UN',
+  custo:       '3,20',
+  categoria:   'Mercearia',
+  familia:     'Açúcar',
+  ncm:         '17019900',
   cest:        '',
   cod_servico: '',
-  origem:      '0',
   segmento:    '',
-  descricao:   'Notebook i7 16GB',
+  descricao:   '',
 }
 
 // ── Oportunidades ─────────────────────────────────────────────────────────────

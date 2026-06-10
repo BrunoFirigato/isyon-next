@@ -9,6 +9,27 @@ function num(v: string | undefined): number | null {
   return isNaN(n) ? null : n
 }
 
+/** Acha as classificações por nome (cria as que faltarem). Devolve mapa nome(lower)→id. */
+async function resolveClassif(
+  admin: ReturnType<typeof createAdminClient>,
+  tabela: 'categorias' | 'familias',
+  tenantId: string,
+  nomes: string[],
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>()
+  const distintos = [...new Set(nomes.map(n => n.trim()).filter(Boolean))]
+  if (distintos.length === 0) return map
+  const { data: existentes } = await admin.from(tabela).select('id, nome').eq('tenant_id', tenantId)
+  for (const e of existentes ?? []) map.set(String(e.nome).trim().toLowerCase(), e.id as string)
+  const faltantes = distintos.filter(n => !map.has(n.toLowerCase()))
+  if (faltantes.length) {
+    const { data: novos } = await admin.from(tabela)
+      .insert(faltantes.map(nome => ({ tenant_id: tenantId, nome }))).select('id, nome')
+    for (const n of novos ?? []) map.set(String(n.nome).trim().toLowerCase(), n.id as string)
+  }
+  return map
+}
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -25,9 +46,14 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient()
 
+  // Resolve categorias/famílias por nome (cria as que faltarem)
+  const catMap = await resolveClassif(admin, 'categorias', usuario.tenant_id, validas.map(r => r.dados.categoria ?? ''))
+  const famMap = await resolveClassif(admin, 'familias',   usuario.tenant_id, validas.map(r => r.dados.familia ?? ''))
+
   const payload = validas.map(r => {
     const tipo = r.dados.tipo?.trim().toLowerCase() === 'servico' ? 'servico' : 'produto'
-    const origemDig = r.dados.origem?.replace(/\D/g, '')
+    const cat = r.dados.categoria?.trim()
+    const fam = r.dados.familia?.trim()
     return {
       tenant_id:   usuario.tenant_id,
       nome:        r.dados.nome?.trim(),
@@ -35,12 +61,14 @@ export async function POST(req: NextRequest) {
       tipo,
       unidade:     r.dados.unidade?.trim().toUpperCase() || 'UN',
       custo:       num(r.dados.custo),
-      preco:       num(r.dados.preco),
+      preco:       null,
       ncm:         r.dados.ncm?.replace(/\D/g, '') || null,
       cest:        r.dados.cest?.trim()        || null,
       cod_servico: r.dados.cod_servico?.trim() || null,
-      origem:      origemDig ? parseInt(origemDig) : 0,
+      origem:      0,
       segmento:    r.dados.segmento?.trim()    || null,
+      categoria_id: cat ? (catMap.get(cat.toLowerCase()) ?? null) : null,
+      familia_id:   fam ? (famMap.get(fam.toLowerCase()) ?? null) : null,
       descricao:   r.dados.descricao?.trim()   || null,
       ativo:       true,
     }
