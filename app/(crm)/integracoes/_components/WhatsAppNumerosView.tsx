@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Smartphone, Trash2, QrCode, RefreshCw, X, Loader2 } from 'lucide-react'
+import { ArrowLeft, Plus, Smartphone, Trash2, QrCode, RefreshCw, X, Loader2, Webhook, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 
@@ -23,6 +23,14 @@ interface Numero {
 }
 interface UsuarioRef { id: string; nome: string }
 interface Carga { usuario_id: string | null; nome: string; n_conversas: number; nao_lidas: number; sem_resposta: number }
+interface DiagResult {
+  nome: string
+  ok: boolean
+  expectedUrl: string
+  found: { ok: boolean; url?: string | null; enabled?: boolean | null; events?: string[] | null; error?: string }
+  applied: { ok: boolean; status?: number; detail?: string }
+  checks: { urlOk: boolean; enabledOk: boolean; eventsOk: boolean }
+}
 
 const DIAS_PARADO = 3 // sem atividade há 3+ dias = "parado"
 
@@ -67,6 +75,8 @@ export default function WhatsAppNumerosView() {
 
   const [qr, setQr] = useState<{ id: string; base64: string | null } | null>(null)
   const [removendo, setRemovendo] = useState<string | null>(null)
+  const [diagBusy, setDiagBusy] = useState<string | null>(null)
+  const [diag, setDiag] = useState<DiagResult | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const carregar = useCallback(async () => {
@@ -122,6 +132,18 @@ export default function WhatsAppNumerosView() {
     if (!res.ok || !d.qrBase64) { toast(d.error ?? 'Não foi possível gerar o QR.', 'error'); setQr(null); return }
     setQr({ id, base64: d.qrBase64 })
     iniciarPoll(id)
+  }
+
+  async function testarRecebimento(id: string, nome: string) {
+    setDiagBusy(id)
+    try {
+      const res = await fetch('/api/whatsapp/instancias', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'diagnostico', id }) })
+      const d = await res.json()
+      if (!res.ok) { toast(d.error ?? 'Falha no diagnóstico', 'error'); return }
+      setDiag({ nome, ...d })
+    } finally {
+      setDiagBusy(null)
+    }
   }
 
   async function atualizar(id: string, patch: Record<string, unknown>) {
@@ -247,6 +269,12 @@ export default function WhatsAppNumerosView() {
                   </label>
 
                   <div className="ml-auto flex items-center gap-1">
+                    <button onClick={() => testarRecebimento(n.id, n.nome)} disabled={diagBusy === n.id}
+                      title="Verifica e reaplica o webhook (recebimento de mensagens)"
+                      className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors disabled:opacity-60">
+                      {diagBusy === n.id ? <Loader2 size={13} className="animate-spin" /> : <Webhook size={13} />}
+                      <span className="hidden sm:inline">Testar recebimento</span>
+                    </button>
                     <button onClick={() => reconectar(n.id)} title={n.status === 'conectado' ? 'Reconectar' : 'Conectar (QR)'}
                       className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 transition-colors">
                       {n.status === 'conectado' ? <RefreshCw size={13} /> : <QrCode size={13} />}
@@ -316,6 +344,49 @@ export default function WhatsAppNumerosView() {
         </div>
       )}
 
+      {/* Resultado do diagnóstico de recebimento */}
+      {diag && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setDiag(null)} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <button onClick={() => setDiag(null)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><X size={18} /></button>
+            <div className="flex items-center gap-2 mb-3">
+              {diag.ok
+                ? <CheckCircle2 size={20} className="text-emerald-500 shrink-0" />
+                : <AlertTriangle size={20} className="text-amber-500 shrink-0" />}
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                {diag.ok ? 'Recebimento configurado ✓' : 'Atenção no recebimento'}
+              </h2>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              {diag.ok
+                ? <>O webhook de <strong>{diag.nome}</strong> está ativo e apontando para o Isyon. As mensagens recebidas dos clientes vão aparecer nas Conversas. Se ainda não aparecerem, peça para o contato enviar uma nova mensagem.</>
+                : <>Reaplicamos o webhook de <strong>{diag.nome}</strong>, mas algo ainda não bateu (veja abaixo). Mensagens enviadas a partir de agora devem começar a chegar — teste pedindo uma nova mensagem ao contato.</>}
+            </p>
+
+            <div className="space-y-2 text-sm">
+              <DiagRow ok={diag.applied.ok} label="Webhook aplicado na instância"
+                detail={diag.applied.ok ? undefined : (diag.applied.detail || `HTTP ${diag.applied.status ?? '—'}`)} />
+              <DiagRow ok={diag.checks.urlOk} label="Apontando para o endereço do Isyon"
+                detail={diag.found.url ? undefined : 'nenhuma URL configurada'} />
+              <DiagRow ok={diag.checks.enabledOk} label="Webhook habilitado" />
+              <DiagRow ok={diag.checks.eventsOk} label="Evento de mensagens (MESSAGES_UPSERT)" />
+            </div>
+
+            {diag.found.url && (
+              <p className="mt-3 text-[11px] text-gray-400 dark:text-gray-500 break-all">
+                Configurado: {diag.found.url.split('?')[0]}
+              </p>
+            )}
+
+            <button onClick={() => setDiag(null)}
+              className="w-full mt-5 py-2.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+              Entendi
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Confirmar remoção */}
       {removendo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -330,6 +401,20 @@ export default function WhatsAppNumerosView() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function DiagRow({ ok, label, detail }: { ok: boolean; label: string; detail?: string }) {
+  return (
+    <div className="flex items-start gap-2">
+      {ok
+        ? <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+        : <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />}
+      <div className="min-w-0">
+        <p className="text-gray-700 dark:text-gray-300">{label}</p>
+        {!ok && detail && <p className="text-xs text-amber-600 dark:text-amber-400 break-all">{detail}</p>}
+      </div>
     </div>
   )
 }

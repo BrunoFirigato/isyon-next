@@ -65,21 +65,39 @@ export async function deleteInstance(srv: EvolutionServer, instanceName: string)
 }
 
 /** Configura o webhook de uma instância para receber as mensagens. */
-export async function setWebhook(srv: EvolutionServer, instanceName: string, url: string): Promise<{ ok: boolean; error?: string }> {
-  const evento = ['MESSAGES_UPSERT']
-  // Tenta o formato v1.8.6; se falhar, tenta o formato alternativo.
+export async function setWebhook(srv: EvolutionServer, instanceName: string, url: string): Promise<{ ok: boolean; status?: number; detail?: string }> {
+  const events = ['MESSAGES_UPSERT']
+  const u = `${base(srv.url)}/webhook/set/${encodeURIComponent(instanceName)}`
+  // Tenta o formato plano (v1.8.6) e, se falhar, o formato aninhado.
   try {
-    const res = await fetch(`${base(srv.url)}/webhook/set/${encodeURIComponent(instanceName)}`, {
+    const res = await fetch(u, {
       method: 'POST', headers: hdrs(srv.key),
-      body: JSON.stringify({ url, webhook_by_events: false, events: evento }),
+      body: JSON.stringify({ url, enabled: true, webhook_by_events: false, webhook_base64: false, events }),
     })
-    if (res.ok) return { ok: true }
-    const res2 = await fetch(`${base(srv.url)}/webhook/set/${encodeURIComponent(instanceName)}`, {
+    const d = await res.text().catch(() => '')
+    if (res.ok) return { ok: true, status: res.status }
+    const res2 = await fetch(u, {
       method: 'POST', headers: hdrs(srv.key),
-      body: JSON.stringify({ webhook: { url, enabled: true, events: evento } }),
+      body: JSON.stringify({ webhook: { url, enabled: true, webhook_by_events: false, events } }),
     })
-    if (res2.ok) return { ok: true }
-    return { ok: false, error: `Evolution ${res.status}` }
+    const d2 = await res2.text().catch(() => '')
+    if (res2.ok) return { ok: true, status: res2.status }
+    return { ok: false, status: res.status, detail: (d || d2 || '').slice(0, 200) }
+  } catch (err) {
+    return { ok: false, detail: err instanceof Error ? err.message : 'Erro de conexão' }
+  }
+}
+
+/** Lê a configuração atual do webhook de uma instância (para diagnóstico). */
+export async function findWebhook(
+  srv: EvolutionServer, instanceName: string,
+): Promise<{ ok: boolean; url?: string | null; enabled?: boolean | null; events?: string[] | null; error?: string }> {
+  try {
+    const res = await fetch(`${base(srv.url)}/webhook/find/${encodeURIComponent(instanceName)}`, { headers: hdrs(srv.key) })
+    const d = await res.json().catch(() => ({}))
+    if (!res.ok) return { ok: false, error: `Evolution ${res.status}` }
+    const w = (d?.webhook ?? d) as { url?: string; enabled?: boolean; events?: string[] }
+    return { ok: true, url: w?.url ?? null, enabled: w?.enabled ?? null, events: w?.events ?? null }
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Erro de conexão' }
   }

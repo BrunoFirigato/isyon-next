@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import {
   createInstance, connectInstance, connectionState,
-  logoutInstance, deleteInstance, listInstances, setWebhook,
+  logoutInstance, deleteInstance, listInstances, setWebhook, findWebhook,
 } from '@/lib/whatsapp/evolution'
 import { getEvolutionServer, getWebhookToken, buildWebhookUrl } from '@/lib/whatsapp/config'
 
@@ -158,6 +158,35 @@ export async function POST(req: NextRequest) {
     const status = mapEstado(r.state)
     await admin.from('wa_instancias').update({ status }).eq('id', id)
     return NextResponse.json({ ok: true, estado: r.state, status })
+  }
+
+  if (action === 'diagnostico') {
+    // Reaplica o webhook e lê de volta a config — diagnostica recebimento de mensagens
+    const { id } = body
+    const { data: row } = await admin.from('wa_instancias').select('instance_name').eq('id', id).eq('tenant_id', caller.tenantId).maybeSingle()
+    if (!row) return NextResponse.json({ error: 'Número não encontrado' }, { status: 404 })
+
+    const tk = await getWebhookToken(admin)
+    if (!tk) {
+      return NextResponse.json({ error: 'O token do webhook não está configurado no servidor. Fale com o suporte do Isyon.' }, { status: 400 })
+    }
+    const expectedUrl = buildWebhookUrl(tk)
+    const applied = await setWebhook(srv, row.instance_name as string, expectedUrl)
+    const found = await findWebhook(srv, row.instance_name as string)
+
+    const bare = (u?: string | null) => (u ?? '').split('?')[0]
+    const urlOk = !!found.url && bare(found.url) === bare(expectedUrl)
+    const enabledOk = found.enabled !== false
+    const eventsOk = !found.events || found.events.some(e => String(e).toUpperCase().includes('MESSAGES_UPSERT'))
+    const ok = applied.ok && found.ok && urlOk && enabledOk && eventsOk
+
+    return NextResponse.json({
+      ok,
+      applied,
+      found,
+      expectedUrl,
+      checks: { urlOk, enabledOk, eventsOk },
+    })
   }
 
   if (action === 'atualizar') {
