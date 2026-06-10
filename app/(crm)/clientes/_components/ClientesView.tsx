@@ -309,7 +309,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
 
       {/* Tabela — desktop */}
       {items.length > 0 && (
-        <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
@@ -335,7 +335,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
                         {c.empresa && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{c.empresa}</p>}
                       </td>
                       <td className="px-4 py-3">
-                        {c.email && <p className="text-gray-600 dark:text-gray-400">{c.email}</p>}
+                        {c.email && <p className="text-gray-600 dark:text-gray-400 max-w-[220px] truncate" title={c.email}>{c.email}</p>}
                         {c.telefone && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{c.telefone}</p>}
                       </td>
                       <td className="px-4 py-3">
