@@ -146,7 +146,11 @@ export async function POST(req: NextRequest) {
   }
 
   // 8. Cria o Pedido de Venda no Omie
-  const frete = { modalidade: String(pedido.modalidade_frete ?? '9'), valor: Number(pedido.valor_frete) || 0 }
+  // O valor do frete só compõe o total quando é "Por conta do emitente (CIF)".
+  // Nas demais modalidades (FOB / terceiros) o cliente paga a transportadora à
+  // parte, então enviamos a modalidade mas com valor 0 para o total bater com o Isyon.
+  const modalidadeFrete = String(pedido.modalidade_frete ?? '9')
+  const frete = { modalidade: modalidadeFrete, valor: modalidadeFrete === '0' ? (Number(pedido.valor_frete) || 0) : 0 }
   const ped = await incluirPedidoOmie(app_key, app_secret, {
     codigoCliente,
     codigoIntegracao: pedido.id,

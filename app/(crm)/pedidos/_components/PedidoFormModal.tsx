@@ -148,7 +148,13 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
     }))
   }
 
-  const total = calcTotal(itens)
+  const subtotal = calcTotal(itens)
+  const freteNum = valorFrete ? parseFloat(valorFrete.replace(',', '.')) : 0
+  // Frete só compõe o total quando é "Por conta do emitente (CIF)" — nas demais
+  // modalidades (FOB / terceiros) o cliente paga a transportadora à parte, então
+  // o valor é apenas informativo.
+  const freteCompoe = modalidadeFrete === '0' && freteNum > 0
+  const total = subtotal + (freteCompoe ? freteNum : 0)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -409,9 +415,28 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
                   ))}
                 </div>
 
-                <div className="flex justify-end items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total</span>
-                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{brl(total)}</span>
+                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 space-y-1">
+                  {freteNum > 0 && (
+                    <>
+                      <div className="flex justify-end items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                        <span>Subtotal produtos</span>
+                        <span className="w-28 text-right">{brl(subtotal)}</span>
+                      </div>
+                      <div className="flex justify-end items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                        <span>
+                          Frete{' '}
+                          {freteCompoe
+                            ? <span className="text-gray-400">(CIF · compõe)</span>
+                            : <span className="text-gray-400">(não compõe · cliente paga à parte)</span>}
+                        </span>
+                        <span className="w-28 text-right">{freteCompoe ? `+ ${brl(freteNum)}` : brl(freteNum)}</span>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex justify-end items-center gap-3">
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total</span>
+                    <span className="text-lg font-bold text-gray-900 dark:text-gray-100 w-28 text-right">{brl(total)}</span>
+                  </div>
                 </div>
               </div>
             </div>
