@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2, Archive, ArchiveRestore, AlertTriangle, Clock, Users } from 'lucide-react'
 import WhatsAppIcon from '@/app/(crm)/_components/WhatsAppIcon'
+import ConversaComercial from './ConversaComercial'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
@@ -394,6 +395,15 @@ export default function ConversasView() {
                   </div>
                 </div>
               )}
+
+              {/* Cockpit comercial — contexto + ações (proposta, oportunidade) */}
+              <ConversaComercial
+                conversaId={ativa.id}
+                clienteId={ativa.cliente_id}
+                leadId={ativa.lead_id}
+                contatoNome={nomeContato(ativa)}
+                onSent={() => { carregarMensagens(ativa.id); carregarConversas() }}
+              />
 
               <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-gray-50/50 dark:bg-gray-900/30">
                 {mensagens.map(m => (
