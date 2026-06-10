@@ -48,6 +48,7 @@ export default function ConversasView() {
   const searchParams = useSearchParams()
   const [conversas, setConversas] = useState<Conversa[]>([])
   const [instancias, setInstancias] = useState<Instancia[]>([])
+  const [instCarregado, setInstCarregado] = useState(false)
   const [ativaId, setAtivaId] = useState<string | null>(null)
   const [mensagens, setMensagens] = useState<Mensagem[]>([])
   const [busca, setBusca] = useState('')
@@ -84,7 +85,7 @@ export default function ConversasView() {
 
   useEffect(() => {
     carregarConversas()
-    supabase.from('wa_instancias').select('id, nome').eq('ativo', true).order('nome').then(({ data }) => { if (data) { setInstancias(data); if (data.length === 1) setNvInst(data[0].id) } })
+    supabase.from('wa_instancias').select('id, nome').eq('ativo', true).order('nome').then(({ data }) => { if (data) { setInstancias(data); if (data.length === 1) setNvInst(data[0].id) } setInstCarregado(true) })
     supabase.from('usuarios').select('id, nome').order('nome').then(({ data }) => { if (data) setUsuarios(data) })
     const t = setInterval(carregarConversas, 6000)
     return () => clearInterval(t)
@@ -236,6 +237,7 @@ export default function ConversasView() {
     return [nomeContato(c), c.telefone, c.ultima_mensagem].filter(Boolean).join(' ').toLowerCase().includes(q)
   })
 
+  const semNumero = instCarregado && instancias.length === 0
   const semCadastro = !!ativa && !ativa.lead_id && !ativa.cliente_id
   const link360 = ativa?.cliente_id ? `/clientes/${ativa.cliente_id}` : ativa?.lead_id ? `/leads/${ativa.lead_id}` : null
 
@@ -243,7 +245,9 @@ export default function ConversasView() {
     <div className="flex flex-col" style={{ height: 'calc(100vh - 6rem)' }}>
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2"><WhatsAppIcon size={18} className="text-emerald-500" /> Conversas</h1>
-        <button onClick={() => setNovaOpen(true)} className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg"><Plus size={15} /> Nova conversa</button>
+        {!semNumero && (
+          <button onClick={() => setNovaOpen(true)} className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg"><Plus size={15} /> Nova conversa</button>
+        )}
       </div>
 
       {numerosOffline.length > 0 && (
@@ -259,6 +263,29 @@ export default function ConversasView() {
         </div>
       )}
 
+      {semNumero ? (
+        /* Onboarding — nenhum número de WhatsApp conectado ainda */
+        <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-center p-6">
+          <div className="max-w-md text-center">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4">
+              <WhatsAppIcon size={34} className="text-emerald-500" />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Conecte seu WhatsApp</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
+              Você ainda não tem nenhum número conectado. Conecte um WhatsApp para receber e responder
+              as mensagens dos seus clientes aqui dentro do CRM — cada conversa vinculada ao lead, cliente
+              e responsável.
+            </p>
+            <Link href="/integracoes/whatsapp"
+              className="mt-5 inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+              <Smartphone size={16} /> Conectar número
+            </Link>
+            <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
+              É rápido: leia o QR Code com o celular, como no WhatsApp Web.
+            </p>
+          </div>
+        </div>
+      ) : (
       <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex overflow-hidden">
         {/* Lista */}
         <div className={`${ativa ? 'hidden md:flex' : 'flex'} w-full md:w-80 shrink-0 border-r border-gray-100 dark:border-gray-700 flex-col`}>
@@ -375,6 +402,7 @@ export default function ConversasView() {
           )}
         </div>
       </div>
+      )}
 
       {/* Nova conversa */}
       {novaOpen && (

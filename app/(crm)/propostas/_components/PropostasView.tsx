@@ -151,7 +151,14 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
     return clientes.find((x) => x.id === id)?.telefone ?? ''
   }
 
-  // Abre o modal de compartilhamento — garante o share_token da proposta
+  // Slug legível: remove acentos, baixa caixa, troca não-alfanuméricos por hífen
+  function slugify(s: string, max = 40) {
+    return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, max)
+  }
+
+  // Abre o modal de compartilhamento — garante o share_token da proposta.
+  // Token = nº da proposta + nome do cliente + sufixo aleatório (profissional e seguro).
   async function openShare(p: Proposta) {
     setShareModal(p)
     setCopied(false)
@@ -159,7 +166,10 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
     let token = p.share_token
     if (!token) {
       setShareLoading(true)
-      token = crypto.randomUUID()
+      const rand = crypto.randomUUID().replace(/-/g, '').slice(0, 8)
+      const numPart = slugify(p.numero ?? 'proposta', 20)
+      const nomePart = slugify(clienteNome(p.cliente_id) ?? '', 30)
+      token = [numPart, nomePart, rand].filter(Boolean).join('-')
       const supabase = createClient()
       const { error } = await supabase.from('propostas').update({ share_token: token }).eq('id', p.id)
       setShareLoading(false)
