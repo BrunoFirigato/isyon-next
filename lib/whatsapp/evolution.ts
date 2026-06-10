@@ -103,6 +103,82 @@ export async function findWebhook(
   }
 }
 
+export interface EvoMensagem {
+  remoteJid: string
+  fromMe: boolean
+  id: string | null
+  texto: string
+  pushName: string | null
+  /** ISO string derivado do messageTimestamp (ou null). */
+  criadoEm: string | null
+}
+
+function tsToIso(ts: unknown): string | null {
+  // Evolution 1.8.6 devolve Long {low, high, unsigned} ou número (segundos)
+  let sec: number | null = null
+  if (typeof ts === 'number') sec = ts
+  else if (ts && typeof ts === 'object' && 'low' in ts) sec = (ts as { low: number }).low
+  if (!sec || sec <= 0) return null
+  return new Date(sec * 1000).toISOString()
+}
+
+interface RawMsg {
+  key?: { remoteJid?: string; fromMe?: boolean; id?: string }
+  pushName?: string | null
+  messageTimestamp?: unknown
+  message?: {
+    conversation?: string
+    extendedTextMessage?: { text?: string }
+    imageMessage?: { caption?: string }
+    audioMessage?: unknown
+    videoMessage?: unknown
+    documentMessage?: unknown
+    stickerMessage?: unknown
+  }
+}
+
+function textoDe(msg: RawMsg['message']): string {
+  if (!msg) return '[mensagem]'
+  if (msg.conversation) return msg.conversation
+  if (msg.extendedTextMessage?.text) return msg.extendedTextMessage.text
+  if (msg.imageMessage) return msg.imageMessage.caption || '[imagem]'
+  if (msg.audioMessage) return '[áudio]'
+  if (msg.videoMessage) return '[vídeo]'
+  if (msg.documentMessage) return '[documento]'
+  if (msg.stickerMessage) return '[figurinha]'
+  return '[mensagem]'
+}
+
+/**
+ * Busca as últimas mensagens da instância direto no banco da Evolution
+ * (sync ativo — não depende do webhook entregar).
+ */
+export async function findMessages(srv: EvolutionServer, instanceName: string, limit = 30): Promise<EvoMensagem[]> {
+  try {
+    const res = await fetch(`${base(srv.url)}/chat/findMessages/${encodeURIComponent(instanceName)}`, {
+      method: 'POST', headers: hdrs(srv.key),
+      body: JSON.stringify({ where: {}, limit }),
+    })
+    const d = await res.json().catch(() => null)
+    if (!res.ok) return []
+    const arr: RawMsg[] = Array.isArray(d) ? d : ((d as { messages?: { records?: RawMsg[] } | RawMsg[] })?.messages as { records?: RawMsg[] })?.records
+      ?? ((d as { messages?: RawMsg[] })?.messages as RawMsg[] | undefined) ?? []
+    if (!Array.isArray(arr)) return []
+    return arr
+      .filter(m => m?.key?.remoteJid)
+      .map(m => ({
+        remoteJid: m.key!.remoteJid!,
+        fromMe: !!m.key!.fromMe,
+        id: m.key!.id ?? null,
+        texto: textoDe(m.message),
+        pushName: m.pushName ?? null,
+        criadoEm: tsToIso(m.messageTimestamp),
+      }))
+  } catch {
+    return []
+  }
+}
+
 /** Lista todas as instâncias do servidor com seus estados (1 chamada). */
 export async function listInstances(srv: EvolutionServer): Promise<Record<string, string>> {
   try {

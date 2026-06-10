@@ -91,6 +91,22 @@ export default function ConversasView() {
     return () => clearInterval(t)
   }, [carregarConversas, supabase])
 
+  // Sync ativo: puxa mensagens direto da Evolution (plano B do webhook).
+  // Roda na abertura e a cada 15s enquanto a tela está aberta.
+  useEffect(() => {
+    let vivo = true
+    const sync = async () => {
+      try {
+        const r = await fetch('/api/whatsapp/sync', { method: 'POST' })
+        const d = await r.json().catch(() => ({}))
+        if (vivo && r.ok && (d.novas ?? 0) > 0) carregarConversas()
+      } catch { /* silencioso */ }
+    }
+    sync()
+    const t = setInterval(sync, 15000)
+    return () => { vivo = false; clearInterval(t) }
+  }, [carregarConversas])
+
   // Status de conexão (ao vivo) dos números — avisa se algum caiu
   useEffect(() => {
     const checar = async () => {
