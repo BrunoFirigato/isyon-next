@@ -3,8 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { obterIntegracao, logIntegracao } from '@/lib/integracoes/service'
 import {
-  acharClienteOmiePorDoc, incluirClienteOmie, incluirPedidoOmie,
-  type ItemParaOmie,
+  acharClienteOmiePorDoc, incluirClienteOmie, incluirPedidoOmie, calcularParcelasOmie,
+  type ItemParaOmie, type ParcelaOmie,
 } from '@/lib/integracoes/omie'
 
 /** Usuário autenticado do tenant (qualquer perfil pode faturar). */
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   // 2. Pedido (do próprio tenant)
   const { data: pedido } = await admin
     .from('pedidos')
-    .select('id, numero, cliente_id, itens, aprovado, omie_pedido_id, omie_numero')
+    .select('id, numero, cliente_id, cond_pagamento_id, itens, aprovado, omie_pedido_id, omie_numero')
     .eq('id', pedidoId).eq('tenant_id', caller.tenantId).maybeSingle()
   if (!pedido) return NextResponse.json({ error: 'Pedido não encontrado.' }, { status: 404 })
   if (pedido.omie_pedido_id) {
@@ -115,11 +115,23 @@ export async function POST(req: NextRequest) {
     codigoCliente = r.codigo
   }
 
-  // 6. Cria o Pedido de Venda no Omie
+  // 6. Condição de pagamento → parcelas do Omie (null = à vista)
+  let parcelas: ParcelaOmie[] | null = null
+  if (pedido.cond_pagamento_id) {
+    const total = itens.reduce((s, it) => s + it.quantidade * it.valor_unitario, 0)
+    const { data: cond } = await admin
+      .from('cond_pagamentos')
+      .select('parcelas, intervalo, entrada')
+      .eq('id', pedido.cond_pagamento_id).eq('tenant_id', caller.tenantId).maybeSingle()
+    parcelas = calcularParcelasOmie(total, cond ?? null)
+  }
+
+  // 7. Cria o Pedido de Venda no Omie
   const ped = await incluirPedidoOmie(app_key, app_secret, {
     codigoCliente,
     codigoIntegracao: pedido.id,
     itens,
+    parcelas,
   })
   if (ped.error) {
     await logIntegracao(admin, { tenantId: caller.tenantId, integracaoId: integ.id, evento: 'enviar_pedido', mensagem: `ERRO pedido ${pedido.numero ?? pedido.id}: ${ped.error}` })

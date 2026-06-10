@@ -215,10 +215,59 @@ export interface ItemParaOmie {
   valor_unitario: number
 }
 
+export interface ParcelaOmie {
+  numero_parcela: number
+  data_vencimento: string   // dd/mm/yyyy
+  valor: number
+}
+
+export interface CondPagamentoOmie {
+  parcelas: number | null
+  intervalo: number | null
+  entrada: number | null
+}
+
+/**
+ * Converte a condição de pagamento do Isyon em parcelas para o Omie.
+ * Retorna null quando é "à vista" (1 parcela, sem intervalo, sem entrada) → usa codigo_parcela 000.
+ * Caso contrário, gera as parcelas (entrada hoje + N parcelas a cada `intervalo` dias).
+ */
+export function calcularParcelasOmie(total: number, cond: CondPagamentoOmie | null): ParcelaOmie[] | null {
+  if (!cond) return null
+  const n = Math.max(1, Number(cond.parcelas) || 1)
+  const intervalo = Number(cond.intervalo) || 0
+  const entrada = Number(cond.entrada) || 0
+  if (n <= 1 && intervalo <= 0 && entrada <= 0) return null   // à vista
+
+  const round2 = (x: number) => Math.round(x * 100) / 100
+  const fmt = (d: Date) =>
+    `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
+  const hoje = new Date()
+  const passo = intervalo > 0 ? intervalo : 30
+
+  const lista: ParcelaOmie[] = []
+  let numero = 1
+  let restante = round2(total)
+
+  if (entrada > 0) {
+    const ent = round2(Math.min(entrada, total))
+    lista.push({ numero_parcela: numero++, data_vencimento: fmt(hoje), valor: ent })
+    restante = round2(total - ent)
+  }
+  const base = round2(restante / n)
+  for (let i = 1; i <= n; i++) {
+    const venc = new Date(hoje)
+    venc.setDate(venc.getDate() + i * passo)
+    const valor = i === n ? round2(restante - base * (n - 1)) : base
+    lista.push({ numero_parcela: numero++, data_vencimento: fmt(venc), valor })
+  }
+  return lista
+}
+
 /** Cria o Pedido de Venda no Omie (etapa 10). Devolve número/código gerado ou erro. */
 export async function incluirPedidoOmie(
   appKey: string, appSecret: string,
-  args: { codigoCliente: number; codigoIntegracao: string; itens: ItemParaOmie[] },
+  args: { codigoCliente: number; codigoIntegracao: string; itens: ItemParaOmie[]; parcelas?: ParcelaOmie[] | null },
 ): Promise<{ numero?: string; codigoOmie?: string; error?: string }> {
   const hoje = new Date()
   const dd = String(hoje.getDate()).padStart(2, '0')
@@ -235,16 +284,26 @@ export async function incluirPedidoOmie(
     },
   }))
 
-  const param = {
+  const temParcelas = !!args.parcelas && args.parcelas.length > 0
+  const param: Record<string, unknown> = {
     cabecalho: {
       codigo_cliente: args.codigoCliente,
-      codigo_pedido_integracao: args.codigoIntegracao,  // evita duplicidade no reenvio
+      codigo_pedido_integracao: args.codigoIntegracao,   // evita duplicidade no reenvio
       data_previsao: dataPrev,
-      etapa: '10',           // 10 = pedido de venda (00 = orçamento)
-      codigo_parcela: '000', // 000 = à vista (ajustável por tenant no futuro)
+      etapa: '10',                                        // 10 = pedido de venda (00 = orçamento)
+      codigo_parcela: temParcelas ? '999' : '000',       // 999 = conforme lista_parcelas; 000 = à vista
       quantidade_itens: args.itens.length,
     },
     det,
+  }
+  if (temParcelas) {
+    param.lista_parcelas = {
+      parcela: args.parcelas!.map(p => ({
+        numero_parcela: p.numero_parcela,
+        data_vencimento: p.data_vencimento,
+        valor: p.valor,
+      })),
+    }
   }
 
   const r = await omieCall(appKey, appSecret, 'produtos/pedido/', 'IncluirPedido', param)
