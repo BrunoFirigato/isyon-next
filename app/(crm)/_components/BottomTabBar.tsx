@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { useTenantConfig } from './TenantContext'
 import {
   LayoutDashboard,
   Target,
@@ -100,7 +101,10 @@ export default function BottomTabBar({ perfil }: { perfil: Perfil }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
+  const { usaParceiros } = useTenantConfig()
+
   function canSee(item: MoreItem) {
+    if (item.href === '/parceiros') return usaParceiros
     if (!item.perfis) return true
     return item.perfis.includes(perfil)
   }

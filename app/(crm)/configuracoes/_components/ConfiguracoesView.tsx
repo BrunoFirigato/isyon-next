@@ -18,6 +18,7 @@ interface Tenant {
   limite_usuarios: number | null
   divisao_carteira: boolean | null
   aprovacao_pedido: boolean | null
+  usa_parceiros: boolean | null
 }
 
 interface ConfigUsuario {
@@ -117,6 +118,8 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
   const [divisaoCarteira, setDivisaoCarteira] = useState(tenant.divisao_carteira ?? false)
   // Política do tenant — exigir aprovação do gestor no pedido
   const [aprovacaoPedido, setAprovacaoPedido] = useState(tenant.aprovacao_pedido ?? false)
+  // Recurso opcional — parceiros comerciais (revenda)
+  const [usaParceiros, setUsaParceiros] = useState(tenant.usa_parceiros ?? false)
 
   async function salvarConfigs(e: React.FormEvent) {
     e.preventDefault()
@@ -137,6 +140,7 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
     await supabase.from('tenants').update({
       divisao_carteira: divisaoCarteira,
       aprovacao_pedido: aprovacaoPedido,
+      usa_parceiros: usaParceiros,
     }).eq('id', tenant.id)
 
     setSavingConfig(false)
@@ -470,6 +474,33 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                       Quando ativado, todo pedido nasce &quot;Aguardando aprovação&quot; e só pode ser faturado (enviado ao ERP)
                       após um gestor ou administrador liberar. Desligado, o pedido já nasce pronto para faturar.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Parceiros comerciais (tenant) */}
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={usaParceiros}
+                    onClick={() => setUsaParceiros(v => !v)}
+                    className={`mt-0.5 relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                      usaParceiros ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      usaParceiros ? 'translate-x-4' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Usar parceiros comerciais (revenda)</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                      Para quem vende por meio de parceiros/revendedores. Quando ativado, aparece o menu
+                      &quot;Parc. Comerciais&quot; e a opção de vincular o cliente a um parceiro no cadastro.
+                      Desligado (padrão), o cadastro de cliente fica mais simples (venda direta).
                     </p>
                   </div>
                 </label>

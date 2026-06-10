@@ -7,6 +7,7 @@ interface TenantCtx {
   perfil: string
   divisaoCarteira: boolean
   aprovacaoPedido: boolean
+  usaParceiros: boolean
   whatsappTemplate: string | null
   emailTemplateAssunto: string | null
   emailTemplateCorpo: string | null
@@ -19,6 +20,7 @@ export function TenantProvider({
   perfil,
   divisaoCarteira,
   aprovacaoPedido,
+  usaParceiros,
   whatsappTemplate,
   emailTemplateAssunto,
   emailTemplateCorpo,
@@ -28,13 +30,14 @@ export function TenantProvider({
   perfil: string
   divisaoCarteira: boolean
   aprovacaoPedido: boolean
+  usaParceiros: boolean
   whatsappTemplate: string | null
   emailTemplateAssunto: string | null
   emailTemplateCorpo: string | null
   children: React.ReactNode
 }) {
   return (
-    <TenantContext.Provider value={{ tenantId, perfil, divisaoCarteira, aprovacaoPedido, whatsappTemplate, emailTemplateAssunto, emailTemplateCorpo }}>
+    <TenantContext.Provider value={{ tenantId, perfil, divisaoCarteira, aprovacaoPedido, usaParceiros, whatsappTemplate, emailTemplateAssunto, emailTemplateCorpo }}>
       {children}
     </TenantContext.Provider>
   )

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useTenantConfig } from './TenantContext'
 import WhatsAppIcon from './WhatsAppIcon'
 import {
   LayoutDashboard,
@@ -102,6 +103,7 @@ export default function Sidebar({
   perfil: Perfil
 }) {
   const pathname = usePathname()
+  const { usaParceiros } = useTenantConfig()
   const [collapsed,       setCollapsed]       = useState(false)
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
   const [waUnread,        setWaUnread]        = useState(0)
@@ -153,6 +155,8 @@ export default function Sidebar({
   }
 
   function canSee(item: NavItem) {
+    // Parceiros comerciais é recurso opcional por tenant
+    if (item.href === '/parceiros') return usaParceiros
     if (!item.perfis) return true
     // Superadmin só para o e-mail específico
     if (item.href === '/superadmin') return userEmail === 'sa@isyon.com.br'

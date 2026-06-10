@@ -8,7 +8,7 @@ import { type Cliente, type VendedorRef, type ParceiroRef, STATUS_CLIENTE, ESTAD
 import { fetchCnpj } from '@/lib/cnpj'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 import { useToast } from '@/app/(crm)/_components/Toast'
-import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { useTenantId, useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 import PhoneInput, { phoneIsComplete } from '@/app/(crm)/_components/PhoneInput'
 
 const ORIGEM_OPTIONS = [
@@ -49,6 +49,7 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
   const tenantId = useTenantId()
+  const { usaParceiros } = useTenantConfig()
   const segmentos = useSegmentos()
   const isEditing = !!cliente
 
@@ -331,13 +332,15 @@ export default function ClienteFormModal({ cliente, onClose }: Props) {
                     <PhoneInput value={form.telefone} onChange={(v) => set('telefone', v)} className={inputCls} />
                   </div>
 
-                  <div>
-                    <label className={labelCls}>Canal de aquisição</label>
-                    <select value={form.tipo} onChange={(e) => set('tipo', e.target.value)} className={selectCls}>
-                      <option value="direto">Direto (própria empresa)</option>
-                      <option value="revenda">Via parceiro comercial</option>
-                    </select>
-                  </div>
+                  {usaParceiros && (
+                    <div>
+                      <label className={labelCls}>Canal de aquisição</label>
+                      <select value={form.tipo} onChange={(e) => set('tipo', e.target.value)} className={selectCls}>
+                        <option value="direto">Direto (própria empresa)</option>
+                        <option value="revenda">Via parceiro comercial</option>
+                      </select>
+                    </div>
+                  )}
 
                   {segmentos.length > 0 && (
                     <div>
