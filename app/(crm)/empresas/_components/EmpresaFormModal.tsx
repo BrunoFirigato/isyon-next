@@ -30,7 +30,7 @@ function maskCep(v: string) {
   return v.replace(/\D/g,'').slice(0,8).replace(/^(\d{5})(\d)/,'$1-$2')
 }
 
-type TabKey = 'geral' | 'endereco' | 'fiscal'
+type TabKey = 'geral' | 'endereco'
 
 export default function EmpresaFormModal({ empresa, onClose }: Props) {
   const router   = useRouter()
@@ -57,15 +57,6 @@ export default function EmpresaFormModal({ empresa, onClose }: Props) {
     bairro:             empresa?.bairro             ?? '',
     cidade:             empresa?.cidade             ?? '',
     estado:             empresa?.estado             ?? '',
-    // Fiscal & NF-e
-    inscricao_estadual: empresa?.inscricao_estadual ?? '',
-    inscricao_municipal:empresa?.inscricao_municipal?? '',
-    regime_tributario:  empresa?.regime_tributario  ?? '',
-    crt:                empresa?.crt                ?? '',
-    cnae:               empresa?.cnae               ?? '',
-    ambiente_nfe:       empresa?.ambiente_nfe       ?? '',
-    aliq_pis:           empresa?.aliq_pis != null   ? String(empresa.aliq_pis)    : '',
-    aliq_cofins:        empresa?.aliq_cofins != null ? String(empresa.aliq_cofins) : '',
   })
 
   const [saving,       setSaving]       = useState(false)
@@ -148,14 +139,6 @@ export default function EmpresaFormModal({ empresa, onClose }: Props) {
       bairro:              form.bairro.trim()              || null,
       cidade:              form.cidade.trim()              || null,
       estado:              form.estado                     || null,
-      inscricao_estadual:  form.inscricao_estadual.trim()  || null,
-      inscricao_municipal: form.inscricao_municipal.trim() || null,
-      regime_tributario:   form.regime_tributario          || null,
-      crt:                 form.crt                        || null,
-      cnae:                form.cnae.trim()                || null,
-      ambiente_nfe:        form.ambiente_nfe               || null,
-      aliq_pis:            form.aliq_pis    ? parseFloat(form.aliq_pis)    : null,
-      aliq_cofins:         form.aliq_cofins ? parseFloat(form.aliq_cofins) : null,
       cor:                 form.cor,
     }
 
@@ -178,7 +161,6 @@ export default function EmpresaFormModal({ empresa, onClose }: Props) {
   const TABS: { key: TabKey; label: string }[] = [
     { key: 'geral',    label: 'Geral' },
     { key: 'endereco', label: 'Endereço' },
-    { key: 'fiscal',   label: 'Fiscal & NF-e' },
   ]
 
   return (
@@ -347,85 +329,6 @@ export default function EmpresaFormModal({ empresa, onClose }: Props) {
                       <option value="">UF</option>
                       {ESTADOS_BR.map(uf => <option key={uf} value={uf}>{uf}</option>)}
                     </select>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* ── Aba Fiscal & NF-e ─────────────────────────────────────── */}
-            {tab === 'fiscal' && (
-              <>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Dados fiscais</p>
-
-                {/* IE + IM */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={labelCls}>Inscrição Estadual</label>
-                    <input value={form.inscricao_estadual} onChange={e => set('inscricao_estadual', e.target.value)}
-                      placeholder="000.000.000.000" className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Inscrição Municipal</label>
-                    <input value={form.inscricao_municipal} onChange={e => set('inscricao_municipal', e.target.value)}
-                      placeholder="000000" className={inputCls} />
-                  </div>
-                </div>
-
-                {/* Regime + CRT */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="col-span-2">
-                    <label className={labelCls}>Regime Tributário</label>
-                    <select value={form.regime_tributario} onChange={e => set('regime_tributario', e.target.value)} className={inputCls}>
-                      <option value="">Selecione...</option>
-                      <option value="mei">MEI</option>
-                      <option value="simples_nacional">Simples Nacional</option>
-                      <option value="lucro_presumido">Lucro Presumido</option>
-                      <option value="lucro_real">Lucro Real</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelCls}>CRT <span className="text-gray-400 font-normal">(NF-e)</span></label>
-                    <select value={form.crt} onChange={e => set('crt', e.target.value)} className={inputCls}>
-                      <option value="">—</option>
-                      <option value="1">1 — Simples Nacional</option>
-                      <option value="2">2 — Simples (excesso)</option>
-                      <option value="3">3 — Regime Normal</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* CNAE */}
-                <div>
-                  <label className={labelCls}>CNAE principal</label>
-                  <input value={form.cnae} onChange={e => set('cnae', e.target.value)}
-                    placeholder="Ex: 4679-6/99" className={inputCls} />
-                </div>
-
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider pt-2">Configuração NF-e</p>
-
-                <div>
-                  <label className={labelCls}>Ambiente desta empresa</label>
-                  <select value={form.ambiente_nfe} onChange={e => set('ambiente_nfe', e.target.value)} className={inputCls}>
-                    <option value="">Selecione...</option>
-                    <option value="homologacao">Homologação (testes)</option>
-                    <option value="producao">Produção</option>
-                  </select>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    O token do emissor é configurado em <strong>Integrações</strong>.
-                  </p>
-                </div>
-
-                {/* Alíquotas PIS + COFINS */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={labelCls}>Alíquota PIS (%)</label>
-                    <input type="number" min="0" step="0.01" value={form.aliq_pis} onChange={e => set('aliq_pis', e.target.value)}
-                      placeholder="0,65" className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Alíquota COFINS (%)</label>
-                    <input type="number" min="0" step="0.01" value={form.aliq_cofins} onChange={e => set('aliq_cofins', e.target.value)}
-                      placeholder="3,00" className={inputCls} />
                   </div>
                 </div>
               </>

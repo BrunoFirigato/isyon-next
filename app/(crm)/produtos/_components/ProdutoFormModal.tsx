@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { type Produto, UNIDADES, ORIGENS } from './types'
+import { type Produto, UNIDADES } from './types'
 import NcmSearch from './NcmSearch'
 import ServicoSearch from './ServicoSearch'
 import { useToast } from '@/app/(crm)/_components/Toast'
@@ -38,7 +38,6 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
     ncm:         produto?.ncm ?? '',
     cod_servico: produto?.cod_servico ?? '',
     cest:        produto?.cest ?? '',
-    origem:      produto?.origem != null ? String(produto.origem) : '0',
     segmento:    produto?.segmento ?? '',
     ativo:       produto?.ativo ?? true,
   })
@@ -108,7 +107,7 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
       ncm:         form.ncm.trim() || null,
       cod_servico: form.cod_servico.trim() || null,
       cest:        form.cest.trim() || null,
-      origem:      form.origem !== '' ? parseInt(form.origem) : 0,
+      origem:      0,
       segmento:    form.segmento || null,
       ativo:       form.ativo,
     }
@@ -289,18 +288,6 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
                   required
                 />
               )}
-              <div>
-                <label className={smallLabelCls}>Origem</label>
-                <select
-                  value={form.origem}
-                  onChange={(e) => set('origem', e.target.value)}
-                  className={smallSelectCls}
-                >
-                  {ORIGENS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
               {segmentos.length > 0 && (
                 <div>
                   <label className={smallLabelCls}>Segmento <span className="text-gray-400 dark:text-gray-500 font-normal">(margem)</span></label>
