@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Send, Search, Plus, ArrowLeft, Building2, UserPlus, Smartphone, X, Loader2, Archive, ArchiveRestore, AlertTriangle, Clock, Users } from 'lucide-react'
+import { Send, Search, Plus, ArrowLeft, Building2, Target, Smartphone, X, Loader2, Archive, ArchiveRestore, AlertTriangle, Clock, Users } from 'lucide-react'
 import WhatsAppIcon from '@/app/(crm)/_components/WhatsAppIcon'
 import ConversaComercial from './ConversaComercial'
 import { createClient } from '@/lib/supabase/client'
@@ -343,7 +343,7 @@ export default function ConversasView() {
                   className="w-full text-left px-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate flex items-center gap-1.5">
-                      {c.clientes ? <Building2 size={12} className="text-blue-500 shrink-0" /> : c.leads ? <UserPlus size={12} className="text-amber-500 shrink-0" /> : null}
+                      {c.clientes ? <Building2 size={12} className="text-blue-500 shrink-0" /> : c.leads ? <Target size={12} className="text-amber-500 shrink-0" /> : null}
                       {nomeContato(c)}
                     </span>
                     {c.ultima_direcao === 'in' && c.nao_lidas === 0 && <Clock size={12} className="text-amber-500 shrink-0" />}
@@ -498,7 +498,7 @@ export default function ConversasView() {
               ) : vincRes.map(r => (
                 <button key={`${r.tipo}_${r.id}`} onClick={() => vincular(r.tipo, r.id)}
                   className="w-full flex items-center gap-2 px-1 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded">
-                  {r.tipo === 'cliente' ? <Building2 size={13} className="text-blue-500 shrink-0" /> : <UserPlus size={13} className="text-amber-500 shrink-0" />}
+                  {r.tipo === 'cliente' ? <Building2 size={13} className="text-blue-500 shrink-0" /> : <Target size={13} className="text-amber-500 shrink-0" />}
                   <span className="text-sm text-gray-800 dark:text-gray-100 truncate">{r.nome}</span>
                   <span className="ml-auto text-[10px] text-gray-400 uppercase">{r.tipo}</span>
                 </button>

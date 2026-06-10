@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Send, FileText, Target, X, Loader2, ShoppingCart, TrendingUp, ExternalLink } from 'lucide-react'
+import { Send, FileText, Briefcase, X, Loader2, ShoppingCart, TrendingUp, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
@@ -177,7 +177,7 @@ export default function ConversaComercial({ conversaId, clienteId, leadId, conta
       {/* Contexto comercial */}
       <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-xs text-gray-500 dark:text-gray-400 min-w-0">
         {ctx?.opsAbertas ? (
-          <span className="inline-flex items-center gap-1"><Target size={12} className="text-blue-500" />{ctx.opsAbertas} oport. aberta{ctx.opsAbertas !== 1 ? 's' : ''}</span>
+          <span className="inline-flex items-center gap-1"><Briefcase size={12} className="text-blue-500" />{ctx.opsAbertas} oport. aberta{ctx.opsAbertas !== 1 ? 's' : ''}</span>
         ) : null}
         {ctx?.propostas.length ? (
           <span className="inline-flex items-center gap-1"><FileText size={12} className="text-indigo-500" />{ctx.propostas.length} proposta{ctx.propostas.length !== 1 ? 's' : ''}</span>
@@ -201,7 +201,7 @@ export default function ConversaComercial({ conversaId, clienteId, leadId, conta
         </button>
         <button onClick={abrirCriarOportunidade} disabled={convertLoading}
           className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 transition-colors disabled:opacity-60">
-          {convertLoading ? <Loader2 size={13} className="animate-spin" /> : <Target size={13} />}
+          {convertLoading ? <Loader2 size={13} className="animate-spin" /> : <Briefcase size={13} />}
           {ehLead ? 'Converter em oportunidade' : 'Criar oportunidade'}
         </button>
       </div>
@@ -226,7 +226,7 @@ export default function ConversaComercial({ conversaId, clienteId, leadId, conta
                   </p>
                   <button onClick={() => { setPropOpen(false); iniciarConversao() }} disabled={convertLoading}
                     className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-                    {convertLoading ? <Loader2 size={14} className="animate-spin" /> : <Target size={14} />} Converter em oportunidade
+                    {convertLoading ? <Loader2 size={14} className="animate-spin" /> : <Briefcase size={14} />} Converter em oportunidade
                   </button>
                 </div>
               ) : (ctx?.propostas.length ?? 0) === 0 ? (
@@ -265,7 +265,7 @@ export default function ConversaComercial({ conversaId, clienteId, leadId, conta
           <div className="absolute inset-0 bg-black/40" onClick={() => !opSaving && setOpOpen(false)} />
           <div className="relative bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm shadow-xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-2"><Target size={16} className="text-blue-500" />
+              <div className="flex items-center gap-2"><Briefcase size={16} className="text-blue-500" />
                 <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Nova oportunidade</h3>
               </div>
               <button onClick={() => setOpOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
