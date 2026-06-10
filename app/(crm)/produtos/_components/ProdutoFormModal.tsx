@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -34,10 +34,20 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
     cod_servico: produto?.cod_servico ?? '',
     cest:        produto?.cest ?? '',
     segmento:    produto?.segmento ?? '',
+    categoria_id: produto?.categoria_id ?? '',
+    familia_id:   produto?.familia_id ?? '',
     ativo:       produto?.ativo ?? true,
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [categorias, setCategorias] = useState<{ id: string; nome: string }[]>([])
+  const [familias, setFamilias] = useState<{ id: string; nome: string }[]>([])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('categorias').select('id, nome').order('nome').then(({ data }) => { if (data) setCategorias(data) })
+    supabase.from('familias').select('id, nome').order('nome').then(({ data }) => { if (data) setFamilias(data) })
+  }, [])
 
   function set(field: string, value: string | boolean) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -76,6 +86,8 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
       cest:        form.cest.trim() || null,
       origem:      0,
       segmento:    form.segmento || null,
+      categoria_id: form.categoria_id || null,
+      familia_id:   form.familia_id || null,
       ativo:       form.ativo,
     }
 
@@ -260,6 +272,20 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
                   </select>
                 </div>
               )}
+              <div>
+                <label className={smallLabelCls}>Categoria</label>
+                <select value={form.categoria_id} onChange={(e) => set('categoria_id', e.target.value)} className={smallSelectCls}>
+                  <option value="">—</option>
+                  {categorias.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={smallLabelCls}>Família</label>
+                <select value={form.familia_id} onChange={(e) => set('familia_id', e.target.value)} className={smallSelectCls}>
+                  <option value="">—</option>
+                  {familias.map((f) => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                </select>
+              </div>
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import ProdutosView from './_components/ProdutosView'
+import ProdutosScreen from './_components/ProdutosScreen'
 import { PRODUTO_COLS, PRODUTOS_PAGE_SIZE } from './_components/types'
 
 interface Props {
@@ -21,17 +21,23 @@ export default async function ProdutosPage({ searchParams }: Props) {
   if (q?.trim())           query = query.or(`nome.ilike.%${q.trim()}%,codigo.ilike.%${q.trim()}%,ncm.ilike.%${q.trim()}%`)
 
   // Só a primeira página; o total vem do count para montar a paginação
-  const { data: produtos, count } = await query.range(0, PRODUTOS_PAGE_SIZE - 1)
+  const [{ data: produtos, count }, { data: categorias }, { data: familias }] = await Promise.all([
+    query.range(0, PRODUTOS_PAGE_SIZE - 1),
+    supabase.from('categorias').select('id, nome').order('nome'),
+    supabase.from('familias').select('id, nome').order('nome'),
+  ])
 
   return (
-    <ProdutosView
-      // Remonta (reseta paginação) sempre que filtro/busca muda
-      key={`${tipo ?? 'todos'}-${ativo ?? 'todos'}-${q ?? ''}`}
+    <ProdutosScreen
       produtos={produtos ?? []}
       total={count ?? 0}
       currentTipo={tipo ?? 'todos'}
       currentAtivo={ativo ?? 'todos'}
       currentQ={q ?? ''}
+      // Remonta (reseta paginação) sempre que filtro/busca muda
+      produtosKey={`${tipo ?? 'todos'}-${ativo ?? 'todos'}-${q ?? ''}`}
+      categorias={categorias ?? []}
+      familias={familias ?? []}
     />
   )
 }
