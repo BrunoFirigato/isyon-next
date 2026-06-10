@@ -7,37 +7,33 @@ import { createClient } from '@/lib/supabase/client'
 import { vinculosCondPagamento, inativarRegistro, type Vinculo } from '@/lib/exclusao'
 import BloqueioExclusaoDialog from '@/app/(crm)/_components/BloqueioExclusaoDialog'
 import {
-  type Ncm, type Transportadora, type CondPagamento,
-  formatDate, formaLabel, formaStyle,
+  type Transportadora, type CondPagamento,
+  formaLabel, formaStyle,
 } from './types'
-import NcmFormModal from './NcmFormModal'
 import TransportadoraFormModal from './TransportadoraFormModal'
 import CondPagamentoFormModal from './CondPagamentoFormModal'
 import { useToast } from '@/app/(crm)/_components/Toast'
 
-type Tab = 'ncm' | 'transportadoras' | 'cond_pagamentos'
+type Tab = 'transportadoras' | 'cond_pagamentos'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'ncm',             label: 'NCM' },
   { id: 'transportadoras', label: 'Transportadoras' },
   { id: 'cond_pagamentos', label: 'Cond. de Pagamento' },
 ]
 
 const TAB_LABEL: Record<Tab, string> = {
-  ncm:             'NCM',
   transportadoras: 'Transportadora',
   cond_pagamentos: 'Condição de Pagamento',
 }
 
 interface Props {
-  ncms: Ncm[]
   transportadoras: Transportadora[]
   condPagamentos: CondPagamento[]
   activeTab: Tab
 }
 
 export default function CadastrosView({
-  ncms, transportadoras, condPagamentos, activeTab: initialTab,
+  transportadoras, condPagamentos, activeTab: initialTab,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -51,7 +47,6 @@ export default function CadastrosView({
   const [bloqueio, setBloqueio] = useState<{ id: string; vinculos: Vinculo[] } | null>(null)
   const [inativando, setInativando] = useState(false)
 
-  const [editNcm, setEditNcm] = useState<Ncm | null>(null)
   const [editTransp, setEditTransp] = useState<Transportadora | null>(null)
   const [editCond, setEditCond] = useState<CondPagamento | null>(null)
 
@@ -96,7 +91,6 @@ export default function CadastrosView({
 
   const q = search.toLowerCase().trim()
 
-  const filteredNcms      = ncms.filter((n) => !q || n.codigo.toLowerCase().includes(q) || n.descricao.toLowerCase().includes(q))
   const filteredTransps   = transportadoras.filter((t) => !q || t.nome.toLowerCase().includes(q) || (t.cnpj ?? '').toLowerCase().includes(q))
   const filteredConds     = condPagamentos.filter((c) => !q || c.nome.toLowerCase().includes(q) || (formaLabel(c.forma)).toLowerCase().includes(q))
 
@@ -110,7 +104,6 @@ export default function CadastrosView({
         </div>
         <button
           onClick={() => {
-            setEditNcm(null)
             setEditTransp(null); setEditCond(null)
             setFormOpen(true)
           }}
@@ -155,45 +148,6 @@ export default function CadastrosView({
           </button>
         )}
       </div>
-
-      {/* ─── Tab: NCM ─────────────────────────────────────────────────────────── */}
-      {tab === 'ncm' && (
-        filteredNcms.length === 0
-          ? <EmptyState label="NCM" onNew={() => setFormOpen(true)} />
-          : (
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <table className="w-full text-sm hidden md:table">
-                <thead><tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                  <Th>Código</Th><Th>Descrição</Th><Th>Alíq. IPI</Th><Th>Unid. Trib.</Th><Th>Cadastro</Th><th className="px-4 py-3" />
-                </tr></thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
-                  {filteredNcms.map((n) => (
-                    <tr key={n.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 group">
-                      <td className="px-4 py-3 font-mono text-sm text-gray-900 dark:text-gray-100">{n.codigo}</td>
-                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{n.descricao}</td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{n.aliq_ipi != null ? `${n.aliq_ipi}%` : '—'}</td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{n.unid_trib ?? '—'}</td>
-                      <td className="px-4 py-3 text-gray-400 dark:text-gray-500 text-xs">{formatDate(n.created_at)}</td>
-                      <td className="px-4 py-3"><Actions onEdit={() => { setEditNcm(n); setFormOpen(true) }} onDelete={() => openDelete(n.id, 'ncms')} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
-                {filteredNcms.map((n) => (
-                  <div key={n.id} className="p-4 flex items-start justify-between gap-2 group">
-                    <div>
-                      <p className="font-mono font-medium text-gray-900 dark:text-gray-100 text-sm">{n.codigo}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{n.descricao}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{n.aliq_ipi != null ? `IPI ${n.aliq_ipi}%` : ''}{n.unid_trib ? ` · ${n.unid_trib}` : ''}</p>
-                    </div>
-                    <Actions onEdit={() => { setEditNcm(n); setFormOpen(true) }} onDelete={() => openDelete(n.id, 'ncms')} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )
-      )}
 
       {/* ─── Tab: Transportadoras ─────────────────────────────────────────────── */}
       {tab === 'transportadoras' && (
@@ -330,9 +284,6 @@ export default function CadastrosView({
       />
 
       {/* ─── Modais de formulário ─────────────────────────────────────────────── */}
-      {formOpen && tab === 'ncm' && (
-        <NcmFormModal ncm={editNcm ?? undefined} onClose={() => { setFormOpen(false); setEditNcm(null) }} />
-      )}
       {formOpen && tab === 'transportadoras' && (
         <TransportadoraFormModal transportadora={editTransp ?? undefined} onClose={() => { setFormOpen(false); setEditTransp(null) }} />
       )}
