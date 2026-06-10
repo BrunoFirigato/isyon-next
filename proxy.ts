@@ -34,10 +34,13 @@ export default async function proxy(req: NextRequest) {
   const isCadastro        = path.startsWith('/cadastro')
   const isRedefinirSenha  = path.startsWith('/redefinir-senha')
   const isLegal           = path.startsWith('/politica-privacidade') || path.startsWith('/termos-de-uso')
+  // Proposta pública: link compartilhado com o cliente (sem login). A segurança é o
+  // token aleatório e não-adivinhável na URL (/p/<token>) + página noindex.
+  const isPropostaPublica = path.startsWith('/p/')
   // Rotas de API fazem a própria autenticação e devem retornar status (401/403),
   // nunca ser redirecionadas para /login (quebraria webhooks e chamadas externas).
   const isApi             = path.startsWith('/api')
-  const isPublic = isLoginNormal || isLoginSuperadmin || isCadastro || isRedefinirSenha || isLegal || isApi
+  const isPublic = isLoginNormal || isLoginSuperadmin || isCadastro || isRedefinirSenha || isLegal || isPropostaPublica || isApi
 
   // Não autenticado tentando acessar rota protegida
   if (!user && !isPublic) {
