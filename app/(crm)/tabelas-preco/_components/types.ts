@@ -3,6 +3,7 @@ export interface TabelaPreco {
   nome: string
   ativo: boolean
   margem: number | null
+  desconto_maximo: number | null
   criado_em: string
 }
 

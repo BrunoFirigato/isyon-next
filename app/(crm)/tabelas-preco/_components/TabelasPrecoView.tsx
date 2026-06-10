@@ -40,6 +40,7 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Prop
   // Estado editável da tabela selecionada
   const tabelaSel = tabelas.find(t => t.id === selectedId)
   const [margemGeral, setMargemGeral] = useState<string>(tabelaSel?.margem != null ? String(tabelaSel.margem) : '')
+  const [descontoGeral, setDescontoGeral] = useState<string>(tabelaSel?.desconto_maximo != null ? String(tabelaSel.desconto_maximo) : '')
   const [segs,     setSegs]     = useState<Record<string, string>>(() => buildSegs(selectedId))
 
   function buildSegs(tid: string): Record<string, string> {
@@ -52,6 +53,7 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Prop
     setSelectedId(id)
     const t = tabelas.find(x => x.id === id)
     setMargemGeral(t?.margem != null ? String(t.margem) : '')
+    setDescontoGeral(t?.desconto_maximo != null ? String(t.desconto_maximo) : '')
     setSegs(buildSegs(id))
     setBusca('')
   }
@@ -98,7 +100,7 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Prop
     const supabase = createClient()
 
     // 1. Margem geral da tabela
-    await supabase.from('tabelas_preco').update({ margem: parseNum(margemGeral) }).eq('id', selectedId)
+    await supabase.from('tabelas_preco').update({ margem: parseNum(margemGeral), desconto_maximo: parseNum(descontoGeral) }).eq('id', selectedId)
 
     // 2. Margens por segmento (upsert não-vazias, deleta vazias existentes)
     const segUpsert = Object.entries(segs)
@@ -167,6 +169,11 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Prop
                 <input type="number" value={margemGeral} onChange={(e) => setMargemGeral(e.target.value)}
                   placeholder="ex: 50" className={`${numInput} w-full text-left`} />
               </div>
+              <div>
+                <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">Desconto máximo (%)</label>
+                <input type="number" value={descontoGeral} onChange={(e) => setDescontoGeral(e.target.value)}
+                  placeholder="ex: 10" className={`${numInput} w-full text-left`} />
+              </div>
               {segmentos.map(seg => (
                 <div key={seg.value}>
                   <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">Margem {seg.label} (%)</label>
@@ -176,7 +183,7 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Prop
               ))}
             </div>
             <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
-              Preço de venda = custo × (1 + margem). Margem por segmento sobrepõe a geral.
+              Preço de venda = custo × (1 + margem). Margem por segmento sobrepõe a geral. O desconto máximo limita o abatimento que o vendedor pode dar no preço.
             </p>
           </div>
 
@@ -189,23 +196,31 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Prop
 
           {/* Produtos: custo → preço de venda (margem aplicada) */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-            <div className="grid grid-cols-[1fr_120px_120px] gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
+            <div className="grid grid-cols-[1fr_100px_90px_120px_100px] gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
               <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Produto</span>
               <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Custo</span>
+              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Margem</span>
               <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Preço de venda</span>
+              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Desc. máx.</span>
             </div>
             <div className="divide-y divide-gray-50 dark:divide-gray-700 max-h-[55vh] overflow-y-auto">
               {produtosFiltrados.slice(0, 200).map(p => {
                 const calc = precoCalc(p)
                 return (
-                  <div key={p.id} className="grid grid-cols-[1fr_120px_120px] gap-2 items-center px-4 py-2.5">
+                  <div key={p.id} className="grid grid-cols-[1fr_100px_90px_120px_100px] gap-2 items-center px-4 py-2.5">
                     <div className="min-w-0">
                       <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{p.nome}</p>
                       {p.segmento && <p className="text-[11px] text-gray-400">{segmentos.find(s => s.value === p.segmento)?.label ?? p.segmento}</p>}
                     </div>
                     <span className="text-sm text-gray-400 dark:text-gray-500 text-right">{brl(p.custo)}</span>
+                    <span className="text-sm text-right text-gray-500 dark:text-gray-400">
+                      {p.custo && p.custo > 0 ? `${Math.round((calc.valor / p.custo - 1) * 100)}%` : '—'}
+                    </span>
                     <span className="text-sm text-right font-medium text-gray-900 dark:text-gray-100">
                       {brl(calc.valor)}
+                    </span>
+                    <span className="text-sm text-right text-gray-500 dark:text-gray-400">
+                      {descontoGeral.trim() ? `${descontoGeral}%` : '—'}
                     </span>
                   </div>
                 )
