@@ -376,10 +376,13 @@ export default function ConversasView() {
                   <p className="text-[11px] text-gray-400 flex items-center gap-1"><Smartphone size={10} /> {ativa.wa_instancias?.nome ?? ''} · {ativa.telefone}</p>
                 </div>
                 {link360 && <Link href={link360} className="text-xs font-medium text-blue-600 hover:underline shrink-0">Ver 360°</Link>}
-                <button onClick={() => setTransfOpen(true)} title="Transferir conversa para outro responsável"
-                  className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <Users size={16} />
-                </button>
+                {/* Transferir só faz sentido com equipe (2+ vendedores) */}
+                {usuarios.length > 1 && (
+                  <button onClick={() => setTransfOpen(true)} title="Passar esta conversa para outro vendedor"
+                    className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <Users size={16} />
+                  </button>
+                )}
                 <button onClick={() => arquivar(ativa, !ativa.arquivada)} title={ativa.arquivada ? 'Desarquivar' : 'Arquivar / ignorar'}
                   className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                   {ativa.arquivada ? <ArchiveRestore size={16} /> : <Archive size={16} />}
@@ -515,13 +518,13 @@ export default function ConversasView() {
               <button onClick={() => setTransfOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-              Escolha o novo responsável. Se não for você, esta conversa sairá da sua lista.
+              Passe esta conversa para outro vendedor — ela sairá da sua lista e entrará na dele.
             </p>
             <div className="max-h-72 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700">
               <button onClick={() => transferir('')} disabled={acaoBusy}
                 className="w-full flex items-center gap-2 px-1 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded disabled:opacity-60">
                 <Smartphone size={13} className="text-gray-400 shrink-0" />
-                <span className="text-sm text-gray-600 dark:text-gray-300">Seguir o responsável do número</span>
+                <span className="text-sm text-gray-600 dark:text-gray-300">Sem responsável fixo (segue o dono do número)</span>
               </button>
               {usuarios.map(u => (
                 <button key={u.id} onClick={() => transferir(u.id)} disabled={acaoBusy}
