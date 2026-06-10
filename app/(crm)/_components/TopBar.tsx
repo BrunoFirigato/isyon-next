@@ -34,7 +34,8 @@ const PAGE_LABELS: Record<string, string> = {
   '/configuracoes': 'Configurações',
   '/vendedores':    'Vendedores',
   '/empresas':      'Empresas',
-  '/cadastros':     'Cadastros',
+  '/transportadoras':     'Transportadoras',
+  '/condicoes-pagamento': 'Condições de Pagamento',
   '/usuarios':      'Usuários',
   '/superadmin':    'Superadmin',
 }
