@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Plus, Trash2, Lock, Package } from 'lucide-react'
+import { X, Plus, Trash2, Lock, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
   type Proposta, type ItemProposta, type ClienteRef,
@@ -355,7 +355,7 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
                 <div>
                   <label className={labelCls}>Tabela de preço</label>
                   <select value={tabelaPrecoId} onChange={(e) => onTabelaChange(e.target.value)} className={selectCls}>
-                    <option value="">Preço base</option>
+                    <option value="">Sem tabela (custo)</option>
                     {tabelas.map((t) => (
                       <option key={t.id} value={t.id}>{t.nome}</option>
                     ))}
@@ -472,11 +472,10 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
                         </span>
                       </div>
 
-                      {/* Selo de vínculo — abaixo da linha, sem quebrar o alinhamento */}
+                      {/* Selo de vínculo — só um check verde */}
                       {item.produto_id && (
                         <p className="flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400 mt-1.5">
-                          <Package size={10} />
-                          Produto vinculado{item.ncm ? ` · NCM ${item.ncm}` : ''}
+                          <CheckCircle2 size={11} /> Produto vinculado
                         </p>
                       )}
                     </div>

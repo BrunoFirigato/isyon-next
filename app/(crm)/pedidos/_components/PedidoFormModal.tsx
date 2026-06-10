@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Plus, Trash2 } from 'lucide-react'
+import { X, Plus, Trash2, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
   type Pedido, type ItemPedido, type ClienteRef,
@@ -302,7 +302,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
                 <div>
                   <label className={labelCls}>Tabela de preço</label>
                   <select value={tabelaPrecoId} onChange={(e) => onTabelaChange(e.target.value)} className={selectCls}>
-                    <option value="">Preço base</option>
+                    <option value="">Sem tabela (custo)</option>
                     {tabelas.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
                   </select>
                 </div>
@@ -384,6 +384,11 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
                             {brl(item.quantidade * item.valorUnitario)}
                           </span>
                         </div>
+                        {item.produto_id && (
+                          <p className="flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400 mt-1.5">
+                            <CheckCircle2 size={11} /> Produto vinculado
+                          </p>
+                        )}
                       </div>
 
                       <input
