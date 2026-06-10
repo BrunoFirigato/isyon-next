@@ -22,6 +22,7 @@ import {
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useSegmentos, segmentoLabel } from '@/app/(crm)/_components/SegmentosContext'
+import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 
 interface Props {
   clientes: Cliente[]
@@ -57,6 +58,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
   const [, startTransition] = useTransition()
   const toast = useToast()
   const segmentos = useSegmentos()
+  const { usaParceiros } = useTenantConfig()
 
   function openWhatsApp(c: Cliente) {
     if (!c.telefone) return
@@ -235,7 +237,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
       </div>
 
       {/* Filtros por vendedor e parceiro */}
-      {(vendedores.length > 0 || parceiros.length > 0) && (
+      {(vendedores.length > 0 || usaParceiros) && (
         <div className="flex gap-2 mb-4 flex-wrap">
           {vendedores.length > 0 && (
             <select
@@ -249,7 +251,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
               ))}
             </select>
           )}
-          {parceiros.length > 0 && (
+          {usaParceiros && (
             <select
               value={currentParceiro}
               onChange={e => updateParams({ status: currentStatus, q: search, vendedor: currentVendedor, parceiro: e.target.value })}
@@ -313,10 +315,10 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
               <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Razão social / Nome</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Contato</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tipo</th>
+                {usaParceiros && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tipo</th>}
                 {segmentos.length > 0 && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Segmento</th>}
                 {vendedores.length > 0 && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Vendedor</th>}
-                {parceiros.length > 0 && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Parceiro</th>}
+                {usaParceiros && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Parceiro</th>}
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -344,16 +346,18 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
                         {c.email && <p className="text-gray-600 dark:text-gray-400">{c.email}</p>}
                         {c.telefone && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{c.telefone}</p>}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs text-gray-600 dark:text-gray-400">{tipoLabel(c.tipo)}</span>
-                      </td>
+                      {usaParceiros && (
+                        <td className="px-4 py-3">
+                          <span className="text-xs text-gray-600 dark:text-gray-400">{tipoLabel(c.tipo)}</span>
+                        </td>
+                      )}
                       {segmentos.length > 0 && <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{segmentoLabel(c.segmento, segmentos)}</td>}
                       {vendedores.length > 0 && (
                         <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 max-w-[130px]">
                           {vendedorNome(c) ?? <span className="text-gray-300 dark:text-gray-600">—</span>}
                         </td>
                       )}
-                      {parceiros.length > 0 && (
+                      {usaParceiros && (
                         <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 max-w-[130px] truncate">
                           {c.parceiro_id ? (parceiroMap[c.parceiro_id] ?? '—') : <span className="text-gray-300 dark:text-gray-600">—</span>}
                         </td>
@@ -478,14 +482,14 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
                   </div>
                 )}
 
-                {(vendedorNome(c) || c.parceiro_id) && (
+                {(vendedorNome(c) || (usaParceiros && c.parceiro_id)) && (
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2 mb-1">
                     {vendedorNome(c) && (
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         <span className="text-gray-400 dark:text-gray-500">Vendedor:</span> {vendedorNome(c)}
                       </span>
                     )}
-                    {c.parceiro_id && parceiroMap[c.parceiro_id] && (
+                    {usaParceiros && c.parceiro_id && parceiroMap[c.parceiro_id] && (
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         <span className="text-gray-400 dark:text-gray-500">Parceiro:</span> {parceiroMap[c.parceiro_id]}
                       </span>
@@ -495,7 +499,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
 
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 dark:text-gray-500">{tipoLabel(c.tipo)}</span>
+                    {usaParceiros && <span className="text-xs text-gray-400 dark:text-gray-500">{tipoLabel(c.tipo)}</span>}
                     {c.valor_total ? (
                       <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{brl(c.valor_total)}</span>
                     ) : null}
