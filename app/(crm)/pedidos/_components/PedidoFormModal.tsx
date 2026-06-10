@@ -11,9 +11,9 @@ import {
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
-import { precoNaTabela, type TabelaInfo, type SegMargem, type Override } from '@/lib/preco'
+import { precoNaTabela, type TabelaInfo, type SegMargem, type Override, type ClassifMargem } from '@/lib/preco'
 
-interface ProdutoRef { id: string; nome: string; preco: number | null; custo: number | null; ncm: string | null; unidade: string | null; segmento: string | null; tipo: string | null }
+interface ProdutoRef { id: string; nome: string; preco: number | null; custo: number | null; ncm: string | null; unidade: string | null; segmento: string | null; categoria_id: string | null; familia_id: string | null; tipo: string | null }
 interface TabelaRef  { id: string; nome: string }
 
 const MODALIDADES_FRETE = [
@@ -61,6 +61,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
   const [tabelasInfo, setTabelasInfo] = useState<TabelaInfo[]>([])
   const [segMargens,  setSegMargens]  = useState<SegMargem[]>([])
   const [overrides,   setOverrides]   = useState<Override[]>([])
+  const [classifMargens, setClassifMargens] = useState<ClassifMargem[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -68,16 +69,17 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
     const supabase = createClient()
     async function init() {
       const [{ data: cls }, { data: emps }, { data: prods }, { data: vends }, { data: conds },
-              { data: tabs }, { data: tms }, { data: tpi }, { data: transps }, { data: { user } }] = await Promise.all([
+              { data: tabs }, { data: tms }, { data: tpi }, { data: transps }, { data: classif }, { data: { user } }] = await Promise.all([
         supabase.from('clientes').select('id, nome, empresa').order('nome'),
         supabase.from('empresas').select('id, nome, sigla').order('nome'),
-        supabase.from('produtos').select('id, nome, preco, custo, ncm, unidade, segmento, tipo').not('ativo', 'is', false).order('nome'),
+        supabase.from('produtos').select('id, nome, preco, custo, ncm, unidade, segmento, categoria_id, familia_id, tipo').not('ativo', 'is', false).order('nome'),
         supabase.from('vendedores').select('id, nome').eq('status', 'ativo').order('nome'),
         supabase.from('cond_pagamentos').select('id, nome').eq('ativo', true).order('nome'),
         supabase.from('tabelas_preco').select('id, nome, margem').not('ativo', 'is', false).order('nome'),
         supabase.from('tabela_margem_segmento').select('tabela_id, segmento, margem'),
         supabase.from('tabela_preco_itens').select('tabela_id, produto_id, preco'),
         supabase.from('transportadoras').select('id, nome').order('nome'),
+        supabase.from('tabela_margem_classif').select('tabela_id, tipo, ref_id, margem'),
         supabase.auth.getUser(),
       ])
       if (cls)   setClientes(cls)
@@ -88,6 +90,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
       if (tabs)  { setTabelas(tabs.map(t => ({ id: t.id, nome: t.nome }))); setTabelasInfo(tabs.map(t => ({ id: t.id, margem: t.margem }))) }
       if (tms)   setSegMargens(tms)
       if (tpi)   setOverrides(tpi)
+      if (classif) setClassifMargens(classif)
       if (emps) {
         setFiliais(emps)
         if (emps.length === 1 && !pedido?.empresa_id) setEmpresaId(emps[0].id)
@@ -115,8 +118,8 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
   function precoComTabela(prod: ProdutoRef, tabId: string): number {
     if (!tabId) return prod.preco ?? 0
     return precoNaTabela(
-      { id: prod.id, custo: prod.custo, preco: prod.preco, segmento: prod.segmento },
-      tabId, tabelasInfo, segMargens, overrides,
+      { id: prod.id, custo: prod.custo, preco: prod.preco, segmento: prod.segmento, categoria_id: prod.categoria_id, familia_id: prod.familia_id },
+      tabId, tabelasInfo, segMargens, overrides, classifMargens,
     )
   }
 

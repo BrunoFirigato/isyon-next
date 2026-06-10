@@ -3,20 +3,23 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, Search, Tag, Save, X, Percent } from 'lucide-react'
+import { Plus, Trash2, Search, Tag, Save, X, Percent, Layers } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 import {
-  type TabelaPreco, type TabelaPrecoItem, type TabelaMargemSegmento, type ProdutoRef, brl,
+  type TabelaPreco, type TabelaMargemSegmento, type TabelaMargemClassif,
+  type ProdutoRef, type Classificacao, brl,
 } from './types'
 
 interface Props {
-  tabelas:    TabelaPreco[]
-  produtos:   ProdutoRef[]
-  itens:      TabelaPrecoItem[]
-  segMargens: TabelaMargemSegmento[]
+  tabelas:        TabelaPreco[]
+  produtos:       ProdutoRef[]
+  segMargens:     TabelaMargemSegmento[]
+  categorias:     Classificacao[]
+  familias:       Classificacao[]
+  classifMargens: TabelaMargemClassif[]
 }
 
 function parseNum(v: string): number | null {
@@ -24,11 +27,16 @@ function parseNum(v: string): number | null {
   return isNaN(n) ? null : n
 }
 
-export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Props) {
+type Regra = { margem: string; desconto: string }
+
+export default function TabelasPrecoView({ tabelas, produtos, segMargens, categorias, familias, classifMargens }: Props) {
   const router    = useRouter()
   const toast     = useToast()
   const tenantId  = useTenantId()
   const segmentos = useSegmentos()
+
+  const catNome = Object.fromEntries(categorias.map(c => [c.id, c.nome]))
+  const famNome = Object.fromEntries(familias.map(f => [f.id, f.nome]))
 
   const [selectedId, setSelectedId] = useState<string>(tabelas[0]?.id ?? '')
   const [busca,      setBusca]      = useState('')
@@ -37,15 +45,30 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Prop
   const [novoNome,   setNovoNome]   = useState('')
   const [deletando,  setDeletando]  = useState<TabelaPreco | null>(null)
 
+  // Seletores de escopo (regra por categoria/família)
+  const [catSel, setCatSel] = useState('')
+  const [famSel, setFamSel] = useState('')
+
   // Estado editável da tabela selecionada
   const tabelaSel = tabelas.find(t => t.id === selectedId)
-  const [margemGeral, setMargemGeral] = useState<string>(tabelaSel?.margem != null ? String(tabelaSel.margem) : '')
+  const [margemGeral,   setMargemGeral]   = useState<string>(tabelaSel?.margem != null ? String(tabelaSel.margem) : '')
   const [descontoGeral, setDescontoGeral] = useState<string>(tabelaSel?.desconto_maximo != null ? String(tabelaSel.desconto_maximo) : '')
-  const [segs,     setSegs]     = useState<Record<string, string>>(() => buildSegs(selectedId))
+  const [segs,    setSegs]    = useState<Record<string, string>>(() => buildSegs(selectedId))
+  const [classif, setClassif] = useState<Record<string, Regra>>(() => buildClassif(selectedId))
 
   function buildSegs(tid: string): Record<string, string> {
     const m: Record<string, string> = {}
     segMargens.filter(s => s.tabela_id === tid).forEach(s => { if (s.margem != null) m[s.segmento] = String(s.margem) })
+    return m
+  }
+  function buildClassif(tid: string): Record<string, Regra> {
+    const m: Record<string, Regra> = {}
+    classifMargens.filter(c => c.tabela_id === tid).forEach(c => {
+      m[`${c.tipo}:${c.ref_id}`] = {
+        margem:   c.margem != null ? String(c.margem) : '',
+        desconto: c.desconto_maximo != null ? String(c.desconto_maximo) : '',
+      }
+    })
     return m
   }
 
@@ -55,23 +78,60 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Prop
     setMargemGeral(t?.margem != null ? String(t.margem) : '')
     setDescontoGeral(t?.desconto_maximo != null ? String(t.desconto_maximo) : '')
     setSegs(buildSegs(id))
-    setBusca('')
+    setClassif(buildClassif(id))
+    setCatSel(''); setFamSel(''); setBusca('')
   }
 
-  // Preço calculado (live) seguindo a cascata, usando o estado editável
-  function precoCalc(p: ProdutoRef): { valor: number; fonte: string } {
+  // Escopo ativo p/ os campos da regra específica
+  const scopeKey = famSel ? `fam:${famSel}` : catSel ? `cat:${catSel}` : ''
+  const scopeNome = famSel ? (famNome[famSel] ?? 'família') : catSel ? (catNome[catSel] ?? 'categoria') : ''
+  const regraAtual = scopeKey ? (classif[scopeKey] ?? { margem: '', desconto: '' }) : { margem: '', desconto: '' }
+  function setRegra(campo: keyof Regra, v: string) {
+    if (!scopeKey) return
+    setClassif(prev => ({ ...prev, [scopeKey]: { ...(prev[scopeKey] ?? { margem: '', desconto: '' }), [campo]: v } }))
+  }
+
+  // ── Cálculo do preço (cascata: família › categoria › segmento › geral) ──
+  function precoCalc(p: ProdutoRef): number {
     if (p.custo != null && p.custo > 0) {
-      const segM = parseNum(segs[p.segmento ?? ''] ?? '')
-      if (segM != null) return { valor: Math.round(p.custo * (1 + segM / 100) * 100) / 100, fonte: 'segmento' }
+      const fm = p.familia_id ? parseNum(classif[`fam:${p.familia_id}`]?.margem ?? '') : null
+      if (fm != null) return Math.round(p.custo * (1 + fm / 100) * 100) / 100
+      const cm = p.categoria_id ? parseNum(classif[`cat:${p.categoria_id}`]?.margem ?? '') : null
+      if (cm != null) return Math.round(p.custo * (1 + cm / 100) * 100) / 100
+      const sm = parseNum(segs[p.segmento ?? ''] ?? '')
+      if (sm != null) return Math.round(p.custo * (1 + sm / 100) * 100) / 100
       const gm = parseNum(margemGeral)
-      if (gm != null) return { valor: Math.round(p.custo * (1 + gm / 100) * 100) / 100, fonte: 'geral' }
+      if (gm != null) return Math.round(p.custo * (1 + gm / 100) * 100) / 100
     }
-    return { valor: p.preco ?? 0, fonte: 'base' }
+    return p.preco ?? p.custo ?? 0
+  }
+  // Desconto máximo efetivo (cascata: família › categoria › geral)
+  function descCalc(p: ProdutoRef): string {
+    const fd = p.familia_id ? classif[`fam:${p.familia_id}`]?.desconto?.trim() : ''
+    if (fd) return fd
+    const cd = p.categoria_id ? classif[`cat:${p.categoria_id}`]?.desconto?.trim() : ''
+    if (cd) return cd
+    return descontoGeral.trim()
   }
 
-  const produtosFiltrados = produtos.filter(p =>
-    !busca.trim() || p.nome.toLowerCase().includes(busca.toLowerCase()) || p.codigo?.toLowerCase().includes(busca.toLowerCase())
-  )
+  const produtosFiltrados = produtos.filter(p => {
+    if (famSel && p.familia_id !== famSel) return false
+    if (catSel && p.categoria_id !== catSel) return false
+    if (busca.trim()) {
+      const q = busca.toLowerCase()
+      return p.nome.toLowerCase().includes(q) || (p.codigo?.toLowerCase().includes(q) ?? false)
+    }
+    return true
+  })
+
+  // Regras configuradas (chips)
+  const regrasConfiguradas = Object.entries(classif)
+    .filter(([, v]) => v.margem.trim() !== '' || v.desconto.trim() !== '')
+    .map(([key, v]) => {
+      const [tipo, ref] = key.split(':')
+      const nome = tipo === 'fam' ? (famNome[ref] ?? '—') : (catNome[ref] ?? '—')
+      return { key, tipo, nome, ...v }
+    })
 
   // ─── Criar / excluir tabela ──────────────────────────────────────────────
   async function criarTabela() {
@@ -93,30 +153,43 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Prop
     toast('Tabela excluída', 'info'); router.refresh()
   }
 
-  // ─── Salvar (margem geral + por segmento + overrides) ────────────────────
+  // ─── Salvar (geral + segmento + categoria/família) ────────────────────────
   async function salvar() {
     if (!selectedId) return
     setSaving(true)
     const supabase = createClient()
 
-    // 1. Margem geral da tabela
-    await supabase.from('tabelas_preco').update({ margem: parseNum(margemGeral), desconto_maximo: parseNum(descontoGeral) }).eq('id', selectedId)
+    await supabase.from('tabelas_preco')
+      .update({ margem: parseNum(margemGeral), desconto_maximo: parseNum(descontoGeral) }).eq('id', selectedId)
 
-    // 2. Margens por segmento (upsert não-vazias, deleta vazias existentes)
-    const segUpsert = Object.entries(segs)
-      .filter(([, v]) => v.trim() !== '')
+    const segUpsert = Object.entries(segs).filter(([, v]) => v.trim() !== '')
       .map(([segmento, v]) => ({ tenant_id: tenantId, tabela_id: selectedId, segmento, margem: parseNum(v) }))
-    if (segUpsert.length)
-      await supabase.from('tabela_margem_segmento').upsert(segUpsert, { onConflict: 'tabela_id,segmento' })
+    if (segUpsert.length) await supabase.from('tabela_margem_segmento').upsert(segUpsert, { onConflict: 'tabela_id,segmento' })
     const segDelete = segMargens.filter(s => s.tabela_id === selectedId && !segs[s.segmento]?.trim()).map(s => s.id)
     if (segDelete.length) await supabase.from('tabela_margem_segmento').delete().in('id', segDelete)
+
+    // Regras por categoria/família
+    const classifUpsert = Object.entries(classif).flatMap(([key, v]) => {
+      const margem = parseNum(v.margem), desc = parseNum(v.desconto)
+      if (margem == null && desc == null) return []
+      const [tipo, ref_id] = key.split(':')
+      return [{ tenant_id: tenantId, tabela_id: selectedId, tipo: tipo === 'fam' ? 'familia' : 'categoria', ref_id, margem, desconto_maximo: desc }]
+    })
+    if (classifUpsert.length) await supabase.from('tabela_margem_classif').upsert(classifUpsert, { onConflict: 'tabela_id,tipo,ref_id' })
+    const classifDelete = classifMargens.filter(c => {
+      if (c.tabela_id !== selectedId) return false
+      const v = classif[`${c.tipo === 'familia' ? 'fam' : 'cat'}:${c.ref_id}`]
+      return !v || (parseNum(v.margem) == null && parseNum(v.desconto) == null)
+    }).map(c => c.id)
+    if (classifDelete.length) await supabase.from('tabela_margem_classif').delete().in('id', classifDelete)
 
     setSaving(false)
     toast('Tabela salva!')
     router.refresh()
   }
 
-  const numInput = 'w-24 border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-1.5 text-sm text-right dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const numInput = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-1.5 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  const selInput = numInput
 
   return (
     <>
@@ -157,7 +230,7 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Prop
             ))}
           </div>
 
-          {/* Margens (geral + por segmento) */}
+          {/* Margens gerais */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 mb-4">
             <div className="flex items-center gap-2 mb-3">
               <Percent size={15} className="text-gray-400" />
@@ -166,81 +239,129 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Prop
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
                 <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">Margem geral (%)</label>
-                <input type="number" value={margemGeral} onChange={(e) => setMargemGeral(e.target.value)}
-                  placeholder="ex: 50" className={`${numInput} w-full text-left`} />
+                <input type="number" value={margemGeral} onChange={(e) => setMargemGeral(e.target.value)} placeholder="ex: 50" className={numInput} />
               </div>
               <div>
                 <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">Desconto máximo (%)</label>
-                <input type="number" value={descontoGeral} onChange={(e) => setDescontoGeral(e.target.value)}
-                  placeholder="ex: 10" className={`${numInput} w-full text-left`} />
+                <input type="number" value={descontoGeral} onChange={(e) => setDescontoGeral(e.target.value)} placeholder="ex: 10" className={numInput} />
               </div>
               {segmentos.map(seg => (
                 <div key={seg.value}>
                   <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">Margem {seg.label} (%)</label>
-                  <input type="number" value={segs[seg.value] ?? ''} onChange={(e) => setSegs(p => ({ ...p, [seg.value]: e.target.value }))}
-                    placeholder="herda geral" className={`${numInput} w-full text-left`} />
+                  <input type="number" value={segs[seg.value] ?? ''} onChange={(e) => setSegs(p => ({ ...p, [seg.value]: e.target.value }))} placeholder="herda geral" className={numInput} />
                 </div>
               ))}
             </div>
             <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
-              Preço de venda = custo × (1 + margem). Margem por segmento sobrepõe a geral. O desconto máximo limita o abatimento que o vendedor pode dar no preço.
+              Preço de venda = custo × (1 + margem). A regra mais específica vence: família › categoria › segmento › geral.
+            </p>
+          </div>
+
+          {/* Regra por categoria / família */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Layers size={15} className="text-gray-400" />
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Margem por categoria / família</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">Categoria</label>
+                <select value={catSel} onChange={(e) => { setCatSel(e.target.value); setFamSel('') }} className={selInput}>
+                  <option value="">Todas</option>
+                  {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">Família</label>
+                <select value={famSel} onChange={(e) => { setFamSel(e.target.value); setCatSel('') }} className={selInput}>
+                  <option value="">Todas</option>
+                  {familias.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Margem {scopeNome ? `(${scopeNome})` : ''} (%)
+                </label>
+                <input type="number" value={regraAtual.margem} onChange={(e) => setRegra('margem', e.target.value)}
+                  disabled={!scopeKey} placeholder={scopeKey ? 'herda geral' : 'selecione acima'} className={`${numInput} disabled:opacity-50`} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">Desconto máx. (%)</label>
+                <input type="number" value={regraAtual.desconto} onChange={(e) => setRegra('desconto', e.target.value)}
+                  disabled={!scopeKey} placeholder={scopeKey ? 'herda geral' : 'selecione acima'} className={`${numInput} disabled:opacity-50`} />
+              </div>
+            </div>
+            {regrasConfiguradas.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {regrasConfiguradas.map(r => (
+                  <span key={r.key} className="inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                    <span className="font-medium">{r.nome}</span>
+                    {r.margem.trim() && <span>· {r.margem}%</span>}
+                    {r.desconto.trim() && <span>· desc {r.desconto}%</span>}
+                    <button onClick={() => setClassif(prev => { const n = { ...prev }; delete n[r.key]; return n })}
+                      className="ml-0.5 hover:text-red-500"><X size={11} /></button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
+              Escolha uma categoria ou família para definir margem/desconto só dela. O grid abaixo filtra para você conferir.
             </p>
           </div>
 
           {/* Busca */}
           <div className="relative mb-3">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar produto para ajuste manual..."
+            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar produto..."
               className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
           </div>
 
-          {/* Produtos: custo → preço de venda (margem aplicada) */}
+          {/* Produtos */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-            <div className="grid grid-cols-[1fr_100px_90px_120px_100px] gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
-              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Produto</span>
-              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Custo</span>
-              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Margem</span>
-              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Preço de venda</span>
-              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Desc. máx.</span>
-            </div>
-            <div className="divide-y divide-gray-50 dark:divide-gray-700 max-h-[55vh] overflow-y-auto">
-              {produtosFiltrados.slice(0, 200).map(p => {
-                const calc = precoCalc(p)
-                return (
-                  <div key={p.id} className="grid grid-cols-[1fr_100px_90px_120px_100px] gap-2 items-center px-4 py-2.5">
-                    <div className="min-w-0">
-                      <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{p.nome}</p>
-                      {p.segmento && <p className="text-[11px] text-gray-400">{segmentos.find(s => s.value === p.segmento)?.label ?? p.segmento}</p>}
-                    </div>
-                    <span className="text-sm text-gray-400 dark:text-gray-500 text-right">{brl(p.custo)}</span>
-                    <span className="text-sm text-right text-gray-500 dark:text-gray-400">
-                      {p.custo && p.custo > 0 ? `${Math.round((calc.valor / p.custo - 1) * 100)}%` : '—'}
-                    </span>
-                    <span className="text-sm text-right font-medium text-gray-900 dark:text-gray-100">
-                      {brl(calc.valor)}
-                    </span>
-                    <span className="text-sm text-right text-gray-500 dark:text-gray-400">
-                      {descontoGeral.trim() ? `${descontoGeral}%` : '—'}
-                    </span>
-                  </div>
-                )
-              })}
-              {produtos.length === 0 ? (
-                <div className="text-center py-10 px-4">
-                  <Tag size={28} className="mx-auto text-gray-200 dark:text-gray-600 mb-2" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Nenhum produto cadastrado.</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
-                    Cadastre ou importe produtos em{' '}
-                    <Link href="/produtos" className="text-blue-600 hover:underline font-medium">Produtos</Link>
-                    {' '}— eles aparecem aqui automaticamente para definir os preços.
-                  </p>
+            <div className="overflow-x-auto">
+              <div className="min-w-[760px]">
+                <div className="grid grid-cols-[1fr_120px_120px_90px_70px_110px_80px] gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Produto</span>
+                  <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Categoria</span>
+                  <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Família</span>
+                  <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Custo</span>
+                  <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Margem</span>
+                  <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Preço venda</span>
+                  <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Desc. máx.</span>
                 </div>
-              ) : produtosFiltrados.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">Nenhum produto encontrado para a busca.</p>
-              ) : null}
-              {produtosFiltrados.length > 200 && (
-                <p className="text-[11px] text-gray-400 text-center py-3">Mostrando 200 de {produtosFiltrados.length}. Refine a busca para ajustes específicos.</p>
-              )}
+                <div className="divide-y divide-gray-50 dark:divide-gray-700 max-h-[50vh] overflow-y-auto">
+                  {produtosFiltrados.slice(0, 200).map(p => {
+                    const valor = precoCalc(p)
+                    const desc = descCalc(p)
+                    return (
+                      <div key={p.id} className="grid grid-cols-[1fr_120px_120px_90px_70px_110px_80px] gap-2 items-center px-4 py-2.5">
+                        <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{p.nome}</p>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{p.categoria_id ? (catNome[p.categoria_id] ?? '—') : '—'}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{p.familia_id ? (famNome[p.familia_id] ?? '—') : '—'}</span>
+                        <span className="text-sm text-gray-400 dark:text-gray-500 text-right">{brl(p.custo)}</span>
+                        <span className="text-sm text-right text-gray-500 dark:text-gray-400">{p.custo && p.custo > 0 ? `${Math.round((valor / p.custo - 1) * 100)}%` : '—'}</span>
+                        <span className="text-sm text-right font-medium text-gray-900 dark:text-gray-100">{brl(valor)}</span>
+                        <span className="text-sm text-right text-gray-500 dark:text-gray-400">{desc ? `${desc}%` : '—'}</span>
+                      </div>
+                    )
+                  })}
+                  {produtos.length === 0 ? (
+                    <div className="text-center py-10 px-4">
+                      <Tag size={28} className="mx-auto text-gray-200 dark:text-gray-600 mb-2" />
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Nenhum produto cadastrado.</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        Cadastre ou importe produtos em{' '}
+                        <Link href="/produtos" className="text-blue-600 hover:underline font-medium">Produtos</Link>.
+                      </p>
+                    </div>
+                  ) : produtosFiltrados.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-8">Nenhum produto encontrado.</p>
+                  ) : null}
+                  {produtosFiltrados.length > 200 && (
+                    <p className="text-[11px] text-gray-400 text-center py-3">Mostrando 200 de {produtosFiltrados.length}. Refine a busca/filtro.</p>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="flex justify-end px-4 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800">
               <button onClick={salvar} disabled={saving}
@@ -279,7 +400,7 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Prop
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeletando(null)} />
           <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-xl">
             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">Excluir tabela?</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">A tabela <strong>{deletando.nome}</strong> e suas margens/preços serão removidos.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">A tabela <strong>{deletando.nome}</strong> e suas margens serão removidas.</p>
             <div className="flex gap-3">
               <button onClick={() => setDeletando(null)} className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
               <button onClick={excluirTabela} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-lg text-sm">Excluir</button>

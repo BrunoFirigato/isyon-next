@@ -28,7 +28,20 @@ export interface ProdutoRef {
   custo: number | null
   preco: number | null
   segmento: string | null
+  categoria_id: string | null
+  familia_id: string | null
   tipo: string | null
+}
+
+export interface Classificacao { id: string; nome: string }
+
+export interface TabelaMargemClassif {
+  id: string
+  tabela_id: string
+  tipo: 'categoria' | 'familia'
+  ref_id: string
+  margem: number | null
+  desconto_maximo: number | null
 }
 
 export function brl(value: number | null | undefined) {
