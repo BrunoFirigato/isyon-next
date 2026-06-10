@@ -232,21 +232,6 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
                 </div>
               )}
 
-              {segmentos.length > 0 && (
-                <div>
-                  <label className={labelCls}>Segmento</label>
-                  <select
-                    value={segmento} onChange={(e) => setSegmento(e.target.value)}
-                    className={selectCls}
-                  >
-                    <option value="">Selecione...</option>
-                    {segmentos.map((s) => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
               <div>
                 <label className={labelCls}>Vendedor</label>
                 <select value={vendedorId} onChange={(e) => setVendedorId(e.target.value)} className={selectCls}>
@@ -255,12 +240,32 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
                 </select>
               </div>
 
+              {tabelas.length > 0 && (
+                <div>
+                  <label className={labelCls}>Tabela de preço</label>
+                  <select value={tabelaPrecoId} onChange={(e) => onTabelaChange(e.target.value)} className={selectCls}>
+                    <option value="">Sem tabela (custo)</option>
+                    {tabelas.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                  </select>
+                </div>
+              )}
+
               {condPagamentos.length > 0 && (
                 <div>
                   <label className={labelCls}>Condição de pagamento</label>
                   <select value={condPagamentoId} onChange={(e) => setCondPagamentoId(e.target.value)} className={selectCls}>
                     <option value="">Selecione...</option>
                     {condPagamentos.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {transportadoras.length > 0 && (
+                <div>
+                  <label className={labelCls}>Transportadora</label>
+                  <select value={transportadoraId} onChange={(e) => setTransportadoraId(e.target.value)} className={selectCls}>
+                    <option value="">—</option>
+                    {transportadoras.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
                   </select>
                 </div>
               )}
@@ -280,22 +285,17 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
                 </div>
               </div>
 
-              {transportadoras.length > 0 && (
+              {segmentos.length > 0 && (
                 <div>
-                  <label className={labelCls}>Transportadora</label>
-                  <select value={transportadoraId} onChange={(e) => setTransportadoraId(e.target.value)} className={selectCls}>
-                    <option value="">—</option>
-                    {transportadoras.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
-                  </select>
-                </div>
-              )}
-
-              {tabelas.length > 0 && (
-                <div>
-                  <label className={labelCls}>Tabela de preço</label>
-                  <select value={tabelaPrecoId} onChange={(e) => onTabelaChange(e.target.value)} className={selectCls}>
-                    <option value="">Sem tabela (custo)</option>
-                    {tabelas.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                  <label className={labelCls}>Segmento</label>
+                  <select
+                    value={segmento} onChange={(e) => setSegmento(e.target.value)}
+                    className={selectCls}
+                  >
+                    <option value="">Selecione...</option>
+                    {segmentos.map((s) => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
                   </select>
                 </div>
               )}

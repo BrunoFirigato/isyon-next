@@ -322,46 +322,6 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
               )}
 
               <div>
-                <label className={labelCls}>Validade</label>
-                <input type="date" value={validade} onChange={(e) => setValidade(e.target.value)}
-                  className={inputCls} />
-              </div>
-
-              {segmentos.length > 0 && (
-                <div>
-                  <label className={labelCls}>Segmento</label>
-                  <select value={segmento} onChange={(e) => setSegmento(e.target.value)} className={selectCls}>
-                    <option value="">Selecione...</option>
-                    {segmentos.map((s) => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div>
-                <label className={labelCls}>Condição de pagamento</label>
-                <select value={condPagamentoId} onChange={(e) => setCondPagamentoId(e.target.value)} className={selectCls}>
-                  <option value="">Selecione...</option>
-                  {condPagamentos.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nome}</option>
-                  ))}
-                </select>
-              </div>
-
-              {tabelas.length > 0 && (
-                <div>
-                  <label className={labelCls}>Tabela de preço</label>
-                  <select value={tabelaPrecoId} onChange={(e) => onTabelaChange(e.target.value)} className={selectCls}>
-                    <option value="">Sem tabela (custo)</option>
-                    {tabelas.map((t) => (
-                      <option key={t.id} value={t.id}>{t.nome}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div>
                 <label className={`${labelCls} flex items-center gap-1`}>
                   Vendedor
                   {vendedorTravado && <Lock size={11} className="text-gray-400" />}
@@ -381,6 +341,46 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
                   <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Herdado da oportunidade.</p>
                 )}
               </div>
+
+              {tabelas.length > 0 && (
+                <div>
+                  <label className={labelCls}>Tabela de preço</label>
+                  <select value={tabelaPrecoId} onChange={(e) => onTabelaChange(e.target.value)} className={selectCls}>
+                    <option value="">Sem tabela (custo)</option>
+                    {tabelas.map((t) => (
+                      <option key={t.id} value={t.id}>{t.nome}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className={labelCls}>Condição de pagamento</label>
+                <select value={condPagamentoId} onChange={(e) => setCondPagamentoId(e.target.value)} className={selectCls}>
+                  <option value="">Selecione...</option>
+                  {condPagamentos.map((c) => (
+                    <option key={c.id} value={c.id}>{c.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelCls}>Validade</label>
+                <input type="date" value={validade} onChange={(e) => setValidade(e.target.value)}
+                  className={inputCls} />
+              </div>
+
+              {segmentos.length > 0 && (
+                <div>
+                  <label className={labelCls}>Segmento</label>
+                  <select value={segmento} onChange={(e) => setSegmento(e.target.value)} className={selectCls}>
+                    <option value="">Selecione...</option>
+                    {segmentos.map((s) => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Itens */}
