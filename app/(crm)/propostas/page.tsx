@@ -13,7 +13,7 @@ export default async function PropostasPage({ searchParams }: Props) {
 
   let query = supabase
     .from('propostas')
-    .select('id, titulo, status, valor, numero, obs, cliente_id, vendedor_id, empresa_id, cond_pagamento_id, tabela_preco_id, oportunidade_id, validade, itens, segmento, criado_em')
+    .select('id, titulo, status, valor, numero, obs, cliente_id, vendedor_id, empresa_id, cond_pagamento_id, tabela_preco_id, oportunidade_id, validade, itens, segmento, criado_em, share_token, aceite_em, aceite_por')
     .order('criado_em', { ascending: false })
 
   if (status && status !== 'todos') {
@@ -31,7 +31,7 @@ export default async function PropostasPage({ searchParams }: Props) {
     { data: oportunidades },
   ] = await Promise.all([
     query,
-    supabase.from('clientes').select('id, nome, empresa, email').order('nome'),
+    supabase.from('clientes').select('id, nome, empresa, email, telefone').order('nome'),
     supabase.from('vendedores').select('id, nome'),
     supabase.from('empresas').select('id, nome, sigla'),
     supabase.from('pedidos').select('numero, proposta_id').not('proposta_id', 'is', null),

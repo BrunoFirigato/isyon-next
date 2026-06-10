@@ -20,6 +20,7 @@ interface Tenant {
   aprovacao_pedido: boolean | null
   usa_parceiros: boolean | null
   tabela_preco_padrao: string | null
+  proposta_aceite_gera_pedido: boolean | null
 }
 
 interface ConfigUsuario {
@@ -124,6 +125,7 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
   const [usaParceiros, setUsaParceiros] = useState(tenant.usa_parceiros ?? false)
   // Tabela de preço padrão (carrega nos modais de pedido/proposta)
   const [tabelaPadrao, setTabelaPadrao] = useState(tenant.tabela_preco_padrao ?? '')
+  const [propostaAceiteGeraPedido, setPropostaAceiteGeraPedido] = useState(tenant.proposta_aceite_gera_pedido ?? false)
 
   async function salvarConfigs(e: React.FormEvent) {
     e.preventDefault()
@@ -146,6 +148,7 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
       aprovacao_pedido: aprovacaoPedido,
       usa_parceiros: usaParceiros,
       tabela_preco_padrao: tabelaPadrao || null,
+      proposta_aceite_gera_pedido: propostaAceiteGeraPedido,
     }).eq('id', tenant.id)
 
     setSavingConfig(false)
@@ -521,6 +524,33 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                       Para quem vende por meio de parceiros/revendedores. Quando ativado, aparece o menu
                       &quot;Parc. Comerciais&quot; e a opção de vincular o cliente a um parceiro no cadastro.
                       Desligado (padrão), o cadastro de cliente fica mais simples (venda direta).
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Aceite da proposta gera pedido automaticamente */}
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={propostaAceiteGeraPedido}
+                    onClick={() => setPropostaAceiteGeraPedido(v => !v)}
+                    className={`mt-0.5 relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                      propostaAceiteGeraPedido ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      propostaAceiteGeraPedido ? 'translate-x-4' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Aceite da proposta gera o pedido automaticamente</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                      Quando o cliente <strong>aceita</strong> a proposta pelo link público, o pedido é criado na hora
+                      (e a oportunidade fecha como ganha). Desligado (padrão), o aceite apenas marca a proposta como
+                      &quot;Aceita&quot; e o vendedor gera o pedido manualmente, conferindo frete e condição antes.
                     </p>
                   </div>
                 </label>

@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
   CheckCircle, XCircle, Send, Mail, X, ShoppingCart, Printer,
+  Link2, Copy, MessageCircle, Check,
 } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import { createClient } from '@/lib/supabase/client'
@@ -61,6 +62,12 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
   }, [])
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  // Compartilhamento (link público + WhatsApp)
+  const [shareModal, setShareModal] = useState<Proposta | null>(null)
+  const [shareUrl, setShareUrl] = useState('')
+  const [shareLoading, setShareLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
+
   const [emailModal, setEmailModal] = useState<Proposta | null>(null)
   const [emailTo, setEmailTo] = useState('')
   const [emailAssunto, setEmailAssunto] = useState('')
@@ -137,6 +144,46 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
     } finally {
       setSendingEmail(false)
     }
+  }
+
+  function clienteTelefone(id: string | null) {
+    if (!id) return ''
+    return clientes.find((x) => x.id === id)?.telefone ?? ''
+  }
+
+  // Abre o modal de compartilhamento — garante o share_token da proposta
+  async function openShare(p: Proposta) {
+    setShareModal(p)
+    setCopied(false)
+    setShareUrl('')
+    let token = p.share_token
+    if (!token) {
+      setShareLoading(true)
+      token = crypto.randomUUID()
+      const supabase = createClient()
+      const { error } = await supabase.from('propostas').update({ share_token: token }).eq('id', p.id)
+      setShareLoading(false)
+      if (error) { toast('Não foi possível gerar o link.', 'error'); setShareModal(null); return }
+      router.refresh()
+    }
+    setShareUrl(`${window.location.origin}/p/${token}`)
+  }
+
+  function copyShare() {
+    if (!shareUrl) return
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  function whatsappHref(p: Proposta): string {
+    const fone = clienteTelefone(p.cliente_id).replace(/\D/g, '')
+    const num = fone ? (fone.length <= 11 ? `55${fone}` : fone) : ''
+    const nomeCliente = clienteNome(p.cliente_id) ?? ''
+    const msg = `Olá${nomeCliente ? ` ${nomeCliente}` : ''}! Segue nossa proposta${p.numero ? ` ${p.numero}` : ''} para sua avaliação. Você pode visualizar e responder pelo link:\n${shareUrl}`
+    const base = num ? `https://wa.me/${num}` : 'https://wa.me/'
+    return `${base}?text=${encodeURIComponent(msg)}`
   }
 
   function setStatusFilter(s: string) {
@@ -404,6 +451,13 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
                       </>
                     )}
                     <button
+                      onClick={() => openShare(p)}
+                      title="Compartilhar link / WhatsApp"
+                      className="p-1.5 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors"
+                    >
+                      <Link2 size={14} />
+                    </button>
+                    <button
                       onClick={() => openEmailModal(p)}
                       title="Enviar por e-mail"
                       className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors"
@@ -452,6 +506,13 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
                       <Meta label="Empresa emissora" value={emp ? `${emp.nome} (${emp.sigla})` : '—'} />
                       <Meta label="Criada em" value={formatDate(p.criado_em)} />
                       <Meta label="Pedido gerado" value={pedidoNum ?? '— ainda não'} destaque={!!pedidoNum} />
+                      {p.aceite_em && (
+                        <Meta
+                          label={p.status === 'recusada' ? 'Recusada pelo cliente' : 'Aceita pelo cliente'}
+                          value={`${p.aceite_por ? `${p.aceite_por} · ` : ''}${formatDate(p.aceite_em)}`}
+                          destaque={p.status === 'aprovada'}
+                        />
+                      )}
                     </div>
 
                     {/* Itens */}
@@ -532,6 +593,70 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-lg text-sm transition-colors">
                 Excluir
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Compartilhar (link público + WhatsApp) ─────────────────── */}
+      {shareModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShareModal(null)} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2">
+                <Link2 size={16} className="text-green-500 shrink-0" />
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Compartilhar proposta</h3>
+              </div>
+              <button onClick={() => setShareModal(null)} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Envie o link abaixo. O cliente vê a proposta no celular e <strong>aceita ou recusa</strong> com um toque — a resposta volta automaticamente para o sistema.
+              </p>
+
+              {/* Link */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Link da proposta</label>
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={shareLoading ? 'Gerando link...' : shareUrl}
+                    onFocus={(e) => e.target.select()}
+                    className="flex-1 min-w-0 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    onClick={copyShare}
+                    disabled={!shareUrl}
+                    className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      copied ? 'bg-green-100 text-green-700' : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50'
+                    }`}
+                  >
+                    {copied ? <><Check size={14} /> Copiado</> : <><Copy size={14} /> Copiar</>}
+                  </button>
+                </div>
+              </div>
+
+              {/* WhatsApp */}
+              <a
+                href={shareUrl ? whatsappHref(shareModal) : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => { if (!shareUrl) e.preventDefault() }}
+                className={`w-full inline-flex items-center justify-center gap-2 font-semibold py-3 rounded-xl text-sm transition-colors ${
+                  shareUrl ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <MessageCircle size={16} /> Enviar pelo WhatsApp
+              </a>
+              {shareModal.cliente_id && !clienteTelefone(shareModal.cliente_id) && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 text-center -mt-1">
+                  Cliente sem telefone cadastrado — o WhatsApp abrirá para você escolher o contato.
+                </p>
+              )}
             </div>
           </div>
         </div>

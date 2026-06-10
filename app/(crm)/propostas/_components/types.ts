@@ -25,6 +25,9 @@ export interface Proposta {
   segmento: string | null
   itens: ItemProposta[] | null
   criado_em: string
+  share_token: string | null
+  aceite_em: string | null
+  aceite_por: string | null
 }
 
 export interface ClienteRef {
@@ -33,6 +36,7 @@ export interface ClienteRef {
   empresa: string | null
   email?: string | null
   cpf_cnpj?: string | null
+  telefone?: string | null
 }
 
 export const STATUS_PROPOSTA = [
