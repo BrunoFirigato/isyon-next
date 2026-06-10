@@ -116,16 +116,17 @@ export default function ConversasView() {
   useEffect(() => {
     const leadId = searchParams.get('lead')
     const cliId  = searchParams.get('cliente')
+    const txt    = searchParams.get('texto') // mensagem pré-pronta (ex.: envio de proposta)
     if (!leadId && !cliId) return
     ;(async () => {
       const col = leadId ? 'lead_id' : 'cliente_id'
       const val = (leadId ?? cliId) as string
       const { data: existente } = await supabase.from('wa_conversas')
         .select('id').eq(col, val).order('ultima_em', { ascending: false }).limit(1).maybeSingle()
-      if (existente) { setAtivaId(existente.id); return }
+      if (existente) { setAtivaId(existente.id); if (txt) setTexto(txt); return }
       const tbl = leadId ? 'leads' : 'clientes'
       const { data: ct } = await supabase.from(tbl).select('telefone').eq('id', val).maybeSingle()
-      if (ct?.telefone) { setNvTel(String(ct.telefone)); setNovaOpen(true) }
+      if (ct?.telefone) { setNvTel(String(ct.telefone)); if (txt) setNvTexto(txt); setNovaOpen(true) }
       else toast('Este contato não tem telefone cadastrado.', 'error')
     })()
   }, [searchParams, supabase, toast])

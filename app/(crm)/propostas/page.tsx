@@ -29,6 +29,7 @@ export default async function PropostasPage({ searchParams }: Props) {
     { data: empresas },
     { data: pedidoLinks },
     { data: oportunidades },
+    { count: whatsappCount },
   ] = await Promise.all([
     query,
     supabase.from('clientes').select('id, nome, empresa, email, telefone').order('nome'),
@@ -36,6 +37,7 @@ export default async function PropostasPage({ searchParams }: Props) {
     supabase.from('empresas').select('id, nome, sigla'),
     supabase.from('pedidos').select('numero, proposta_id').not('proposta_id', 'is', null),
     supabase.from('oportunidades').select('id, numero, titulo'),
+    supabase.from('wa_instancias').select('id', { count: 'exact', head: true }).eq('ativo', true),
   ])
 
   return (
@@ -47,6 +49,7 @@ export default async function PropostasPage({ searchParams }: Props) {
       pedidoLinks={pedidoLinks ?? []}
       oportunidades={oportunidades ?? []}
       currentStatus={status ?? 'todos'}
+      temWhatsapp={(whatsappCount ?? 0) > 0}
     />
   )
 }

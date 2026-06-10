@@ -32,9 +32,10 @@ interface Props {
   pedidoLinks: PedidoLink[]
   oportunidades: OpRef[]
   currentStatus: string
+  temWhatsapp: boolean
 }
 
-export default function PropostasView({ propostas, clientes, vendedores, empresas, pedidoLinks, oportunidades, currentStatus }: Props) {
+export default function PropostasView({ propostas, clientes, vendedores, empresas, pedidoLinks, oportunidades, currentStatus, temWhatsapp }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [, startTransition] = useTransition()
@@ -187,13 +188,30 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
     })
   }
 
+  // Mensagem padrão de envio da proposta (usada tanto no CRM quanto no wa.me)
+  function mensagemProposta(p: Proposta): string {
+    const nomeCliente = clienteNome(p.cliente_id) ?? ''
+    return `Olá${nomeCliente ? ` ${nomeCliente}` : ''}! Segue nossa proposta${p.numero ? ` ${p.numero}` : ''} para sua avaliação. Você pode visualizar e responder pelo link:\n${shareUrl}`
+  }
+
   function whatsappHref(p: Proposta): string {
     const fone = clienteTelefone(p.cliente_id).replace(/\D/g, '')
     const num = fone ? (fone.length <= 11 ? `55${fone}` : fone) : ''
-    const nomeCliente = clienteNome(p.cliente_id) ?? ''
-    const msg = `Olá${nomeCliente ? ` ${nomeCliente}` : ''}! Segue nossa proposta${p.numero ? ` ${p.numero}` : ''} para sua avaliação. Você pode visualizar e responder pelo link:\n${shareUrl}`
     const base = num ? `https://wa.me/${num}` : 'https://wa.me/'
-    return `${base}?text=${encodeURIComponent(msg)}`
+    return `${base}?text=${encodeURIComponent(mensagemProposta(p))}`
+  }
+
+  // Decide o destino do "Enviar pelo WhatsApp":
+  // com número conectado → abre a tela de Conversas do CRM (envio pelo número de negócio);
+  // sem número → cai no wa.me (vendedor manda do próprio WhatsApp).
+  function enviarWhatsapp(p: Proposta) {
+    if (!shareUrl) return
+    if (temWhatsapp && p.cliente_id) {
+      setShareModal(null)
+      router.push(`/conversas?cliente=${p.cliente_id}&texto=${encodeURIComponent(mensagemProposta(p))}`)
+    } else {
+      window.open(whatsappHref(p), '_blank', 'noopener,noreferrer')
+    }
   }
 
   function setStatusFilter(s: string) {
@@ -651,22 +669,22 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
               </div>
 
               {/* WhatsApp */}
-              <a
-                href={shareUrl ? whatsappHref(shareModal) : undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => { if (!shareUrl) e.preventDefault() }}
+              <button
+                onClick={() => enviarWhatsapp(shareModal)}
+                disabled={!shareUrl}
                 className={`w-full inline-flex items-center justify-center gap-2 font-semibold py-3 rounded-xl text-sm transition-colors ${
                   shareUrl ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
               >
                 <MessageCircle size={16} /> Enviar pelo WhatsApp
-              </a>
-              {shareModal.cliente_id && !clienteTelefone(shareModal.cliente_id) && (
-                <p className="text-[11px] text-amber-600 dark:text-amber-400 text-center -mt-1">
-                  Cliente sem telefone cadastrado — o WhatsApp abrirá para você escolher o contato.
-                </p>
-              )}
+              </button>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center -mt-1">
+                {temWhatsapp
+                  ? 'Abre a conversa no CRM com a mensagem pronta — você envia pelo número conectado.'
+                  : shareModal.cliente_id && !clienteTelefone(shareModal.cliente_id)
+                    ? 'Cliente sem telefone cadastrado — o WhatsApp abrirá para você escolher o contato.'
+                    : 'Abre o WhatsApp com a mensagem pronta para o telefone do cliente.'}
+              </p>
             </div>
           </div>
         </div>
