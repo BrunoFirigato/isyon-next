@@ -319,8 +319,8 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens, catego
           {/* Produtos */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <div className="min-w-[760px]">
-                <div className="grid grid-cols-[1fr_120px_120px_90px_70px_110px_80px] gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
+              <div className="min-w-[760px] max-h-[55vh] overflow-y-auto">
+                <div className="grid grid-cols-[1fr_120px_120px_90px_70px_110px_80px] gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-10">
                   <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Produto</span>
                   <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Categoria</span>
                   <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Família</span>
@@ -329,7 +329,7 @@ export default function TabelasPrecoView({ tabelas, produtos, segMargens, catego
                   <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Preço venda</span>
                   <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Desc. máx.</span>
                 </div>
-                <div className="divide-y divide-gray-50 dark:divide-gray-700 max-h-[50vh] overflow-y-auto">
+                <div className="divide-y divide-gray-50 dark:divide-gray-700">
                   {produtosFiltrados.slice(0, 200).map(p => {
                     const valor = precoCalc(p)
                     const desc = descCalc(p)
