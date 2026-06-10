@@ -36,7 +36,7 @@ export default async function CrmLayout({
   // Busca segmentos configurados pelo tenant
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('segmentos, whatsapp_template, email_template_assunto, email_template_corpo, divisao_carteira, aprovacao_pedido, usa_parceiros')
+    .select('segmentos, whatsapp_template, email_template_assunto, email_template_corpo, divisao_carteira, aprovacao_pedido, usa_parceiros, tabela_preco_padrao')
     .eq('id', tenantId)
     .maybeSingle()
 
@@ -47,6 +47,7 @@ export default async function CrmLayout({
   const divisaoCarteira       = (tenant?.divisao_carteira        as boolean | null) ?? false
   const aprovacaoPedido       = (tenant?.aprovacao_pedido        as boolean | null) ?? false
   const usaParceiros          = (tenant?.usa_parceiros           as boolean | null) ?? false
+  const tabelaPrecoPadrao     = (tenant?.tabela_preco_padrao     as string | null) ?? null
 
   return (
     <TenantProvider
@@ -55,6 +56,7 @@ export default async function CrmLayout({
       divisaoCarteira={divisaoCarteira}
       aprovacaoPedido={aprovacaoPedido}
       usaParceiros={usaParceiros}
+      tabelaPrecoPadrao={tabelaPrecoPadrao}
       whatsappTemplate={whatsappTemplate}
       emailTemplateAssunto={emailTemplateAssunto}
       emailTemplateCorpo={emailTemplateCorpo}

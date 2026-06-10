@@ -10,6 +10,7 @@ import {
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
+import ClienteCombo from '@/app/(crm)/_components/ClienteCombo'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 import { precoNaTabela, type TabelaInfo, type SegMargem, type Override, type ClassifMargem } from '@/lib/preco'
 
@@ -37,7 +38,7 @@ interface Props {
 export default function PropostaFormModal({ proposta, prefill, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
-  const { tenantId, perfil, divisaoCarteira } = useTenantConfig()
+  const { tenantId, perfil, divisaoCarteira, tabelaPrecoPadrao } = useTenantConfig()
   const segmentos = useSegmentos()
   const isEditing = !!proposta
 
@@ -56,7 +57,7 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
   const [validade, setValidade] = useState(proposta?.validade?.slice(0, 10) ?? '')
   const [segmento, setSegmento] = useState(proposta?.segmento ?? prefill?.segmento ?? '')
   const [condPagamentoId, setCondPagamentoId] = useState(proposta?.cond_pagamento_id ?? '')
-  const [tabelaPrecoId, setTabelaPrecoId] = useState(proposta?.tabela_preco_id ?? '')
+  const [tabelaPrecoId, setTabelaPrecoId] = useState(proposta?.tabela_preco_id ?? tabelaPrecoPadrao ?? '')
   // vendedor: proposta (edição) → oportunidade (prefill) → usuário logado (auto)
   const [vendedorId, setVendedorId] = useState(proposta?.vendedor_id ?? prefill?.vendedorId ?? '')
   const [obs, setObs] = useState(proposta?.obs ?? '')
@@ -84,7 +85,7 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
     async function init() {
       const [{ data: cls }, { data: emps }, { data: prods }, { data: conds }, { data: vends },
               { data: tabs }, { data: tms }, { data: tpi }, { data: classif }, { data: { user } }] = await Promise.all([
-        supabase.from('clientes').select('id, nome, empresa').order('nome'),
+        supabase.from('clientes').select('id, nome, empresa, cpf_cnpj').order('nome'),
         supabase.from('empresas').select('id, nome, sigla').order('nome'),
         supabase.from('produtos').select('id, nome, preco, custo, ncm, unidade, segmento, categoria_id, familia_id, tipo').not('ativo', 'is', false).order('nome'),
         supabase.from('cond_pagamentos').select('id, nome').eq('ativo', true).order('nome'),
@@ -282,19 +283,16 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
                   Cliente
                   {clienteTravado && <Lock size={11} className="text-gray-400" />}
                 </label>
-                <select
-                  value={clienteId}
-                  onChange={(e) => setClienteId(e.target.value)}
-                  disabled={clienteTravado}
-                  className={`${selectCls} ${clienteTravado ? 'opacity-70 cursor-not-allowed' : ''}`}
-                >
-                  <option value="">Selecione...</option>
-                  {clientes.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.empresa ? `${c.empresa} — ${c.nome}` : c.nome}
-                    </option>
-                  ))}
-                </select>
+                {clienteTravado ? (
+                  <select value={clienteId} disabled className={`${selectCls} opacity-70 cursor-not-allowed`}>
+                    <option value="">Selecione...</option>
+                    {clientes.map((c) => (
+                      <option key={c.id} value={c.id}>{c.empresa ? `${c.empresa} — ${c.nome}` : c.nome}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <ClienteCombo clientes={clientes} value={clienteId} onChange={setClienteId} className={`${selectCls} w-full`} />
+                )}
                 {clienteTravado && (
                   <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Herdado da oportunidade.</p>
                 )}

@@ -37,6 +37,7 @@ export interface ClienteRef {
   id: string
   nome: string
   empresa: string | null
+  cpf_cnpj?: string | null
 }
 
 export const STATUS_PEDIDO = [

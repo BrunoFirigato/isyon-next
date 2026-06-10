@@ -19,6 +19,7 @@ interface Tenant {
   divisao_carteira: boolean | null
   aprovacao_pedido: boolean | null
   usa_parceiros: boolean | null
+  tabela_preco_padrao: string | null
 }
 
 interface ConfigUsuario {
@@ -35,6 +36,7 @@ interface Props {
   segmentosIniciais: Segmento[]
   usuariosUsados: number
   whatsappUsados: number
+  tabelas: { id: string; nome: string }[]
 }
 
 function fmtData(iso: string) {
@@ -80,7 +82,7 @@ const CONFIG_DEFAULTS: Record<string, string> = {
   meta_global:      '0',
 }
 
-export default function ConfiguracoesView({ tenant, configs, usuarioId, segmentosIniciais, usuariosUsados, whatsappUsados }: Props) {
+export default function ConfiguracoesView({ tenant, configs, usuarioId, segmentosIniciais, usuariosUsados, whatsappUsados, tabelas }: Props) {
   const router = useRouter()
   const toast = useToast()
 
@@ -120,6 +122,8 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
   const [aprovacaoPedido, setAprovacaoPedido] = useState(tenant.aprovacao_pedido ?? false)
   // Recurso opcional — parceiros comerciais (revenda)
   const [usaParceiros, setUsaParceiros] = useState(tenant.usa_parceiros ?? false)
+  // Tabela de preço padrão (carrega nos modais de pedido/proposta)
+  const [tabelaPadrao, setTabelaPadrao] = useState(tenant.tabela_preco_padrao ?? '')
 
   async function salvarConfigs(e: React.FormEvent) {
     e.preventDefault()
@@ -141,6 +145,7 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
       divisao_carteira: divisaoCarteira,
       aprovacao_pedido: aprovacaoPedido,
       usa_parceiros: usaParceiros,
+      tabela_preco_padrao: tabelaPadrao || null,
     }).eq('id', tenant.id)
 
     setSavingConfig(false)
@@ -426,6 +431,21 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                   </div>
                 ))}
               </div>
+
+              {/* Tabela de preço padrão (tenant) */}
+              {tabelas.length > 0 && (
+                <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Tabela de preço padrão</label>
+                  <select value={tabelaPadrao} onChange={(e) => setTabelaPadrao(e.target.value)}
+                    className="w-full sm:max-w-xs border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100">
+                    <option value="">Nenhuma (usa o custo)</option>
+                    {tabelas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                  </select>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
+                    Já vem selecionada ao criar pedidos e propostas — evita fechar venda no custo por engano.
+                  </p>
+                </div>
+              )}
 
               {/* Política de carteira (tenant) */}
               <div className="pt-2 border-t border-gray-100 dark:border-gray-700">

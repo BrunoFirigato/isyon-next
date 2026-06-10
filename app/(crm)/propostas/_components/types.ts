@@ -32,6 +32,7 @@ export interface ClienteRef {
   nome: string
   empresa: string | null
   email?: string | null
+  cpf_cnpj?: string | null
 }
 
 export const STATUS_PROPOSTA = [

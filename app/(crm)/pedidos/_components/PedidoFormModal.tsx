@@ -9,7 +9,8 @@ import {
   STATUS_PEDIDO, brl, calcTotal, novoItem,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
-import { useTenantId } from '@/app/(crm)/_components/TenantContext'
+import { useTenantId, useTenantConfig } from '@/app/(crm)/_components/TenantContext'
+import ClienteCombo from '@/app/(crm)/_components/ClienteCombo'
 import { useSegmentos } from '@/app/(crm)/_components/SegmentosContext'
 import { precoNaTabela, type TabelaInfo, type SegMargem, type Override, type ClassifMargem } from '@/lib/preco'
 
@@ -32,6 +33,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
   const router = useRouter()
   const toast = useToast()
   const tenantId = useTenantId()
+  const { tabelaPrecoPadrao } = useTenantConfig()
   const segmentos = useSegmentos()
   const isEditing = !!pedido
 
@@ -40,7 +42,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
   const [segmento, setSegmento] = useState(pedido?.segmento ?? '')
   const [vendedorId, setVendedorId] = useState(pedido?.vendedor_id ?? '')
   const [condPagamentoId, setCondPagamentoId] = useState(pedido?.cond_pagamento_id ?? '')
-  const [tabelaPrecoId, setTabelaPrecoId] = useState(pedido?.tabela_preco_id ?? '')
+  const [tabelaPrecoId, setTabelaPrecoId] = useState(pedido?.tabela_preco_id ?? tabelaPrecoPadrao ?? '')
   const [valorFrete, setValorFrete] = useState(pedido?.valor_frete != null ? String(pedido.valor_frete) : '')
   const [modalidadeFrete, setModalidadeFrete] = useState(pedido?.modalidade_frete ?? '9')
   const [transportadoraId, setTransportadoraId] = useState(pedido?.transportadora_id ?? '')
@@ -70,7 +72,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
     async function init() {
       const [{ data: cls }, { data: emps }, { data: prods }, { data: vends }, { data: conds },
               { data: tabs }, { data: tms }, { data: tpi }, { data: transps }, { data: classif }, { data: { user } }] = await Promise.all([
-        supabase.from('clientes').select('id, nome, empresa').order('nome'),
+        supabase.from('clientes').select('id, nome, empresa, cpf_cnpj').order('nome'),
         supabase.from('empresas').select('id, nome, sigla').order('nome'),
         supabase.from('produtos').select('id, nome, preco, custo, ncm, unidade, segmento, categoria_id, familia_id, tipo').not('ativo', 'is', false).order('nome'),
         supabase.from('vendedores').select('id, nome').eq('status', 'ativo').order('nome'),
@@ -215,17 +217,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className={labelCls}>Cliente</label>
-                <select
-                  value={clienteId} onChange={(e) => setClienteId(e.target.value)}
-                  className={selectCls}
-                >
-                  <option value="">Selecione...</option>
-                  {clientes.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.empresa ? `${c.empresa} — ${c.nome}` : c.nome}
-                    </option>
-                  ))}
-                </select>
+                <ClienteCombo clientes={clientes} value={clienteId} onChange={setClienteId} className={`${selectCls} w-full`} />
               </div>
 
               {filiais.length > 0 && (

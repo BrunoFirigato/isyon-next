@@ -19,7 +19,7 @@ export default async function ConfiguracoesPage() {
 
   let { data: tenantData, error: tenantErr } = await supabase
     .from('tenants')
-    .select('id, nome, plano, status, criado_em, expiracao_contrato, wa_limite, limite_usuarios, segmentos, divisao_carteira, aprovacao_pedido, usa_parceiros')
+    .select('id, nome, plano, status, criado_em, expiracao_contrato, wa_limite, limite_usuarios, segmentos, divisao_carteira, aprovacao_pedido, usa_parceiros, tabela_preco_padrao')
     .eq('id', tenantId)
     .maybeSingle()
 
@@ -32,7 +32,7 @@ export default async function ConfiguracoesPage() {
       .select('id, nome, plano, status, criado_em, segmentos')
       .eq('id', tenantId)
       .maybeSingle()
-    tenantData = fb.data ? { ...fb.data, expiracao_contrato: null, wa_limite: null, limite_usuarios: null, divisao_carteira: false, aprovacao_pedido: false, usa_parceiros: false } : null
+    tenantData = fb.data ? { ...fb.data, expiracao_contrato: null, wa_limite: null, limite_usuarios: null, divisao_carteira: false, aprovacao_pedido: false, usa_parceiros: false, tabela_preco_padrao: null } : null
   }
 
   if (!tenantData) redirect('/dashboard')
@@ -44,6 +44,9 @@ export default async function ConfiguracoesPage() {
     admin.from('wa_instancias').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
   ])
 
+  const { data: tabelas } = await supabase
+    .from('tabelas_preco').select('id, nome').not('ativo', 'is', false).order('nome')
+
   const segmentosIniciais = (tenantData.segmentos as typeof DEFAULT_SEGMENTOS | null) ?? DEFAULT_SEGMENTOS
 
   return (
@@ -54,6 +57,7 @@ export default async function ConfiguracoesPage() {
       segmentosIniciais={segmentosIniciais}
       usuariosUsados={usuariosUsados ?? 0}
       whatsappUsados={whatsappUsados ?? 0}
+      tabelas={tabelas ?? []}
     />
   )
 }
