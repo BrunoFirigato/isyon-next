@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import ConfiguracoesView from './_components/ConfiguracoesView'
 import { DEFAULT_SEGMENTOS } from '@/app/(crm)/_components/SegmentosContext'
 
@@ -18,7 +19,7 @@ export default async function ConfiguracoesPage() {
 
   let { data: tenantData, error: tenantErr } = await supabase
     .from('tenants')
-    .select('id, nome, plano, status, criado_em, segmentos, divisao_carteira, aprovacao_pedido')
+    .select('id, nome, plano, status, criado_em, expiracao_contrato, wa_limite, limite_usuarios, segmentos, divisao_carteira, aprovacao_pedido')
     .eq('id', tenantId)
     .maybeSingle()
 
@@ -31,10 +32,17 @@ export default async function ConfiguracoesPage() {
       .select('id, nome, plano, status, criado_em, segmentos')
       .eq('id', tenantId)
       .maybeSingle()
-    tenantData = fb.data ? { ...fb.data, divisao_carteira: false, aprovacao_pedido: false } : null
+    tenantData = fb.data ? { ...fb.data, expiracao_contrato: null, wa_limite: null, limite_usuarios: null, divisao_carteira: false, aprovacao_pedido: false } : null
   }
 
   if (!tenantData) redirect('/dashboard')
+
+  // Uso atual da conta (admin client — independe de RLS por perfil)
+  const admin = createAdminClient()
+  const [{ count: usuariosUsados }, { count: whatsappUsados }] = await Promise.all([
+    admin.from('usuarios').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+    admin.from('wa_instancias').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+  ])
 
   const segmentosIniciais = (tenantData.segmentos as typeof DEFAULT_SEGMENTOS | null) ?? DEFAULT_SEGMENTOS
 
@@ -44,6 +52,8 @@ export default async function ConfiguracoesPage() {
       configs={configs ?? []}
       usuarioId={usuario?.id ?? ''}
       segmentosIniciais={segmentosIniciais}
+      usuariosUsados={usuariosUsados ?? 0}
+      whatsappUsados={whatsappUsados ?? 0}
     />
   )
 }

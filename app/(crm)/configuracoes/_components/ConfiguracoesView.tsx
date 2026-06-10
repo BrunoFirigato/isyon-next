@@ -13,6 +13,9 @@ interface Tenant {
   plano: string | null
   status: string | null
   criado_em: string
+  expiracao_contrato: string | null
+  wa_limite: number | null
+  limite_usuarios: number | null
   divisao_carteira: boolean | null
   aprovacao_pedido: boolean | null
 }
@@ -29,6 +32,35 @@ interface Props {
   configs: ConfigUsuario[]
   usuarioId: string
   segmentosIniciais: Segmento[]
+  usuariosUsados: number
+  whatsappUsados: number
+}
+
+function fmtData(iso: string) {
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+function diasRestantes(iso: string | null): number | null {
+  if (!iso) return null
+  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000)
+}
+function UsoBar({ label, usado, limite }: { label: string; usado: number; limite: number }) {
+  const pct = limite > 0 ? Math.min(100, Math.round((usado / limite) * 100)) : 0
+  const cheio = limite > 0 && usado >= limite
+  return (
+    <div>
+      <div className="flex items-center justify-between text-xs mb-1">
+        <span className="text-gray-600 dark:text-gray-400">{label}</span>
+        <span className={cheio ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-gray-500 dark:text-gray-400'}>
+          {usado}{limite > 0 ? ` de ${limite}` : ''}
+        </span>
+      </div>
+      {limite > 0 && (
+        <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+          <div className={`h-full rounded-full ${cheio ? 'bg-amber-500' : 'bg-blue-500'}`} style={{ width: `${pct}%` }} />
+        </div>
+      )}
+    </div>
+  )
 }
 
 const CONFIG_LABELS: Record<string, string> = {
@@ -47,7 +79,7 @@ const CONFIG_DEFAULTS: Record<string, string> = {
   meta_global:      '0',
 }
 
-export default function ConfiguracoesView({ tenant, configs, usuarioId, segmentosIniciais }: Props) {
+export default function ConfiguracoesView({ tenant, configs, usuarioId, segmentosIniciais, usuariosUsados, whatsappUsados }: Props) {
   const router = useRouter()
   const toast = useToast()
 
@@ -251,10 +283,35 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                       {tenant.status ?? '—'}
                     </span>
                   </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Cliente desde</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{fmtData(tenant.criado_em)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Contrato</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {tenant.expiracao_contrato ? fmtData(tenant.expiracao_contrato) : '—'}
+                      {tenant.expiracao_contrato && (() => {
+                        const d = diasRestantes(tenant.expiracao_contrato)!
+                        return (
+                          <span className={`ml-1 text-xs ${d < 0 ? 'text-red-500' : d <= 30 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                            ({d < 0 ? 'vencido' : `${d} dias`})
+                          </span>
+                        )
+                      })()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Uso do plano */}
+                <div className="space-y-2.5 pt-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Uso do plano</p>
+                  <UsoBar label="Usuários" usado={usuariosUsados} limite={tenant.limite_usuarios ?? 0} />
+                  <UsoBar label="Números de WhatsApp" usado={whatsappUsados} limite={tenant.wa_limite ?? 0} />
                 </div>
 
                 <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg px-3 py-2">
-                  Dados fiscais (CNPJ, regime tributário, NF-e) são configurados por empresa em <strong>Administração → Empresas</strong>.
+                  Precisa de mais usuários ou números de WhatsApp? <strong>Fale com o suporte</strong> para aumentar o seu plano. Os dados da sua empresa (CNPJ, endereço) ficam em <strong>Administração → Empresas</strong>.
                 </p>
               </div>
             </div>
@@ -411,7 +468,7 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                   <div>
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Exigir aprovação do gestor no pedido</p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                      Quando ativado, todo pedido nasce &quot;Aguardando aprovação&quot; e só pode ser faturado (emitir NF-e)
+                      Quando ativado, todo pedido nasce &quot;Aguardando aprovação&quot; e só pode ser faturado (enviado ao ERP)
                       após um gestor ou administrador liberar. Desligado, o pedido já nasce pronto para faturar.
                     </p>
                   </div>
