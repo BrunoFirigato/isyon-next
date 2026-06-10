@@ -24,7 +24,7 @@ function parseNum(v: string): number | null {
   return isNaN(n) ? null : n
 }
 
-export default function TabelasPrecoView({ tabelas, produtos, itens, segMargens }: Props) {
+export default function TabelasPrecoView({ tabelas, produtos, segMargens }: Props) {
   const router    = useRouter()
   const toast     = useToast()
   const tenantId  = useTenantId()
@@ -41,16 +41,10 @@ export default function TabelasPrecoView({ tabelas, produtos, itens, segMargens 
   const tabelaSel = tabelas.find(t => t.id === selectedId)
   const [margemGeral, setMargemGeral] = useState<string>(tabelaSel?.margem != null ? String(tabelaSel.margem) : '')
   const [segs,     setSegs]     = useState<Record<string, string>>(() => buildSegs(selectedId))
-  const [overrides, setOverrides] = useState<Record<string, string>>(() => buildOverrides(selectedId))
 
   function buildSegs(tid: string): Record<string, string> {
     const m: Record<string, string> = {}
     segMargens.filter(s => s.tabela_id === tid).forEach(s => { if (s.margem != null) m[s.segmento] = String(s.margem) })
-    return m
-  }
-  function buildOverrides(tid: string): Record<string, string> {
-    const m: Record<string, string> = {}
-    itens.filter(i => i.tabela_id === tid).forEach(i => { if (i.preco != null) m[i.produto_id] = String(i.preco) })
     return m
   }
 
@@ -59,14 +53,11 @@ export default function TabelasPrecoView({ tabelas, produtos, itens, segMargens 
     const t = tabelas.find(x => x.id === id)
     setMargemGeral(t?.margem != null ? String(t.margem) : '')
     setSegs(buildSegs(id))
-    setOverrides(buildOverrides(id))
     setBusca('')
   }
 
   // Preço calculado (live) seguindo a cascata, usando o estado editável
   function precoCalc(p: ProdutoRef): { valor: number; fonte: string } {
-    const ov = overrides[p.id]?.trim()
-    if (ov) { const n = parseNum(ov); if (n != null) return { valor: n, fonte: 'override' } }
     if (p.custo != null && p.custo > 0) {
       const segM = parseNum(segs[p.segmento ?? ''] ?? '')
       if (segM != null) return { valor: Math.round(p.custo * (1 + segM / 100) * 100) / 100, fonte: 'segmento' }
@@ -117,15 +108,6 @@ export default function TabelasPrecoView({ tabelas, produtos, itens, segMargens 
       await supabase.from('tabela_margem_segmento').upsert(segUpsert, { onConflict: 'tabela_id,segmento' })
     const segDelete = segMargens.filter(s => s.tabela_id === selectedId && !segs[s.segmento]?.trim()).map(s => s.id)
     if (segDelete.length) await supabase.from('tabela_margem_segmento').delete().in('id', segDelete)
-
-    // 3. Overrides por produto
-    const ovUpsert = Object.entries(overrides)
-      .filter(([, v]) => v.trim() !== '')
-      .map(([produto_id, v]) => ({ tenant_id: tenantId, tabela_id: selectedId, produto_id, preco: parseNum(v) }))
-    if (ovUpsert.length)
-      await supabase.from('tabela_preco_itens').upsert(ovUpsert, { onConflict: 'tabela_id,produto_id' })
-    const ovDelete = itens.filter(i => i.tabela_id === selectedId && !overrides[i.produto_id]?.trim()).map(i => i.id)
-    if (ovDelete.length) await supabase.from('tabela_preco_itens').delete().in('id', ovDelete)
 
     setSaving(false)
     toast('Tabela salva!')
@@ -194,7 +176,7 @@ export default function TabelasPrecoView({ tabelas, produtos, itens, segMargens 
               ))}
             </div>
             <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
-              Preço = custo × (1 + margem). Segmento sem margem herda a geral; produtos sem custo usam o preço base.
+              Preço de venda = custo × (1 + margem). Margem por segmento sobrepõe a geral.
             </p>
           </div>
 
@@ -205,32 +187,26 @@ export default function TabelasPrecoView({ tabelas, produtos, itens, segMargens 
               className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
           </div>
 
-          {/* Produtos: preço calculado + override */}
+          {/* Produtos: custo → preço de venda (margem aplicada) */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-            <div className="grid grid-cols-[1fr_100px_110px_110px] gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
+            <div className="grid grid-cols-[1fr_120px_120px] gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
               <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Produto</span>
               <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Custo</span>
-              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Preço calc.</span>
-              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Override</span>
+              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">Preço de venda</span>
             </div>
             <div className="divide-y divide-gray-50 dark:divide-gray-700 max-h-[55vh] overflow-y-auto">
               {produtosFiltrados.slice(0, 200).map(p => {
                 const calc = precoCalc(p)
                 return (
-                  <div key={p.id} className="grid grid-cols-[1fr_100px_110px_110px] gap-2 items-center px-4 py-2.5">
+                  <div key={p.id} className="grid grid-cols-[1fr_120px_120px] gap-2 items-center px-4 py-2.5">
                     <div className="min-w-0">
                       <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{p.nome}</p>
                       {p.segmento && <p className="text-[11px] text-gray-400">{segmentos.find(s => s.value === p.segmento)?.label ?? p.segmento}</p>}
                     </div>
                     <span className="text-sm text-gray-400 dark:text-gray-500 text-right">{brl(p.custo)}</span>
-                    <span className={`text-sm text-right font-medium ${calc.fonte === 'override' ? 'text-amber-600' : 'text-gray-900 dark:text-gray-100'}`}>
+                    <span className="text-sm text-right font-medium text-gray-900 dark:text-gray-100">
                       {brl(calc.valor)}
                     </span>
-                    <div className="flex justify-end">
-                      <input type="number" min="0" step="0.01" value={overrides[p.id] ?? ''}
-                        onChange={(e) => setOverrides(prev => ({ ...prev, [p.id]: e.target.value }))}
-                        placeholder="—" className={numInput} />
-                    </div>
                   </div>
                 )
               })}
