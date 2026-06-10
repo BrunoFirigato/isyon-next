@@ -18,9 +18,11 @@ interface EmpresaRef   { id: string; nome: string; sigla: string }
 interface Props {
   lead: Lead
   onClose: () => void
+  /** Chamado após a conversão, com o id do cliente (prospect) recém-criado. */
+  onConverted?: (clienteId: string) => void | Promise<void>
 }
 
-export default function ConvertModal({ lead, onClose }: Props) {
+export default function ConvertModal({ lead, onClose, onConverted }: Props) {
   const router   = useRouter()
   const toast    = useToast()
   const { tenantId, perfil, divisaoCarteira } = useTenantConfig()
@@ -148,6 +150,9 @@ export default function ConvertModal({ lead, onClose }: Props) {
 
     // 3. Marca o lead como convertido
     await supabase.from('leads').update({ status: 'convertido' }).eq('id', lead.id)
+
+    // Permite ao chamador reagir (ex.: revincular a conversa do WhatsApp ao novo cliente)
+    if (onConverted) await onConverted(prospect.id)
 
     toast('Lead convertido! Prospect criado em Clientes.')
     router.refresh()

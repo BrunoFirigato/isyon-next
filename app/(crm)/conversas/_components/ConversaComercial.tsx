@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
 import { gerarShareToken, mensagemProposta } from '@/lib/proposta-share'
+import ConvertModal from '@/app/(crm)/leads/_components/ConvertModal'
+import type { Lead } from '@/app/(crm)/leads/_components/types'
 
 const ETAPAS = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação']
 
@@ -47,6 +49,8 @@ export default function ConversaComercial({ conversaId, clienteId, leadId, conta
   const [propOpen, setPropOpen] = useState(false)
   const [opOpen, setOpOpen] = useState(false)
   const [enviandoId, setEnviandoId] = useState<string | null>(null)
+  const [convertLead, setConvertLead] = useState<Lead | null>(null)
+  const [convertLoading, setConvertLoading] = useState(false)
 
   // Form da oportunidade
   const [opTitulo, setOpTitulo] = useState('')
@@ -130,12 +134,41 @@ export default function ConversaComercial({ conversaId, clienteId, leadId, conta
     }
   }
 
-  function abrirOp() {
+  // Cliente: cria oportunidade simples (não há lead a converter)
+  function abrirOpSimples() {
     setOpTitulo(contatoNome ? `Oportunidade — ${contatoNome}` : '')
     setOpEtapa('Prospecção')
     setOpValor('')
     setOpOpen(true)
   }
+
+  // Lead: abre o fluxo de conversão OFICIAL (cria prospect + oportunidade + marca convertido)
+  async function iniciarConversao() {
+    if (!leadId) return
+    setConvertLoading(true)
+    try {
+      const { data } = await supabase.from('leads').select('*').eq('id', leadId).maybeSingle()
+      if (!data) { toast('Lead não encontrado.', 'error'); return }
+      setConvertLead(data as unknown as Lead)
+    } finally {
+      setConvertLoading(false)
+    }
+  }
+
+  // Dispatcher do botão "Criar oportunidade" / "Converter em oportunidade"
+  function abrirCriarOportunidade() {
+    if (leadId && !clienteId) iniciarConversao()
+    else abrirOpSimples()
+  }
+
+  // Após converter o lead: revincula a conversa ao novo cliente (destrava propostas)
+  async function aposConversao(novoClienteId: string) {
+    await supabase.from('wa_conversas').update({ cliente_id: novoClienteId, lead_id: null }).eq('id', conversaId)
+    onSent()
+    carregar()
+  }
+
+  const ehLead = !!leadId && !clienteId
 
   if (!clienteId && !leadId) return null
 
@@ -166,9 +199,10 @@ export default function ConversaComercial({ conversaId, clienteId, leadId, conta
           className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 transition-colors">
           <FileText size={13} /> Enviar proposta
         </button>
-        <button onClick={abrirOp}
-          className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 transition-colors">
-          <Target size={13} /> Criar oportunidade
+        <button onClick={abrirCriarOportunidade} disabled={convertLoading}
+          className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 transition-colors disabled:opacity-60">
+          {convertLoading ? <Loader2 size={13} className="animate-spin" /> : <Target size={13} />}
+          {ehLead ? 'Converter em oportunidade' : 'Criar oportunidade'}
         </button>
       </div>
 
@@ -185,7 +219,16 @@ export default function ConversaComercial({ conversaId, clienteId, leadId, conta
             </div>
             <div className="p-5">
               {!clienteId ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400">Vincule esta conversa a um <strong>cliente</strong> para enviar propostas.</p>
+                <div className="text-center py-3">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                    Propostas são vinculadas a um <strong>cliente</strong>. Converta este lead em oportunidade — isso
+                    cria o cliente e libera o envio de propostas.
+                  </p>
+                  <button onClick={() => { setPropOpen(false); iniciarConversao() }} disabled={convertLoading}
+                    className="inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                    {convertLoading ? <Loader2 size={14} className="animate-spin" /> : <Target size={14} />} Converter em oportunidade
+                  </button>
+                </div>
               ) : (ctx?.propostas.length ?? 0) === 0 ? (
                 <div className="text-center py-4">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Este cliente ainda não tem propostas.</p>
@@ -254,6 +297,15 @@ export default function ConversaComercial({ conversaId, clienteId, leadId, conta
             </div>
           </div>
         </div>
+      )}
+
+      {/* Conversão oficial do lead (cria prospect + oportunidade + marca convertido) */}
+      {convertLead && (
+        <ConvertModal
+          lead={convertLead}
+          onClose={() => setConvertLead(null)}
+          onConverted={aposConversao}
+        />
       )}
     </div>
   )
