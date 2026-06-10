@@ -30,7 +30,9 @@ interface DiagResult {
   found: { ok: boolean; url?: string | null; enabled?: boolean | null; events?: string[] | null; error?: string }
   applied: { ok: boolean; status?: number; detail?: string }
   checks: { urlOk: boolean; enabledOk: boolean; eventsOk: boolean }
+  recentLogs?: WebhookLog[]
 }
+interface WebhookLog { criado_em: string; resultado: string; event: string | null; from_me: boolean | null; telefone: string | null; remote_jid: string | null }
 
 const DIAS_PARADO = 3 // sem atividade há 3+ dias = "parado"
 
@@ -378,6 +380,28 @@ export default function WhatsAppNumerosView() {
                 Configurado: {diag.found.url.split('?')[0]}
               </p>
             )}
+
+            {/* Últimas chamadas recebidas da Evolution */}
+            <div className="mt-4 border-t border-gray-100 dark:border-gray-700 pt-3">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Últimas chamadas recebidas da Evolution</p>
+              {(diag.recentLogs?.length ?? 0) === 0 ? (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  Nenhuma chamada registrada ainda. Peça ao contato para enviar uma mensagem nova e clique em &quot;Testar recebimento&quot; de novo — se continuar zerado, a Evolution não está conseguindo chamar o Isyon.
+                </p>
+              ) : (
+                <div className="space-y-1 max-h-40 overflow-y-auto">
+                  {diag.recentLogs!.map((l, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 text-[11px]">
+                      <span className="font-mono text-gray-500 dark:text-gray-400 shrink-0">{new Date(l.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                      <span className={`flex-1 truncate ${l.resultado.startsWith('salva') ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-gray-600 dark:text-gray-300'}`}>
+                        {l.resultado}{l.from_me === false ? ' · recebida' : l.from_me === true ? ' · enviada' : ''}
+                      </span>
+                      {l.telefone && <span className="font-mono text-gray-400 shrink-0">{l.telefone.slice(-4)}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <button onClick={() => setDiag(null)}
               className="w-full mt-5 py-2.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">

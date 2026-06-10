@@ -180,12 +180,25 @@ export async function POST(req: NextRequest) {
     const eventsOk = !found.events || found.events.some(e => String(e).toUpperCase().includes('MESSAGES_UPSERT'))
     const ok = applied.ok && found.ok && urlOk && enabledOk && eventsOk
 
+    // Últimas chamadas que a Evolution fez ao webhook (se a tabela existir)
+    let recentLogs: unknown[] = []
+    try {
+      const { data: logs } = await admin
+        .from('wa_webhook_log')
+        .select('criado_em, resultado, event, from_me, telefone, remote_jid')
+        .or(`tenant_id.eq.${caller.tenantId},instance.eq.${row.instance_name}`)
+        .order('criado_em', { ascending: false })
+        .limit(12)
+      recentLogs = logs ?? []
+    } catch { /* tabela ainda não criada */ }
+
     return NextResponse.json({
       ok,
       applied,
       found,
       expectedUrl,
       checks: { urlOk, enabledOk, eventsOk },
+      recentLogs,
     })
   }
 
