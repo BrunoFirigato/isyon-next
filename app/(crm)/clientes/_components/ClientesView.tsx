@@ -315,6 +315,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
               <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Razão social / Nome</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Contato</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Localização</th>
                 {usaParceiros && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tipo</th>}
                 {segmentos.length > 0 && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Segmento</th>}
                 {vendedores.length > 0 && <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Vendedor</th>}
@@ -332,19 +333,21 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
                       <td className="px-4 py-3">
                         <p className="font-medium text-gray-900 dark:text-gray-100">{c.nome}</p>
                         {c.empresa && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{c.empresa}</p>}
-                        {endereco(c) && (
-                          <button
-                            onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
-                            className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-blue-500 mt-0.5 transition-colors"
-                          >
-                            <MapPin size={10} />
-                            {c.cidade}{c.estado ? ` / ${c.estado}` : ''}
-                          </button>
-                        )}
                       </td>
                       <td className="px-4 py-3">
                         {c.email && <p className="text-gray-600 dark:text-gray-400">{c.email}</p>}
                         {c.telefone && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{c.telefone}</p>}
+                      </td>
+                      <td className="px-4 py-3">
+                        {endereco(c) ? (
+                          <button
+                            onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
+                            className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-500 transition-colors"
+                          >
+                            <MapPin size={11} />
+                            {c.cidade}{c.estado ? ` / ${c.estado}` : ''}
+                          </button>
+                        ) : <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>}
                       </td>
                       {usaParceiros && (
                         <td className="px-4 py-3">
