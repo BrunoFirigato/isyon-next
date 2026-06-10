@@ -264,10 +264,65 @@ export function calcularParcelasOmie(total: number, cond: CondPagamentoOmie | nu
   return lista
 }
 
+export interface ProdutoParaOmie {
+  id: string
+  codigo: string
+  descricao: string
+  unidade: string | null
+  ncm: string | null
+  valor_unitario: number
+}
+
+/** Garante que o produto existe no Omie (cria se não existir, por código/SKU). */
+export async function garantirProdutoOmie(
+  appKey: string, appSecret: string, prod: ProdutoParaOmie,
+): Promise<{ ok: boolean; error?: string }> {
+  const cons = await omieCall(appKey, appSecret, 'geral/produtos/', 'ConsultarProduto', { codigo: prod.codigo })
+  if (!cons.data?.faultstring) return { ok: true }   // já existe
+
+  const ncm = (prod.ncm ?? '').replace(/\D/g, '')
+  if (ncm.length !== 8) {
+    return { ok: false, error: `O produto "${prod.descricao}" precisa de um NCM válido (8 dígitos) para ser criado no Omie.` }
+  }
+  const inc = await omieCall(appKey, appSecret, 'geral/produtos/', 'IncluirProduto', {
+    codigo_produto_integracao: prod.id,
+    codigo: prod.codigo,
+    descricao: prod.descricao,
+    unidade: prod.unidade || 'UN',
+    ncm,
+    valor_unitario: prod.valor_unitario,
+  })
+  const fault = inc.data?.faultstring
+  if (fault && !/cadastrad|exist|duplic|já/i.test(fault)) return { ok: false, error: fault }
+  return { ok: true }
+}
+
+/** Acha o código do vendedor no Omie por e-mail ou nome (não cria). null se não encontrar. */
+export async function acharVendedorOmie(
+  appKey: string, appSecret: string, email: string | null, nome: string | null,
+): Promise<number | null> {
+  const r = await omieCall(appKey, appSecret, 'geral/vendedores/', 'ListarVendedores', { pagina: 1, registros_por_pagina: 50 })
+  const lista = (r.data?.cadastro as Array<Record<string, unknown>>) ?? []
+  const em = (email ?? '').trim().toLowerCase()
+  const nm = (nome ?? '').trim().toLowerCase()
+  for (const v of lista) {
+    const vEmail = String(v.email ?? v.cEmail ?? '').trim().toLowerCase()
+    const vNome  = String(v.nome ?? v.cNome ?? '').trim().toLowerCase()
+    const cod    = v.codigo ?? v.nCod ?? v.codigo_vendedor
+    if ((em && vEmail && vEmail === em) || (nm && vNome && vNome === nm)) return cod ? Number(cod) : null
+  }
+  return null
+}
+
 /** Cria o Pedido de Venda no Omie (etapa 10). Devolve número/código gerado ou erro. */
 export async function incluirPedidoOmie(
   appKey: string, appSecret: string,
-  args: { codigoCliente: number; codigoIntegracao: string; itens: ItemParaOmie[]; parcelas?: ParcelaOmie[] | null },
+  args: {
+    codigoCliente: number; codigoIntegracao: string; itens: ItemParaOmie[];
+    parcelas?: ParcelaOmie[] | null;
+    codigoVendedor?: number | null;
+    frete?: { modalidade: string; valor: number } | null;
+  },
 ): Promise<{ numero?: string; codigoOmie?: string; error?: string }> {
   const hoje = new Date()
   const dd = String(hoje.getDate()).padStart(2, '0')
@@ -285,17 +340,17 @@ export async function incluirPedidoOmie(
   }))
 
   const temParcelas = !!args.parcelas && args.parcelas.length > 0
-  const param: Record<string, unknown> = {
-    cabecalho: {
-      codigo_cliente: args.codigoCliente,
-      codigo_pedido_integracao: args.codigoIntegracao,   // evita duplicidade no reenvio
-      data_previsao: dataPrev,
-      etapa: '10',                                        // 10 = pedido de venda (00 = orçamento)
-      codigo_parcela: temParcelas ? '999' : '000',       // 999 = conforme lista_parcelas; 000 = à vista
-      quantidade_itens: args.itens.length,
-    },
-    det,
+  const cabecalho: Record<string, unknown> = {
+    codigo_cliente: args.codigoCliente,
+    codigo_pedido_integracao: args.codigoIntegracao,   // evita duplicidade no reenvio
+    data_previsao: dataPrev,
+    etapa: '10',                                        // 10 = pedido de venda (00 = orçamento)
+    codigo_parcela: temParcelas ? '999' : '000',       // 999 = conforme lista_parcelas; 000 = à vista
+    quantidade_itens: args.itens.length,
   }
+  if (args.codigoVendedor) cabecalho.codigo_vendedor = args.codigoVendedor
+
+  const param: Record<string, unknown> = { cabecalho, det }
   if (temParcelas) {
     param.lista_parcelas = {
       parcela: args.parcelas!.map(p => ({
@@ -304,6 +359,9 @@ export async function incluirPedidoOmie(
         valor: p.valor,
       })),
     }
+  }
+  if (args.frete && (Number(args.frete.valor) > 0 || (args.frete.modalidade && args.frete.modalidade !== '9'))) {
+    param.frete = { modalidade: args.frete.modalidade || '9', valor_frete: Number(args.frete.valor) || 0 }
   }
 
   const r = await omieCall(appKey, appSecret, 'produtos/pedido/', 'IncluirPedido', param)

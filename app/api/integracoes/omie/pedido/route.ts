@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { obterIntegracao, logIntegracao } from '@/lib/integracoes/service'
 import {
   acharClienteOmiePorDoc, incluirClienteOmie, incluirPedidoOmie, calcularParcelasOmie,
+  garantirProdutoOmie, acharVendedorOmie,
   type ItemParaOmie, type ParcelaOmie,
 } from '@/lib/integracoes/omie'
 
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
   // 2. Pedido (do próprio tenant)
   const { data: pedido } = await admin
     .from('pedidos')
-    .select('id, numero, cliente_id, cond_pagamento_id, itens, aprovado, omie_pedido_id, omie_numero')
+    .select('id, numero, cliente_id, cond_pagamento_id, vendedor_id, itens, aprovado, omie_pedido_id, omie_numero')
     .eq('id', pedidoId).eq('tenant_id', caller.tenantId).maybeSingle()
   if (!pedido) return NextResponse.json({ error: 'Pedido não encontrado.' }, { status: 404 })
   if (pedido.omie_pedido_id) {
@@ -63,8 +64,8 @@ export async function POST(req: NextRequest) {
   }
   const produtoIds = [...new Set(itensRaw.map(i => i.produto_id).filter(Boolean) as string[])]
   const { data: prods } = produtoIds.length
-    ? await admin.from('produtos').select('id, codigo').in('id', produtoIds).eq('tenant_id', caller.tenantId)
-    : { data: [] as Array<{ id: string; codigo: string | null }> }
+    ? await admin.from('produtos').select('id, codigo, nome, unidade, ncm, preco').in('id', produtoIds).eq('tenant_id', caller.tenantId)
+    : { data: [] as Array<{ id: string; codigo: string | null; nome: string; unidade: string | null; ncm: string | null; preco: number | null }> }
   const codigoPorId = new Map((prods ?? []).map(p => [p.id, p.codigo]))
 
   const itens: ItemParaOmie[] = []
@@ -81,9 +82,18 @@ export async function POST(req: NextRequest) {
   }
   if (semCodigo.length) {
     return NextResponse.json({
-      error: `Itens sem produto cadastrado no Omie (código/SKU): ${semCodigo.join(', ')}. `
-        + 'Vincule a um produto importado do Omie antes de enviar.',
+      error: `Itens sem produto vinculado: ${semCodigo.join(', ')}. Vincule a um produto cadastrado antes de enviar.`,
     }, { status: 400 })
+  }
+
+  // Garante que cada produto existe no Omie (cria se não existir, por código/SKU)
+  for (const prod of prods ?? []) {
+    if (!prod.codigo) continue
+    const g = await garantirProdutoOmie(app_key, app_secret, {
+      id: prod.id, codigo: String(prod.codigo), descricao: prod.nome,
+      unidade: prod.unidade, ncm: prod.ncm, valor_unitario: Number(prod.preco) || 0,
+    })
+    if (!g.ok) return NextResponse.json({ error: g.error }, { status: 400 })
   }
 
   // 4. Cliente do pedido
@@ -126,12 +136,22 @@ export async function POST(req: NextRequest) {
     parcelas = calcularParcelasOmie(total, cond ?? null)
   }
 
-  // 7. Cria o Pedido de Venda no Omie
+  // 7. Vendedor no Omie (best-effort: acha por e-mail/nome; se não achar, omite)
+  let codigoVendedor: number | null = null
+  if (pedido.vendedor_id) {
+    const { data: vend } = await admin
+      .from('vendedores').select('nome, email')
+      .eq('id', pedido.vendedor_id).eq('tenant_id', caller.tenantId).maybeSingle()
+    if (vend) codigoVendedor = await acharVendedorOmie(app_key, app_secret, vend.email, vend.nome)
+  }
+
+  // 8. Cria o Pedido de Venda no Omie
   const ped = await incluirPedidoOmie(app_key, app_secret, {
     codigoCliente,
     codigoIntegracao: pedido.id,
     itens,
     parcelas,
+    codigoVendedor,
   })
   if (ped.error) {
     await logIntegracao(admin, { tenantId: caller.tenantId, integracaoId: integ.id, evento: 'enviar_pedido', mensagem: `ERRO pedido ${pedido.numero ?? pedido.id}: ${ped.error}` })
