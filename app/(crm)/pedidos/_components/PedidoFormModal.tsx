@@ -16,6 +16,13 @@ import { precoNaTabela, type TabelaInfo, type SegMargem, type Override } from '@
 interface ProdutoRef { id: string; nome: string; preco: number | null; custo: number | null; ncm: string | null; unidade: string | null; segmento: string | null; tipo: string | null }
 interface TabelaRef  { id: string; nome: string }
 
+const MODALIDADES_FRETE = [
+  { value: '9', label: 'Sem frete' },
+  { value: '0', label: 'Por conta do emitente (CIF)' },
+  { value: '1', label: 'Por conta do destinatário (FOB)' },
+  { value: '2', label: 'Por conta de terceiros' },
+]
+
 interface Props {
   pedido?: Pedido
   onClose: () => void
@@ -34,6 +41,9 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
   const [vendedorId, setVendedorId] = useState(pedido?.vendedor_id ?? '')
   const [condPagamentoId, setCondPagamentoId] = useState(pedido?.cond_pagamento_id ?? '')
   const [tabelaPrecoId, setTabelaPrecoId] = useState(pedido?.tabela_preco_id ?? '')
+  const [valorFrete, setValorFrete] = useState(pedido?.valor_frete != null ? String(pedido.valor_frete) : '')
+  const [modalidadeFrete, setModalidadeFrete] = useState(pedido?.modalidade_frete ?? '9')
+  const [transportadoraId, setTransportadoraId] = useState(pedido?.transportadora_id ?? '')
   const [status, setStatus] = useState(pedido?.status ?? 'aguardando')
   const [obs, setObs] = useState(pedido?.obs ?? '')
   const [itens, setItens] = useState<ItemPedido[]>(
@@ -45,6 +55,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
   const [produtos, setProdutos] = useState<ProdutoRef[]>([])
   const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([])
   const [condPagamentos, setCondPagamentos] = useState<{ id: string; nome: string }[]>([])
+  const [transportadoras, setTransportadoras] = useState<{ id: string; nome: string }[]>([])
   // Precificação (tabelas + cascata)
   const [tabelas,     setTabelas]     = useState<TabelaRef[]>([])
   const [tabelasInfo, setTabelasInfo] = useState<TabelaInfo[]>([])
@@ -57,7 +68,7 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
     const supabase = createClient()
     async function init() {
       const [{ data: cls }, { data: emps }, { data: prods }, { data: vends }, { data: conds },
-              { data: tabs }, { data: tms }, { data: tpi }, { data: { user } }] = await Promise.all([
+              { data: tabs }, { data: tms }, { data: tpi }, { data: transps }, { data: { user } }] = await Promise.all([
         supabase.from('clientes').select('id, nome, empresa').order('nome'),
         supabase.from('empresas').select('id, nome, sigla').order('nome'),
         supabase.from('produtos').select('id, nome, preco, custo, ncm, unidade, segmento, tipo').not('ativo', 'is', false).order('nome'),
@@ -66,12 +77,14 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
         supabase.from('tabelas_preco').select('id, nome, margem').not('ativo', 'is', false).order('nome'),
         supabase.from('tabela_margem_segmento').select('tabela_id, segmento, margem'),
         supabase.from('tabela_preco_itens').select('tabela_id, produto_id, preco'),
+        supabase.from('transportadoras').select('id, nome').order('nome'),
         supabase.auth.getUser(),
       ])
       if (cls)   setClientes(cls)
       if (prods) setProdutos(prods)
       if (vends) setVendedores(vends)
       if (conds) setCondPagamentos(conds)
+      if (transps) setTransportadoras(transps)
       if (tabs)  { setTabelas(tabs.map(t => ({ id: t.id, nome: t.nome }))); setTabelasInfo(tabs.map(t => ({ id: t.id, margem: t.margem }))) }
       if (tms)   setSegMargens(tms)
       if (tpi)   setOverrides(tpi)
@@ -150,6 +163,9 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
       vendedor_id:       vendedorId || null,
       cond_pagamento_id: condPagamentoId || null,
       tabela_preco_id:   tabelaPrecoId || null,
+      valor_frete:       valorFrete ? parseFloat(valorFrete.replace(',', '.')) : 0,
+      modalidade_frete:  modalidadeFrete || '9',
+      transportadora_id: transportadoraId || null,
       segmento:          segmento   || null,
       status,
       obs:   obs.trim() || null,
@@ -250,6 +266,31 @@ export default function PedidoFormModal({ pedido, onClose }: Props) {
                   <select value={condPagamentoId} onChange={(e) => setCondPagamentoId(e.target.value)} className={selectCls}>
                     <option value="">Selecione...</option>
                     {condPagamentos.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {/* Frete */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Frete (R$)</label>
+                  <input type="number" min="0" step="0.01" value={valorFrete}
+                    onChange={(e) => setValorFrete(e.target.value)} placeholder="0,00" className={selectCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Modalidade do frete</label>
+                  <select value={modalidadeFrete} onChange={(e) => setModalidadeFrete(e.target.value)} className={selectCls}>
+                    {MODALIDADES_FRETE.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {transportadoras.length > 0 && (
+                <div>
+                  <label className={labelCls}>Transportadora</label>
+                  <select value={transportadoraId} onChange={(e) => setTransportadoraId(e.target.value)} className={selectCls}>
+                    <option value="">—</option>
+                    {transportadoras.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
                   </select>
                 </div>
               )}

@@ -19,6 +19,9 @@ export interface Pedido {
   vendedor_id: string | null
   cond_pagamento_id: string | null
   tabela_preco_id: string | null
+  valor_frete: number | null
+  modalidade_frete: string | null
+  transportadora_id: string | null
   proposta_id: string | null
   empresa_id: string | null
   segmento: string | null

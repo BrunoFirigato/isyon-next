@@ -14,7 +14,7 @@ export default async function PedidosPage({ searchParams }: Props) {
 
   let query = supabase
     .from('pedidos')
-    .select('id, numero, status, aprovado, valor, obs, cliente_id, vendedor_id, cond_pagamento_id, tabela_preco_id, proposta_id, empresa_id, segmento, itens, criado_em, atualizado_em, omie_pedido_id, omie_numero, omie_enviado_em')
+    .select('id, numero, status, aprovado, valor, obs, cliente_id, vendedor_id, cond_pagamento_id, tabela_preco_id, valor_frete, modalidade_frete, transportadora_id, proposta_id, empresa_id, segmento, itens, criado_em, atualizado_em, omie_pedido_id, omie_numero, omie_enviado_em')
     .order('criado_em', { ascending: false })
 
   if (status && status !== 'todos') {

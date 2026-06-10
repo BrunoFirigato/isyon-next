@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   // 2. Pedido (do próprio tenant)
   const { data: pedido } = await admin
     .from('pedidos')
-    .select('id, numero, cliente_id, cond_pagamento_id, vendedor_id, itens, aprovado, omie_pedido_id, omie_numero')
+    .select('id, numero, cliente_id, cond_pagamento_id, vendedor_id, valor_frete, modalidade_frete, itens, aprovado, omie_pedido_id, omie_numero')
     .eq('id', pedidoId).eq('tenant_id', caller.tenantId).maybeSingle()
   if (!pedido) return NextResponse.json({ error: 'Pedido não encontrado.' }, { status: 404 })
   if (pedido.omie_pedido_id) {
@@ -146,12 +146,14 @@ export async function POST(req: NextRequest) {
   }
 
   // 8. Cria o Pedido de Venda no Omie
+  const frete = { modalidade: String(pedido.modalidade_frete ?? '9'), valor: Number(pedido.valor_frete) || 0 }
   const ped = await incluirPedidoOmie(app_key, app_secret, {
     codigoCliente,
     codigoIntegracao: pedido.id,
     itens,
     parcelas,
     codigoVendedor,
+    frete,
   })
   if (ped.error) {
     await logIntegracao(admin, { tenantId: caller.tenantId, integracaoId: integ.id, evento: 'enviar_pedido', mensagem: `ERRO pedido ${pedido.numero ?? pedido.id}: ${ped.error}` })
