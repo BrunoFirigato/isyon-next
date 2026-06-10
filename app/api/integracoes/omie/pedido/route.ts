@@ -64,8 +64,8 @@ export async function POST(req: NextRequest) {
   }
   const produtoIds = [...new Set(itensRaw.map(i => i.produto_id).filter(Boolean) as string[])]
   const { data: prods } = produtoIds.length
-    ? await admin.from('produtos').select('id, codigo, nome, unidade, ncm, preco').in('id', produtoIds).eq('tenant_id', caller.tenantId)
-    : { data: [] as Array<{ id: string; codigo: string | null; nome: string; unidade: string | null; ncm: string | null; preco: number | null }> }
+    ? await admin.from('produtos').select('id, codigo, nome, unidade, ncm, preco, custo').in('id', produtoIds).eq('tenant_id', caller.tenantId)
+    : { data: [] as Array<{ id: string; codigo: string | null; nome: string; unidade: string | null; ncm: string | null; preco: number | null; custo: number | null }> }
   const codigoPorId = new Map((prods ?? []).map(p => [p.id, p.codigo]))
 
   const itens: ItemParaOmie[] = []
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     if (!prod.codigo) continue
     const g = await garantirProdutoOmie(app_key, app_secret, {
       id: prod.id, codigo: String(prod.codigo), descricao: prod.nome,
-      unidade: prod.unidade, ncm: prod.ncm, valor_unitario: Number(prod.preco) || 0,
+      unidade: prod.unidade, ncm: prod.ncm, valor_unitario: Number(prod.preco ?? prod.custo) || 0,
     })
     if (!g.ok) return NextResponse.json({ error: g.error }, { status: 400 })
   }

@@ -1,9 +1,9 @@
 // lib/preco.ts
-// Motor de precificação em cascata:
-//   1. Override do produto na tabela
+// Motor de precificação em cascata (margem = % sobre o CUSTO do produto):
+//   1. Override do produto na tabela (preço manual fixo)
 //   2. Margem por segmento na tabela
 //   3. Margem geral da tabela
-//   4. Preço base do produto (fallback)
+//   4. Fallback: preço base (legado) ou custo
 
 export interface ProdutoPreco { id: string; custo: number | null; preco: number | null; segmento: string | null }
 export interface TabelaInfo   { id: string; margem: number | null }
@@ -25,11 +25,11 @@ export function precoNaTabela(
   segMargens:SegMargem[],
   overrides: Override[],
 ): number {
-  // 1. Override específico
+  // 1. Override específico (preço manual)
   const ov = overrides.find(o => o.tabela_id === tabelaId && o.produto_id === produto.id)
   if (ov?.preco != null) return ov.preco
 
-  // 2 e 3 dependem do custo
+  // 2 e 3: margem (% sobre o custo)
   if (produto.custo != null && produto.custo > 0) {
     const seg = segMargens.find(s => s.tabela_id === tabelaId && s.segmento === produto.segmento)
     if (seg?.margem != null) return aplicarMargem(produto.custo, seg.margem)
@@ -38,6 +38,6 @@ export function precoNaTabela(
     if (tab?.margem != null) return aplicarMargem(produto.custo, tab.margem)
   }
 
-  // 4. Preço base
-  return produto.preco ?? 0
+  // 4. Fallback: preço base legado, senão o custo
+  return produto.preco ?? produto.custo ?? 0
 }

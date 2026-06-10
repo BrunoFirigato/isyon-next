@@ -258,7 +258,6 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Nome</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tipo</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Un.</th>
-                <th className="text-right px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Preço</th>
                 <th className="text-right px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Custo</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">NCM</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status</th>
@@ -280,8 +279,7 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{p.unidade ?? '—'}</td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-gray-100">{brl(p.preco)}</td>
-                  <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400">{brl(p.custo)}</td>
+                  <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-gray-100">{brl(p.custo)}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs">{p.ncm ?? '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-lg ${p.ativo ? 'bg-green-50 text-green-700' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>
@@ -380,14 +378,10 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
 
               <div className="flex items-center justify-between mt-2">
                 <div className="flex gap-4 text-sm">
-                  <div>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">Preço </span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">{brl(p.preco)}</span>
-                  </div>
                   {p.custo != null && (
                     <div>
                       <span className="text-xs text-gray-400 dark:text-gray-500">Custo </span>
-                      <span className="text-gray-600 dark:text-gray-400">{brl(p.custo)}</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">{brl(p.custo)}</span>
                     </div>
                   )}
                 </div>

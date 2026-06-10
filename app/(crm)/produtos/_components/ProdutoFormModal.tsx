@@ -29,11 +29,6 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
     tipo:        produto?.tipo ?? 'produto',
     unidade:     produto?.unidade ?? 'UN',
     custo:       produto?.custo != null ? String(produto.custo) : '',
-    // margem derivada de custo/preço quando ambos existem
-    margem:      (produto?.custo != null && produto.custo > 0 && produto?.preco != null)
-                   ? String(Math.round((produto.preco / produto.custo - 1) * 10000) / 100)
-                   : '',
-    preco:       produto?.preco != null ? String(produto.preco) : '',
     descricao:   produto?.descricao ?? '',
     ncm:         produto?.ncm ?? '',
     cod_servico: produto?.cod_servico ?? '',
@@ -51,34 +46,6 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
   function parseNum(v: string) {
     const n = parseFloat(v.replace(',', '.'))
     return isNaN(n) ? null : n
-  }
-
-  // ── Precificação (cálculo de mão dupla: custo × margem ↔ preço) ──────────────
-  function setCusto(v: string) {
-    setForm(f => {
-      const custo = parseNum(v), margem = parseNum(f.margem)
-      const next = { ...f, custo: v }
-      // mantém a margem e recalcula o preço
-      if (custo != null && custo > 0 && margem != null) next.preco = (custo * (1 + margem / 100)).toFixed(2)
-      return next
-    })
-  }
-  function setMargem(v: string) {
-    setForm(f => {
-      const custo = parseNum(f.custo), margem = parseNum(v)
-      const next = { ...f, margem: v }
-      if (custo != null && custo > 0 && margem != null) next.preco = (custo * (1 + margem / 100)).toFixed(2)
-      return next
-    })
-  }
-  function setPreco(v: string) {
-    setForm(f => {
-      const custo = parseNum(f.custo), preco = parseNum(v)
-      const next = { ...f, preco: v }
-      // recalcula a margem a partir do preço informado
-      if (custo != null && custo > 0 && preco != null) next.margem = (((preco / custo) - 1) * 100).toFixed(2)
-      return next
-    })
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -101,7 +68,7 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
       nome:        form.nome.trim(),
       tipo:        form.tipo,
       unidade:     form.unidade || null,
-      preco:       parseNum(form.preco),
+      preco:       null,
       custo:       parseNum(form.custo),
       descricao:   form.descricao.trim() || null,
       ncm:         form.ncm.trim() || null,
@@ -195,28 +162,18 @@ export default function ProdutoFormModal({ produto, onClose }: Props) {
             </div>
           </div>
 
-          {/* Precificação: Custo → Margem → Preço de venda */}
+          {/* Precificação: o produto guarda só o CUSTO; o preço de venda vem da Tabela de Preço */}
           <div>
             <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Precificação</p>
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className={labelCls}>Custo (R$)</label>
-                <input type="text" value={form.custo} onChange={(e) => setCusto(e.target.value)}
+                <input type="text" value={form.custo} onChange={(e) => set('custo', e.target.value)}
                   placeholder="0,00" className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Margem (%)</label>
-                <input type="text" value={form.margem} onChange={(e) => setMargem(e.target.value)}
-                  placeholder="0" className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Preço de venda (R$)</label>
-                <input type="text" value={form.preco} onChange={(e) => setPreco(e.target.value)}
-                  placeholder="0,00" className={`${inputCls} font-medium`} />
               </div>
             </div>
             <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">
-              Informe custo + margem para calcular o preço, ou digite o preço para ver a margem.
+              O preço de venda é definido nas <strong>Tabelas de Preço</strong> — margem (%) aplicada sobre o custo.
             </p>
           </div>
 
