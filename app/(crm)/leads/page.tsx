@@ -3,11 +3,11 @@ import LeadsView from './_components/LeadsView'
 import { LEAD_COLS, LEADS_PAGE_SIZE } from './_components/types'
 
 interface Props {
-  searchParams: Promise<{ status?: string; q?: string }>
+  searchParams: Promise<{ status?: string; q?: string; score?: string; origem?: string }>
 }
 
 export default async function LeadsPage({ searchParams }: Props) {
-  const { status, q } = await searchParams
+  const { status, q, score, origem } = await searchParams
   const supabase = await createClient()
 
   let query = supabase
@@ -18,6 +18,8 @@ export default async function LeadsPage({ searchParams }: Props) {
   if (status && status !== 'todos') {
     query = query.eq('status', status)
   }
+  if (score)  query = query.eq('score', score)
+  if (origem) query = query.eq('origem', origem)
 
   if (q?.trim()) {
     const termo = q.trim()
@@ -32,11 +34,13 @@ export default async function LeadsPage({ searchParams }: Props) {
   return (
     <LeadsView
       // Remonta (reseta paginação) sempre que o filtro/busca muda
-      key={`${status ?? 'todos'}-${q ?? ''}`}
+      key={`${status ?? 'todos'}-${q ?? ''}-${score ?? ''}-${origem ?? ''}`}
       leads={leads ?? []}
       total={count ?? 0}
       currentStatus={status ?? 'todos'}
       currentQ={q ?? ''}
+      currentScore={score ?? ''}
+      currentOrigem={origem ?? ''}
     />
   )
 }

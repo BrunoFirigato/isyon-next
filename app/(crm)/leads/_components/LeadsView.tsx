@@ -13,7 +13,7 @@ import { vinculosLead, mensagemBloqueio } from '@/lib/exclusao'
 import LeadFormModal from './LeadFormModal'
 import ConvertModal from './ConvertModal'
 import CompromissoFormModal from '@/app/(crm)/agenda/_components/CompromissoFormModal'
-import { type Lead, STATUS_LEADS, SCORE_OPTIONS, LEADS_PAGE_SIZE, LEAD_COLS, statusStyle, statusLabel, formatDate, scoreInfo } from './types'
+import { type Lead, STATUS_LEADS, SCORE_OPTIONS, ORIGEM_OPTIONS, LEADS_PAGE_SIZE, LEAD_COLS, statusStyle, statusLabel, formatDate, scoreInfo } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
 
@@ -22,6 +22,8 @@ interface Props {
   total: number
   currentStatus: string
   currentQ: string
+  currentScore: string
+  currentOrigem: string
 }
 
 /** Calcula os números de página visíveis, com reticências (ex.: 1 … 4 5 6 … 20). */
@@ -43,7 +45,7 @@ function applyTemplate(tpl: string, lead: Lead) {
   return tpl.replace(/\{nome\}/g, lead.nome).replace(/\{empresa\}/g, lead.empresa ?? '')
 }
 
-export default function LeadsView({ leads, total: totalProp, currentStatus, currentQ }: Props) {
+export default function LeadsView({ leads, total: totalProp, currentStatus, currentQ, currentScore, currentOrigem }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [, startTransition] = useTransition()
@@ -69,6 +71,8 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
     const supabase = createClient()
     let qy = supabase.from('leads').select(LEAD_COLS).order('criado_em', { ascending: false })
     if (currentStatus && currentStatus !== 'todos') qy = qy.eq('status', currentStatus)
+    if (currentScore)  qy = qy.eq('score', currentScore)
+    if (currentOrigem) qy = qy.eq('origem', currentOrigem)
     if (currentQ.trim()) {
       const termo = currentQ.trim()
       qy = qy.or(`nome.ilike.%${termo}%,empresa.ilike.%${termo}%,email.ilike.%${termo}%,telefone.ilike.%${termo}%`)
@@ -117,10 +121,19 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function updateParams(params: Record<string, string>) {
+  // Mescla o filtro alterado com os atuais — assim status/score/origem/busca convivem
+  function updateParams(patch: Partial<{ status: string; q: string; score: string; origem: string }>) {
+    const next = {
+      status: patch.status ?? currentStatus,
+      q:      patch.q      ?? search,
+      score:  patch.score  ?? currentScore,
+      origem: patch.origem ?? currentOrigem,
+    }
     const sp = new URLSearchParams()
-    if (params.status && params.status !== 'todos') sp.set('status', params.status)
-    if (params.q?.trim()) sp.set('q', params.q.trim())
+    if (next.status && next.status !== 'todos') sp.set('status', next.status)
+    if (next.q?.trim()) sp.set('q', next.q.trim())
+    if (next.score)  sp.set('score', next.score)
+    if (next.origem) sp.set('origem', next.origem)
     const qs = sp.toString()
     startTransition(() => {
       router.push(pathname + (qs ? '?' + qs : ''))
@@ -128,17 +141,17 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
   }
 
   function handleStatusFilter(status: string) {
-    updateParams({ status, q: search })
+    updateParams({ status })
   }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
-    updateParams({ status: currentStatus, q: search })
+    updateParams({ q: search })
   }
 
   function clearSearch() {
     setSearch('')
-    updateParams({ status: currentStatus, q: '' })
+    updateParams({ q: '' })
   }
 
   async function handleContato(lead: Lead, canal: 'whatsapp' | 'email') {
@@ -257,7 +270,7 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
       </div>
 
       {/* Filtros de status */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-hide">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-3 scrollbar-hide">
         {STATUS_LEADS.map(({ value, label }) => (
           <button
             key={value}
@@ -271,6 +284,44 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
             {label}
           </button>
         ))}
+      </div>
+
+      {/* Filtros de score e origem */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <select
+          value={currentScore}
+          onChange={(e) => updateParams({ score: e.target.value })}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            currentScore ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          <option value="">Score: todos</option>
+          {SCORE_OPTIONS.map((s) => (
+            <option key={s.value} value={s.value}>{s.emoji} {s.label}</option>
+          ))}
+        </select>
+
+        <select
+          value={currentOrigem}
+          onChange={(e) => updateParams({ origem: e.target.value })}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            currentOrigem ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          <option value="">Origem: todas</option>
+          {ORIGEM_OPTIONS.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
+
+        {(currentScore || currentOrigem) && (
+          <button
+            onClick={() => updateParams({ score: '', origem: '' })}
+            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-2"
+          >
+            limpar filtros
+          </button>
+        )}
       </div>
 
       {/* Busca */}

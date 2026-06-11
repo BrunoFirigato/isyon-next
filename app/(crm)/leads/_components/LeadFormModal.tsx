@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { X, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
-  type Lead, CARGOS, FATURAMENTO_FAIXAS, FUNCIONARIOS_FAIXAS, SCORE_OPTIONS, ESTADOS,
+  type Lead, CARGOS, FATURAMENTO_FAIXAS, FUNCIONARIOS_FAIXAS, SCORE_OPTIONS, ESTADOS, ORIGEM_OPTIONS,
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantId } from '@/app/(crm)/_components/TenantContext'
@@ -17,11 +17,6 @@ const STATUS_OPTIONS = [
   { value: 'qualificado', label: 'Qualificado' },
   { value: 'convertido', label: 'Convertido' },
   { value: 'perdido', label: 'Perdido' },
-]
-
-const ORIGEM_OPTIONS = [
-  'Site', 'Indicação', 'LinkedIn', 'WhatsApp',
-  'Evento', 'Prospecção', 'Parceiro', 'Outro',
 ]
 
 interface Props {

@@ -45,6 +45,11 @@ export function scoreInfo(score: string | null | undefined) {
   return SCORE_OPTIONS.find((s) => s.value === score) ?? null
 }
 
+export const ORIGEM_OPTIONS = [
+  'Site', 'Indicação', 'LinkedIn', 'WhatsApp',
+  'Evento', 'Prospecção', 'Parceiro', 'Outro',
+] as const
+
 export const ESTADOS = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
   'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
