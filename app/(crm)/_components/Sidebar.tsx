@@ -14,7 +14,6 @@ import {
   Users2,
   FileText,
   ShoppingCart,
-  Wallet,
   BarChart3,
   Settings2,
   UserCog,
@@ -78,10 +77,9 @@ const navGroups: { label: string; icon: React.ElementType; items: NavItem[] }[] 
     ],
   },
   {
-    label: 'Financeiro',
-    icon: Wallet,
+    label: 'Análises',
+    icon: BarChart3,
     items: [
-      { href: '/financeiro', label: 'Financeiro', icon: Wallet,    perfis: ['admin', 'gestor', 'financeiro'] },
       { href: '/relatorios', label: 'Relatórios', icon: BarChart3, perfis: ['admin', 'gestor', 'financeiro'] },
     ],
   },

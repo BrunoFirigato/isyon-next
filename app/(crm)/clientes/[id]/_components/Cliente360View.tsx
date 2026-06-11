@@ -7,7 +7,7 @@ import {
   ArrowLeft, Mail, Phone, MapPin, Building2,
   FileText, ShoppingCart, TrendingUp, DollarSign, Target,
   Calendar, Pencil, ChevronRight, Receipt, MessageSquare,
-  Plus, X, Save, Landmark, Radar,
+  Plus, X, Save, Radar,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import AgendaVinculada, { type CompromissoData } from '@/app/(crm)/_components/AgendaVinculada'
@@ -31,10 +31,6 @@ interface PropostaData {
 interface PedidoData {
   id: string; numero: string | null; status: string; valor: number | null; criado_em: string
 }
-interface FaturaData {
-  id: string; numero: string | null; status: string
-  valor: number | null; pedido_id: string | null; obs: string | null; criado_em: string
-}
 interface HistoricoData {
   id: string; tipo: string | null; texto: string | null
   valor: number | null; usuario_nome: string | null; criado_em: string
@@ -49,7 +45,6 @@ interface Props {
   oportunidades: OpData[]
   propostas: PropostaData[]
   pedidos: PedidoData[]
-  faturas: FaturaData[]
   historico: HistoricoData[]
   notas: NotaFiscalData[]
   compromissos: CompromissoData[]
@@ -101,12 +96,6 @@ function pedidoBadge(s: string) {
   if (s === 'cancelado')   return { label: 'Cancelado',   cls: 'bg-red-100 text-red-600' }
   return { label: 'Aguardando', cls: 'bg-yellow-100 text-yellow-700' }
 }
-function faturaBadge(s: string) {
-  if (s === 'pago')      return { label: 'Pago',      cls: 'bg-green-100 text-green-700' }
-  if (s === 'vencido')   return { label: 'Vencido',   cls: 'bg-red-100 text-red-600' }
-  if (s === 'cancelado') return { label: 'Cancelado', cls: 'bg-gray-100 text-gray-500' }
-  return { label: 'Pendente', cls: 'bg-yellow-100 text-yellow-700' }
-}
 function notaBadge(s: string | null) {
   if (s === 'cancelada') return { label: 'Cancelada', cls: 'bg-red-100 text-red-600' }
   return { label: 'Emitida', cls: 'bg-green-100 text-green-700' }
@@ -127,7 +116,7 @@ function tipoHistoricoIcon(tipo: string | null) {
 
 /* ─────────────────────── Main ── */
 
-export default function Cliente360View({ cliente, oportunidades, propostas, pedidos, faturas, historico, notas, compromissos }: Props) {
+export default function Cliente360View({ cliente, oportunidades, propostas, pedidos, historico, notas, compromissos }: Props) {
   const router    = useRouter()
   const tenantId  = useTenantId()
   const { setBreadcrumb } = useBreadcrumb()
@@ -141,7 +130,6 @@ export default function Cliente360View({ cliente, oportunidades, propostas, pedi
 
   const opsAbertas  = oportunidades.filter(o => o.status !== 'ganho' && o.status !== 'perdido')
   const opsGanhas   = oportunidades.filter(o => o.status === 'ganho')
-  const totalFatura = faturas.filter(f => f.status === 'pago').reduce((s, f) => s + (f.valor ?? 0), 0)
   const endereco    = [cliente.cidade, cliente.estado].filter(Boolean).join(' / ')
   const endFull     = [cliente.rua, cliente.numero, cliente.complemento, cliente.bairro, cliente.cidade, cliente.estado].filter(Boolean).join(', ')
 
@@ -252,8 +240,8 @@ export default function Cliente360View({ cliente, oportunidades, propostas, pedi
             ? `${pedidos.filter(p => p.status === 'entregue').length} entregue${pedidos.filter(p => p.status === 'entregue').length > 1 ? 's' : ''}`
             : undefined}
           color="emerald" />
-        <StatCard icon={DollarSign} label="Total recebido"
-          value={totalFatura > 0 ? brl(totalFatura) : brlCliente(cliente.valor_total) ?? '—'}
+        <StatCard icon={DollarSign} label="Total comprado"
+          value={brlCliente(cliente.valor_total) ?? '—'}
           color="violet" />
       </div>
 
@@ -305,21 +293,7 @@ export default function Cliente360View({ cliente, oportunidades, propostas, pedi
         })}
       </Section>
 
-      {/* ── Financeiro ── */}
-      <Section titulo="Financeiro" count={faturas.length} icon={Landmark} emptyMsg="Nenhuma fatura vinculada." linkHref="/financeiro" linkLabel="Ver financeiro">
-        {faturas.map((f) => {
-          const badge = faturaBadge(f.status)
-          return (
-            <ItemRow key={f.id}
-              numero={f.numero}
-              titulo={f.obs ?? undefined}
-              data={fmt(f.criado_em)}
-              badge={badge}
-              valor={brl(f.valor)}
-            />
-          )
-        })}
-      </Section>
+      {/* Financeiro do cliente (a receber / inadimplência via ERP) virá aqui — ver roadmap */}
 
       {/* ── Notas Fiscais ── */}
       <NotasFiscaisSection

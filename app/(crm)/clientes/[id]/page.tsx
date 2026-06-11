@@ -15,7 +15,6 @@ export default async function Cliente360Page({ params }: Props) {
     { data: oportunidades },
     { data: propostas },
     { data: pedidos },
-    { data: faturasData, error: errFaturas },
     { data: historicoData, error: errHistorico },
     { data: notasData, error: errNotas },
     { data: compromissosData, error: errCompromissos },
@@ -38,11 +37,6 @@ export default async function Cliente360Page({ params }: Props) {
     supabase
       .from('pedidos')
       .select('id, numero, status, valor, criado_em')
-      .eq('cliente_id', id)
-      .order('criado_em', { ascending: false }),
-    supabase
-      .from('faturas')
-      .select('id, numero, status, valor, pedido_id, obs, criado_em')
       .eq('cliente_id', id)
       .order('criado_em', { ascending: false }),
     supabase
@@ -71,7 +65,6 @@ export default async function Cliente360Page({ params }: Props) {
       oportunidades={oportunidades ?? []}
       propostas={propostas ?? []}
       pedidos={pedidos ?? []}
-      faturas={errFaturas ? [] : (faturasData ?? [])}
       historico={errHistorico ? [] : (historicoData ?? [])}
       notas={errNotas ? [] : (notasData ?? [])}
       compromissos={errCompromissos ? [] : (compromissosData ?? [])}
