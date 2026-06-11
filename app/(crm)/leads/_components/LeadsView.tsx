@@ -269,25 +269,20 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
         </div>
       </div>
 
-      {/* Filtros de status */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-3 scrollbar-hide">
-        {STATUS_LEADS.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => handleStatusFilter(value)}
-            className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              currentStatus === value
-                ? 'bg-blue-600 text-white'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Filtros de score e origem */}
+      {/* Filtros — Status, Score e Origem numa linha só */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
+        <select
+          value={currentStatus}
+          onChange={(e) => handleStatusFilter(e.target.value)}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            currentStatus !== 'todos' ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          {STATUS_LEADS.map(({ value, label }) => (
+            <option key={value} value={value}>{value === 'todos' ? 'Status: todos' : label}</option>
+          ))}
+        </select>
+
         <select
           value={currentScore}
           onChange={(e) => updateParams({ score: e.target.value })}
@@ -314,9 +309,9 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
           ))}
         </select>
 
-        {(currentScore || currentOrigem) && (
+        {(currentStatus !== 'todos' || currentScore || currentOrigem) && (
           <button
-            onClick={() => updateParams({ score: '', origem: '' })}
+            onClick={() => updateParams({ status: 'todos', score: '', origem: '' })}
             className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-2"
           >
             limpar filtros
@@ -352,18 +347,6 @@ export default function LeadsView({ leads, total: totalProp, currentStatus, curr
           Buscar
         </button>
       </form>
-
-      {/* Legenda do score — só aparece quando há leads pontuados */}
-      {items.some((l) => l.score) && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4 text-xs text-gray-400 dark:text-gray-500">
-          <span className="font-medium text-gray-500 dark:text-gray-400">Score do lead:</span>
-          {SCORE_OPTIONS.map((s) => (
-            <span key={s.value} className="inline-flex items-center gap-1">
-              <span>{s.emoji}</span> {s.label}
-            </span>
-          ))}
-        </div>
-      )}
 
       {/* Lista vazia */}
       {total === 0 && (
