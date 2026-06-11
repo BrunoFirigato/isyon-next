@@ -58,6 +58,7 @@ export default async function DashboardPage() {
     { count: leadsDoMes },
     { count: totalProdutos },
     { count: totalFiliais },
+    { data: pedidoLinks },
   ] = await Promise.all([
     supabase.from('config_usuario').select('chave, valor').eq('usuario_id', usuario?.id ?? ''),
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'novo'),
@@ -69,6 +70,7 @@ export default async function DashboardPage() {
     supabase.from('leads').select('*', { count: 'exact', head: true }).gte('criado_em', inicio),
     supabase.from('produtos').select('*', { count: 'exact', head: true }),
     supabase.from('empresas').select('*', { count: 'exact', head: true }),
+    supabase.from('pedidos').select('proposta_id').not('proposta_id', 'is', null),
   ])
 
   const cfg = Object.fromEntries((config ?? []).map(c => [c.chave, c.valor]))
@@ -105,6 +107,9 @@ export default async function DashboardPage() {
   const opsParadas = opAbertas.filter(o => new Date(o.atualizado_em ?? o.criado_em).getTime() < limiteParada)
   const em7 = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)
   const propsAVencer = (props ?? []).filter(p => p.status === 'enviada' && p.validade && p.validade <= em7)
+  // Propostas aceitas pelo cliente que ainda não viraram pedido — ação do vendedor
+  const propsComPedido = new Set((pedidoLinks ?? []).map(pl => pl.proposta_id as string))
+  const propsAceitasSemPedido = (props ?? []).filter(p => p.status === 'aprovada' && !propsComPedido.has(p.id))
   const compsRaw = (comps ?? []).filter(c => c.status !== 'cancelado')
   const compCliIds = [...new Set(compsRaw.filter(c => c.cliente_id).map(c => c.cliente_id as string))]
   const compLeadIds = [...new Set(compsRaw.filter(c => c.lead_id).map(c => c.lead_id as string))]
@@ -126,7 +131,7 @@ export default async function DashboardPage() {
   const totalPropostas = (props ?? []).length
 
   // Os números das pendências já aparecem nos cards — aqui a saudação fica contextual, sem repetir
-  const temPendencias = (leadsNovo ?? 0) > 0 || opsParadas.length > 0 || propsAVencer.length > 0 || compromissosHoje.length > 0
+  const temPendencias = (leadsNovo ?? 0) > 0 || opsParadas.length > 0 || propsAVencer.length > 0 || propsAceitasSemPedido.length > 0 || compromissosHoje.length > 0
   const subline = mostrarOnboarding
     ? 'Vamos montar sua operação? Siga os primeiros passos abaixo. 🚀'
     : temPendencias
@@ -202,7 +207,13 @@ export default async function DashboardPage() {
           tone="orange" icon={<FileText size={16} />} title="Propostas"
           criarHref="/propostas?novo=1" criarLabel="Nova"
           valor={String(totalPropostas)} label="no total"
-          alerta={propsAVencer.length > 0 ? { texto: `${propsAVencer.length} a vencer`, href: '/propostas?status=enviada', cor: 'orange' } : undefined}
+          alerta={
+            propsAceitasSemPedido.length > 0
+              ? { texto: `${propsAceitasSemPedido.length} aceita${propsAceitasSemPedido.length > 1 ? 's' : ''} → gerar pedido`, href: '/propostas?status=aprovada', cor: 'green' }
+              : propsAVencer.length > 0
+                ? { texto: `${propsAVencer.length} a vencer`, href: '/propostas?status=enviada', cor: 'orange' }
+                : undefined
+          }
           link={{ texto: 'Ver propostas', href: '/propostas' }}
         />
         <CardEntidade
@@ -316,6 +327,7 @@ const ALERTA_COR: Record<string, string> = {
   red:    'text-red-600 dark:text-red-400',
   amber:  'text-amber-600 dark:text-amber-400',
   orange: 'text-orange-600 dark:text-orange-400',
+  green:  'text-green-600 dark:text-green-400',
 }
 
 function CardEntidade({ tone, icon, title, criarHref, criarLabel, valor, label, alerta, link }: {
@@ -326,7 +338,7 @@ function CardEntidade({ tone, icon, title, criarHref, criarLabel, valor, label, 
   criarLabel?: string
   valor: string
   label: string
-  alerta?: { texto: string; href: string; cor: 'red' | 'amber' | 'orange' }
+  alerta?: { texto: string; href: string; cor: 'red' | 'amber' | 'orange' | 'green' }
   link?: { texto: string; href: string }
 }) {
   const t = TONES[tone]

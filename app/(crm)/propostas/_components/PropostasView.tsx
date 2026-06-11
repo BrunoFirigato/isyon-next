@@ -239,8 +239,16 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
   async function updateStatus(p: Proposta, novoStatus: string) {
     const supabase = createClient()
     await supabase.from('propostas').update({ status: novoStatus }).eq('id', p.id)
-    if (novoStatus === 'enviada' || novoStatus === 'aprovada') {
+    if (novoStatus === 'enviada') {
       await avancarOpNegociacao(supabase, p.oportunidade_id)
+    } else if (novoStatus === 'aprovada') {
+      // Aceite = negócio ganho: fecha a oportunidade e promove o prospect
+      if (p.oportunidade_id) {
+        await supabase.from('oportunidades').update({ status: 'ganho', valor: p.valor }).eq('id', p.oportunidade_id)
+      }
+      if (p.cliente_id) {
+        await supabase.from('clientes').update({ status: 'ativo' }).eq('id', p.cliente_id).eq('status', 'prospect')
+      }
     }
     toast(`Status alterado para ${STATUS_LABEL[novoStatus] ?? novoStatus}`, 'info')
     router.refresh()

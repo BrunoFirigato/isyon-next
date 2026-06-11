@@ -197,6 +197,17 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
     const supabase = createClient()
     const itensLimpos = itens.map(({ id: _id, ...rest }) => rest)
 
+    // Vínculo com oportunidade: explícito (prefill/edição) OU automático —
+    // quando o cliente tem exatamente UMA oportunidade aberta, a proposta entra
+    // vinculada a ela (faz o funil mover e o aceite "ganhar" a oportunidade certa).
+    let opId = oportunidadeId
+    let opEtapaAtual: string | null = prefill?.oportunidadeEtapa ?? null
+    if (!opId && clienteId && !isEditing) {
+      const { data: ops } = await supabase
+        .from('oportunidades').select('id, etapa').eq('cliente_id', clienteId).eq('status', 'aberto')
+      if (ops && ops.length === 1) { opId = ops[0].id; opEtapaAtual = ops[0].etapa }
+    }
+
     const payload = {
       titulo:            titulo.trim(),
       cliente_id:        clienteId  || null,
@@ -204,7 +215,7 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
       vendedor_id:       vendedorId || null,
       cond_pagamento_id: condPagamentoId || null,
       tabela_preco_id:   tabelaPrecoId || null,
-      oportunidade_id:   oportunidadeId,
+      oportunidade_id:   opId,
       validade:          validade   || null,
       segmento:          segmento   || null,
       status,
@@ -230,11 +241,11 @@ export default function PropostaFormModal({ proposta, prefill, onClose }: Props)
       if (err) { setError(err.message); setSaving(false); return }
 
       // Avança a oportunidade para a etapa "Proposta" (só se ainda estiver antes dela)
-      if (prefill?.oportunidadeId) {
+      if (opId) {
         const ORDEM = ['Prospecção', 'Qualificação', 'Proposta', 'Negociação']
-        const atualIdx = ORDEM.indexOf(prefill.oportunidadeEtapa ?? '')
+        const atualIdx = ORDEM.indexOf(opEtapaAtual ?? '')
         if (atualIdx < ORDEM.indexOf('Proposta')) {
-          await supabase.from('oportunidades').update({ etapa: 'Proposta' }).eq('id', prefill.oportunidadeId)
+          await supabase.from('oportunidades').update({ etapa: 'Proposta' }).eq('id', opId)
         }
       }
     }

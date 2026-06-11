@@ -27,7 +27,7 @@ interface Conversa {
   leads?: { nome: string } | null
   clientes?: { nome: string; empresa: string | null } | null
 }
-interface Mensagem { id: string; direcao: string; texto: string | null; criado_em: string }
+interface Mensagem { id: string; direcao: string; texto: string | null; criado_em: string; tipo?: string | null }
 interface Instancia { id: string; nome: string }
 interface UsuarioRef { id: string; nome: string }
 
@@ -80,7 +80,7 @@ export default function ConversasView() {
   }, [supabase])
 
   const carregarMensagens = useCallback(async (id: string) => {
-    const { data } = await supabase.from('wa_mensagens').select('id, direcao, texto, criado_em').eq('conversa_id', id).order('criado_em', { ascending: true }).limit(500)
+    const { data } = await supabase.from('wa_mensagens').select('id, direcao, texto, criado_em, tipo').eq('conversa_id', id).order('criado_em', { ascending: true }).limit(500)
     if (data) setMensagens(data as Mensagem[])
   }, [supabase])
 
@@ -409,7 +409,13 @@ export default function ConversasView() {
               />
 
               <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-gray-50/50 dark:bg-gray-900/30">
-                {mensagens.map(m => (
+                {mensagens.map(m => m.tipo === 'sistema' ? (
+                  <div key={m.id} className="flex justify-center">
+                    <div className="max-w-[85%] px-3 py-1.5 rounded-full text-xs text-center bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800 whitespace-pre-wrap">
+                      {m.texto}
+                    </div>
+                  </div>
+                ) : (
                   <div key={m.id} className={`flex ${m.direcao === 'out' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm ${m.direcao === 'out' ? 'bg-emerald-500 text-white rounded-br-sm' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-gray-600 rounded-bl-sm'}`}>
                       <p className="whitespace-pre-wrap break-words">{m.texto}</p>

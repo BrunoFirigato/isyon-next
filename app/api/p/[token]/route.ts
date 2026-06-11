@@ -34,7 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
   const { data: p } = await admin
     .from('propostas')
-    .select('id, tenant_id, status, validade, valor, itens, cliente_id, vendedor_id, cond_pagamento_id, tabela_preco_id, empresa_id, segmento, oportunidade_id')
+    .select('id, numero, tenant_id, status, validade, valor, itens, cliente_id, vendedor_id, cond_pagamento_id, tabela_preco_id, empresa_id, segmento, oportunidade_id')
     .eq('share_token', token)
     .maybeSingle()
 
@@ -122,14 +122,34 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     } else {
       pedidoNumero = existente.numero
     }
+  }
 
-    // Fecha a oportunidade como ganha e promove o prospect
-    if (p.oportunidade_id) {
-      await admin.from('oportunidades').update({ status: 'ganho', valor: p.valor }).eq('id', p.oportunidade_id)
-    }
-    if (p.cliente_id) {
-      await admin.from('clientes').update({ status: 'ativo' })
-        .eq('id', p.cliente_id).eq('status', 'prospect')
+  // Aceite = negócio ganho — vale nos DOIS modos (gerar pedido automático ou manual).
+  // Fecha a oportunidade vinculada e promove o prospect a cliente ativo.
+  if (p.oportunidade_id) {
+    await admin.from('oportunidades').update({ status: 'ganho', valor: p.valor }).eq('id', p.oportunidade_id)
+  }
+  if (p.cliente_id) {
+    await admin.from('clientes').update({ status: 'ativo' })
+      .eq('id', p.cliente_id).eq('status', 'prospect')
+
+    // Avisa o vendedor na própria conversa do WhatsApp (nota interna do sistema)
+    const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.valor ?? 0)
+    const aviso = `✅ Cliente aceitou a proposta${p.numero ? ` ${p.numero}` : ''} · ${valorFmt}`
+        + (geraPedido && pedidoNumero ? `\nPedido ${pedidoNumero} gerado automaticamente.` : `\nDisponível para gerar o pedido.`)
+    const { data: conv } = await admin.from('wa_conversas')
+      .select('id, instancia_id, nao_lidas').eq('cliente_id', p.cliente_id)
+      .order('ultima_em', { ascending: false }).limit(1).maybeSingle()
+    if (conv) {
+      const agora = new Date().toISOString()
+      await admin.from('wa_mensagens').insert({
+        tenant_id: p.tenant_id, conversa_id: conv.id, instancia_id: conv.instancia_id,
+        direcao: 'in', texto: aviso, tipo: 'sistema', criado_em: agora,
+      })
+      await admin.from('wa_conversas').update({
+        ultima_mensagem: aviso, ultima_em: agora, ultima_direcao: 'in',
+        nao_lidas: (conv.nao_lidas ?? 0) + 1, atualizado_em: agora,
+      }).eq('id', conv.id)
     }
   }
 
