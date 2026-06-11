@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, ChevronRight, Mail, Phone,
-  TrendingUp, Calendar, Pencil,
+  TrendingUp, Briefcase, Calendar, Pencil,
   MessageSquare, Plus, X, Save, Lock, Send,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -429,7 +429,7 @@ export default function Lead360View({ lead, oportunidades, historico, compromiss
       {oportunidades.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm mb-4">
           <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
-            <TrendingUp size={15} className="text-gray-400 dark:text-gray-500" />
+            <Briefcase size={15} className="text-gray-400 dark:text-gray-500" />
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               Oportunidade{oportunidades.length > 1 ? 's' : ''} gerada{oportunidades.length > 1 ? 's' : ''}
             </h2>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, CheckCircle2, Pencil, Trash2, Calendar, Search, X, TrendingUp, Building2, UserPlus } from 'lucide-react'
+import { Plus, CheckCircle2, Pencil, Trash2, Calendar, Search, X, Briefcase, Building2, Target } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
   type Compromisso, TIPOS_COMPROMISSO,
@@ -238,7 +238,7 @@ export default function AgendaView({ compromissos }: Props) {
                       {c.op ? (
                         <span title={`Oportunidade: ${c.op.titulo}`}
                           className="hidden sm:flex items-center gap-1 text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-full shrink-0 max-w-[160px]">
-                          <TrendingUp size={11} className="shrink-0" />
+                          <Briefcase size={11} className="shrink-0" />
                           <span className="truncate">{c.op.numero ?? c.op.titulo}</span>
                         </span>
                       ) : c.cliente ? (
@@ -250,7 +250,7 @@ export default function AgendaView({ compromissos }: Props) {
                       ) : c.lead ? (
                         <span title={`Lead: ${c.lead.nome}`}
                           className="hidden sm:flex items-center gap-1 text-xs font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-2 py-0.5 rounded-full shrink-0 max-w-[160px]">
-                          <UserPlus size={11} className="shrink-0" />
+                          <Target size={11} className="shrink-0" />
                           <span className="truncate">{c.lead.nome}</span>
                         </span>
                       ) : null}

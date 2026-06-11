@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Mail, Phone, MapPin, Building2,
-  FileText, ShoppingCart, TrendingUp, DollarSign,
+  FileText, ShoppingCart, TrendingUp, DollarSign, Target,
   Calendar, Pencil, ChevronRight, Receipt, MessageSquare,
   Plus, X, Save, Landmark, Radar,
 } from 'lucide-react'
@@ -228,7 +228,7 @@ export default function Cliente360View({ cliente, oportunidades, propostas, pedi
               href={`/leads/${cliente.lead_id}`}
               className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-100 px-2 py-0.5 rounded-full font-medium transition-colors"
             >
-              <TrendingUp size={10} /> Originado de lead
+              <Target size={10} /> Originado de lead
             </Link>
           )}
         </div>
