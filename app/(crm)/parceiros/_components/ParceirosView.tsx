@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, Trash2, MapPin } from 'lucide-react'
+import { Plus, Search, X, Pencil, Trash2, MapPin, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { vinculosParceiro, inativarRegistro, type Vinculo } from '@/lib/exclusao'
 import BloqueioExclusaoDialog from '@/app/(crm)/_components/BloqueioExclusaoDialog'
@@ -23,7 +23,7 @@ interface Props {
 export default function ParceirosView({ parceiros, vendedores, currentStatus, currentQ }: Props) {
   const router = useRouter()
   const pathname = usePathname()
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
   const toast = useToast()
 
   const [search, setSearch] = useState(currentQ)
@@ -87,8 +87,9 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
       <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Parceiros Comerciais</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
             {parceiros.length} parceiro{parceiros.length !== 1 ? 's' : ''}
+            {isPending && <Loader2 size={13} className="animate-spin text-blue-500" />}
           </p>
         </div>
         <button
@@ -153,7 +154,7 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
 
       {/* Tabela — desktop */}
       {parceiros.length > 0 && (
-        <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className={`hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden transition-opacity ${isPending ? 'opacity-50' : ''}`}>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
@@ -228,7 +229,7 @@ export default function ParceirosView({ parceiros, vendedores, currentStatus, cu
 
       {/* Cards — mobile */}
       {parceiros.length > 0 && (
-        <div className="md:hidden space-y-3">
+        <div className={`md:hidden space-y-3 transition-opacity ${isPending ? 'opacity-50' : ''}`}>
           {parceiros.map((p) => {
             const vMaq = vendedorNome(p.vendedor_maq_id)
             const vPec = vendedorNome(p.vendedor_pec_id)

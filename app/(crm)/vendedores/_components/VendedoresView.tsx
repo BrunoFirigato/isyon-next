@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus, Search, X, Pencil, Trash2, Phone, Mail } from 'lucide-react'
+import { Plus, Search, X, Pencil, Trash2, Phone, Mail, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { vinculosVendedor, inativarRegistro, type Vinculo } from '@/lib/exclusao'
 import BloqueioExclusaoDialog from '@/app/(crm)/_components/BloqueioExclusaoDialog'
@@ -23,7 +23,7 @@ interface Props {
 export default function VendedoresView({ vendedores, currentStatus, currentQ }: Props) {
   const router = useRouter()
   const pathname = usePathname()
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
   const toast = useToast()
   const segmentos = useSegmentos()
 
@@ -83,9 +83,10 @@ export default function VendedoresView({ vendedores, currentStatus, currentQ }: 
       <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Vendedores</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
             {vendedores.length} vendedor{vendedores.length !== 1 ? 'es' : ''}
             {currentStatus !== 'todos' && ` · ${currentStatus}`}
+            {isPending && <Loader2 size={13} className="animate-spin text-blue-500" />}
           </p>
         </div>
         <button
@@ -159,7 +160,7 @@ export default function VendedoresView({ vendedores, currentStatus, currentQ }: 
 
       {/* Tabela — desktop */}
       {vendedores.length > 0 && (
-        <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className={`hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden transition-opacity ${isPending ? 'opacity-50' : ''}`}>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
@@ -220,7 +221,7 @@ export default function VendedoresView({ vendedores, currentStatus, currentQ }: 
 
       {/* Cards — mobile */}
       {vendedores.length > 0 && (
-        <div className="md:hidden space-y-3">
+        <div className={`md:hidden space-y-3 transition-opacity ${isPending ? 'opacity-50' : ''}`}>
           {vendedores.map((v) => (
             <div key={v.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
               <div className="flex items-start justify-between gap-2 mb-2">

@@ -55,7 +55,7 @@ function pageNumbers(current: number, totalPages: number): (number | '…')[] {
 export default function ClientesView({ clientes, total: totalProp, restrict, scopedVendedorId, currentStatus, currentQ, currentVendedor, currentParceiro, vendedores, parceiros }: Props) {
   const router = useRouter()
   const pathname = usePathname()
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
   const toast = useToast()
   const segmentos = useSegmentos()
   const { usaParceiros } = useTenantConfig()
@@ -189,9 +189,10 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
       <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Clientes</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
             {total} registro{total !== 1 ? 's' : ''}
             {currentStatus !== 'todos' && ` · ${statusLabel(currentStatus)}`}
+            {isPending && <Loader2 size={13} className="animate-spin text-blue-500" />}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -309,7 +310,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
 
       {/* Tabela — desktop */}
       {items.length > 0 && (
-        <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-x-auto">
+        <div className={`hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-x-auto transition-opacity ${isPending ? 'opacity-50' : ''}`}>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
@@ -462,7 +463,7 @@ export default function ClientesView({ clientes, total: totalProp, restrict, sco
 
       {/* Cards — mobile */}
       {items.length > 0 && (
-        <div className="md:hidden space-y-3">
+        <div className={`md:hidden space-y-3 transition-opacity ${isPending ? 'opacity-50' : ''}`}>
           {items.map((c) => {
             const st = statusStyle(c.status)
             return (

@@ -5,7 +5,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
   CheckCircle, XCircle, Send, Mail, X, ShoppingCart, Printer,
-  Link2, Copy, MessageCircle, Check,
+  Link2, Copy, MessageCircle, Check, Loader2,
 } from 'lucide-react'
 import ExportButton from '@/app/(crm)/_components/ExportButton'
 import { createClient } from '@/lib/supabase/client'
@@ -38,7 +38,7 @@ interface Props {
 export default function PropostasView({ propostas, clientes, vendedores, empresas, pedidoLinks, oportunidades, currentStatus, temWhatsapp }: Props) {
   const router = useRouter()
   const pathname = usePathname()
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
   const toast = useToast()
   const { tenantId, aprovacaoPedido } = useTenantConfig()
 
@@ -342,9 +342,10 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
       <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Propostas</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
             {propostas.length} proposta{propostas.length !== 1 ? 's' : ''}
             {totalFiltrado > 0 && ` · ${brl(totalFiltrado)}`}
+            {isPending && <Loader2 size={13} className="animate-spin text-blue-500" />}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -392,7 +393,7 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
 
       {/* Lista de propostas */}
       {propostas.length > 0 && (
-        <div className="space-y-2">
+        <div className={`space-y-2 transition-opacity ${isPending ? 'opacity-50' : ''}`}>
           {propostas.map((p) => {
             const expanded = expandedId === p.id
             const itens = p.itens ?? []

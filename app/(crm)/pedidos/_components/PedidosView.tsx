@@ -36,7 +36,7 @@ interface Props {
 export default function PedidosView({ pedidos, clientes, vendedores, empresas, propostaLinks, currentStatus, omieConectado }: Props) {
   const router = useRouter()
   const pathname = usePathname()
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
   const toast = useToast()
   const segmentos = useSegmentos()
   const { perfil } = useTenantConfig()
@@ -125,9 +125,10 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
       <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Pedidos</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
             {pedidos.length} pedido{pedidos.length !== 1 ? 's' : ''}
             {totalFiltrado > 0 && ` · ${brl(totalFiltrado)}`}
+            {isPending && <Loader2 size={13} className="animate-spin text-blue-500" />}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -175,7 +176,7 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
 
       {/* Lista de pedidos */}
       {pedidos.length > 0 && (
-        <div className="space-y-2">
+        <div className={`space-y-2 transition-opacity ${isPending ? 'opacity-50' : ''}`}>
           {pedidos.map((p) => {
             const expanded = expandedId === p.id
             const itens = p.itens ?? []

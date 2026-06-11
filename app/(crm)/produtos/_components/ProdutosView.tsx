@@ -41,7 +41,7 @@ function pageNumbers(current: number, totalPages: number): (number | '…')[] {
 export default function ProdutosView({ produtos, total: totalProp, currentTipo, currentAtivo, currentQ }: Props) {
   const router = useRouter()
   const pathname = usePathname()
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
   const toast = useToast()
 
   // Paginação
@@ -151,9 +151,10 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
       <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Produtos</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
             {total} {total !== 1 ? 'itens' : 'item'}
             {currentTipo !== 'todos' && ` · ${currentTipo === 'servico' ? 'Serviços' : 'Produtos'}`}
+            {isPending && <Loader2 size={13} className="animate-spin text-blue-500" />}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -250,7 +251,7 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
 
       {/* Tabela desktop */}
       {items.length > 0 && (
-        <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className={`hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden transition-opacity ${isPending ? 'opacity-50' : ''}`}>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
@@ -356,7 +357,7 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
 
       {/* Cards mobile */}
       {items.length > 0 && (
-        <div className="md:hidden space-y-3">
+        <div className={`md:hidden space-y-3 transition-opacity ${isPending ? 'opacity-50' : ''}`}>
           {items.map((p) => (
             <div key={p.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
               <div className="flex items-start justify-between gap-2 mb-2">
