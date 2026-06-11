@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import {
-  Target, TrendingUp, FileText, DollarSign,
+  Target, Briefcase, FileText, DollarSign,
   ChevronRight, CheckCircle2, ArrowRight, Plus,
   Building2, Package, Rocket, Lightbulb, BarChart3,
 } from 'lucide-react'
@@ -93,7 +93,7 @@ export default async function DashboardPage() {
     { ok: (totalFiliais ?? 0) > 0,  Icon: Building2,  label: 'Cadastrar sua empresa', href: '/empresas' },
     { ok: (totalProdutos ?? 0) > 0, Icon: Package,    label: 'Cadastrar produtos ou serviços', href: '/produtos' },
     { ok: (totalLeads ?? 0) > 0,    Icon: Target,     label: 'Criar seu primeiro lead',        href: '/leads' },
-    { ok: opList.length > 0,        Icon: TrendingUp, label: 'Abrir uma oportunidade',         href: '/oportunidades' },
+    { ok: opList.length > 0,        Icon: Briefcase, label: 'Abrir uma oportunidade',         href: '/oportunidades' },
   ]
   const setupCompleto = passos.every(p => p.ok)
   const passosFeitos = passos.filter(p => p.ok).length
@@ -192,7 +192,7 @@ export default async function DashboardPage() {
           link={{ texto: 'Ver todos os leads', href: '/leads' }}
         />
         <CardEntidade
-          tone="purple" icon={<TrendingUp size={16} />} title="Oportunidades"
+          tone="purple" icon={<Briefcase size={16} />} title="Oportunidades"
           criarHref="/oportunidades?novo=1" criarLabel="Nova"
           valor={brl(valorPipeline)} label={`${opAbertas.length} abertas · conv. ${taxaConversao}%`}
           alerta={opsParadas.length > 0 ? { texto: `${opsParadas.length} parada${opsParadas.length > 1 ? 's' : ''} +${diasOpParada}d`, href: '/oportunidades', cor: 'amber' } : undefined}
