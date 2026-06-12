@@ -15,6 +15,7 @@ export default function CadastroPage() {
     email: '',
     senha: '',
     confirmar: '',
+    website: '', // honeypot — fica invisível; só bots preenchem
   })
   const [mostrarSenha,     setMostrarSenha]     = useState(false)
   const [mostrarConfirmar, setMostrarConfirmar] = useState(false)
@@ -50,6 +51,7 @@ export default function CadastroPage() {
         nome:        form.nome,
         email:       form.email,
         senha:       form.senha,
+        website:     form.website, // honeypot
       }),
     })
 
@@ -123,6 +125,18 @@ export default function CadastroPage() {
           onSubmit={handleSubmit}
           className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4"
         >
+          {/* Honeypot anti-bot — invisível para humanos, ignorado por leitores de tela */}
+          <input
+            type="text"
+            name="website"
+            value={form.website}
+            onChange={e => set('website', e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="absolute -left-[9999px] h-0 w-0 opacity-0"
+          />
+
           {/* Nome da empresa */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">

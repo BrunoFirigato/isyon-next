@@ -1,27 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import {
+  isEmailValido, isEmailDescartavel, getClientIp,
+  RATE_LIMIT_MAX, RATE_LIMIT_JANELA_MIN,
+} from '@/lib/cadastro/guards'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { nomeEmpresa, nome, email, senha } = body
+  const { nomeEmpresa, nome, email, senha, website } = body
+
+  // Honeypot: campo invisível no formulário; só bots o preenchem.
+  if (typeof website === 'string' && website.trim() !== '')
+    return NextResponse.json({ error: 'Cadastro inválido.' }, { status: 400 })
 
   // Validações
   if (!nomeEmpresa?.trim())
     return NextResponse.json({ error: 'Nome da empresa é obrigatório' }, { status: 400 })
   if (!nome?.trim())
     return NextResponse.json({ error: 'Seu nome é obrigatório' }, { status: 400 })
-  if (!email?.trim())
-    return NextResponse.json({ error: 'E-mail é obrigatório' }, { status: 400 })
-  if (!senha || senha.length < 6)
-    return NextResponse.json({ error: 'Senha deve ter no mínimo 6 caracteres' }, { status: 400 })
+  if (!email?.trim() || !isEmailValido(email))
+    return NextResponse.json({ error: 'Informe um e-mail válido' }, { status: 400 })
+  if (isEmailDescartavel(email))
+    return NextResponse.json({ error: 'E-mails temporários não são aceitos. Use um e-mail válido.' }, { status: 400 })
+  if (!senha || senha.length < 8)
+    return NextResponse.json({ error: 'Senha deve ter no mínimo 8 caracteres' }, { status: 400 })
 
   const admin = createAdminClient()
+  const emailLimpo = email.trim().toLowerCase()
+
+  // Rate-limit por IP (best-effort: fail-open se a tabela ainda não existir).
+  const ip = getClientIp(req)
+  const desde = new Date(Date.now() - RATE_LIMIT_JANELA_MIN * 60_000).toISOString()
+  const { count: tentativas, error: errRate } = await admin
+    .from('signup_attempts')
+    .select('id', { count: 'exact', head: true })
+    .eq('ip', ip)
+    .gte('criado_em', desde)
+  if (!errRate && (tentativas ?? 0) >= RATE_LIMIT_MAX)
+    return NextResponse.json({ error: 'Muitas tentativas de cadastro. Tente novamente mais tarde.' }, { status: 429 })
+  // registra a tentativa (não bloqueia o fluxo se falhar)
+  await admin.from('signup_attempts').insert({ ip, email: emailLimpo })
 
   // Verificar se e-mail já está em uso
   const { data: emailExistente } = await admin
     .from('usuarios')
     .select('id')
-    .eq('email', email.trim().toLowerCase())
+    .eq('email', emailLimpo)
     .maybeSingle()
 
   if (emailExistente)
