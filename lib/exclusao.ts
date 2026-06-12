@@ -22,13 +22,7 @@ export function vinculosCliente(supabase: SupabaseClient, id: string) {
     ['pedidos',       'cliente_id', 'pedido',      'pedidos'],
     ['propostas',     'cliente_id', 'proposta',    'propostas'],
     ['oportunidades', 'cliente_id', 'oportunidade','oportunidades'],
-    ['faturas',       'cliente_id', 'fatura',      'faturas'],
-    ['notas_fiscais', 'cliente_id', 'nota fiscal', 'notas fiscais'],
-    ['parcelas',      'cliente_id', 'parcela',     'parcelas'],
-    ['comissoes',     'cliente_id', 'comissão',    'comissões'],
-    ['tickets',       'cliente_id', 'ticket',      'tickets'],
     ['agenda',        'cliente_id', 'item de agenda', 'itens de agenda'],
-    ['documentos',    'cliente_id', 'documento',   'documentos'],
   ], id)
 }
 
@@ -59,27 +53,22 @@ export function vinculosProposta(supabase: SupabaseClient, id: string) {
 }
 
 // ── Pedido ───────────────────────────────────────────────────────────────────
-export function vinculosPedido(supabase: SupabaseClient, id: string) {
-  return contarDefs(supabase, [
-    ['faturas',    'pedido_id', 'fatura',    'faturas'],
-    ['parcelas',   'pedido_id', 'parcela',   'parcelas'],
-    ['comissoes',  'pedido_id', 'comissão',  'comissões'],
-    ['expedicoes', 'pedido_id', 'expedição', 'expedições'],
-  ], id)
+// O faturamento é do ERP; o pedido não tem mais vínculos internos que bloqueiem.
+export function vinculosPedido(_supabase: SupabaseClient, _id: string): Promise<Vinculo[]> {
+  return Promise.resolve([])
 }
 
 // ── Vendedor ─────────────────────────────────────────────────────────────────
 // clientes/parceiros referenciam o vendedor por duas colunas (maq e pec) → OR.
 export async function vinculosVendedor(supabase: SupabaseClient, id: string): Promise<Vinculo[]> {
   const orVend = `vendedor_maq_id.eq.${id},vendedor_pec_id.eq.${id}`
-  const [cli, par, leads, ops, props, peds, com, metas, ag] = await Promise.all([
+  const [cli, par, leads, ops, props, peds, metas, ag] = await Promise.all([
     supabase.from('clientes').select('id',  { count: 'exact', head: true }).or(orVend),
     supabase.from('parceiros').select('id', { count: 'exact', head: true }).or(orVend),
     supabase.from('leads').select('id',         { count: 'exact', head: true }).eq('vendedor_id', id),
     supabase.from('oportunidades').select('id', { count: 'exact', head: true }).eq('vendedor_id', id),
     supabase.from('propostas').select('id',     { count: 'exact', head: true }).eq('vendedor_id', id),
     supabase.from('pedidos').select('id',       { count: 'exact', head: true }).eq('vendedor_id', id),
-    supabase.from('comissoes').select('id',     { count: 'exact', head: true }).eq('vendedor_id', id),
     supabase.from('metas').select('id',         { count: 'exact', head: true }).eq('vendedor_id', id),
     supabase.from('agenda').select('id',        { count: 'exact', head: true }).eq('vendedor_id', id),
   ])
@@ -90,15 +79,14 @@ export async function vinculosVendedor(supabase: SupabaseClient, id: string): Pr
   }
   add(cli, 'cliente', 'clientes'); add(par, 'parceiro', 'parceiros'); add(leads, 'lead', 'leads')
   add(ops, 'oportunidade', 'oportunidades'); add(props, 'proposta', 'propostas'); add(peds, 'pedido', 'pedidos')
-  add(com, 'comissão', 'comissões'); add(metas, 'meta', 'metas'); add(ag, 'item de agenda', 'itens de agenda')
+  add(metas, 'meta', 'metas'); add(ag, 'item de agenda', 'itens de agenda')
   return out
 }
 
 // ── Parceiro comercial ───────────────────────────────────────────────────────
 export function vinculosParceiro(supabase: SupabaseClient, id: string) {
   return contarDefs(supabase, [
-    ['clientes',          'parceiro_id', 'cliente', 'clientes'],
-    ['visitas_parceiros', 'parceiro_id', 'visita',  'visitas'],
+    ['clientes', 'parceiro_id', 'cliente', 'clientes'],
   ], id)
 }
 
@@ -109,12 +97,8 @@ export function vinculosEmpresa(supabase: SupabaseClient, id: string) {
     ['oportunidades', 'empresa_id', 'oportunidade', 'oportunidades'],
     ['propostas',     'empresa_id', 'proposta',     'propostas'],
     ['pedidos',       'empresa_id', 'pedido',       'pedidos'],
-    ['faturas',       'empresa_id', 'fatura',       'faturas'],
-    ['parcelas',      'empresa_id', 'parcela',      'parcelas'],
-    ['comissoes',     'empresa_id', 'comissão',     'comissões'],
     ['vendedores',    'empresa_id', 'vendedor',     'vendedores'],
     ['parceiros',     'empresa_id', 'parceiro',     'parceiros'],
-    ['lancamentos',   'empresa_id', 'lançamento',   'lançamentos'],
   ], id)
 }
 
@@ -129,9 +113,7 @@ export function vinculosCondPagamento(supabase: SupabaseClient, id: string) {
 // ── Usuário ──────────────────────────────────────────────────────────────────
 export function vinculosUsuario(supabase: SupabaseClient, id: string) {
   return contarDefs(supabase, [
-    ['rotas_parceiros',   'usuario_id',     'rota de parceiro',          'rotas de parceiro'],
-    ['visitas_parceiros', 'usuario_id',     'visita de parceiro',        'visitas de parceiro'],
-    ['leads',             'responsavel_id', 'lead sob responsabilidade', 'leads sob responsabilidade'],
+    ['leads', 'responsavel_id', 'lead sob responsabilidade', 'leads sob responsabilidade'],
   ], id)
 }
 

@@ -16,7 +16,6 @@ export default async function Cliente360Page({ params }: Props) {
     { data: propostas },
     { data: pedidos },
     { data: historicoData, error: errHistorico },
-    { data: notasData, error: errNotas },
     { data: compromissosData, error: errCompromissos },
   ] = await Promise.all([
     supabase
@@ -46,11 +45,6 @@ export default async function Cliente360Page({ params }: Props) {
       .order('criado_em', { ascending: false })
       .limit(30),
     supabase
-      .from('notas_fiscais')
-      .select('id, numero, status, valor, data_emissao, obs, criado_em')
-      .eq('cliente_id', id)
-      .order('data_emissao', { ascending: false }),
-    supabase
       .from('compromissos')
       .select('id, titulo, tipo, data_hora, status, descricao, duracao_min')
       .eq('cliente_id', id)
@@ -66,7 +60,6 @@ export default async function Cliente360Page({ params }: Props) {
       propostas={propostas ?? []}
       pedidos={pedidos ?? []}
       historico={errHistorico ? [] : (historicoData ?? [])}
-      notas={errNotas ? [] : (notasData ?? [])}
       compromissos={errCompromissos ? [] : (compromissosData ?? [])}
     />
   )

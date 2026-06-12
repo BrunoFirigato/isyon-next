@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Mail, Phone, MapPin, Building2,
   FileText, ShoppingCart, TrendingUp, DollarSign, Target,
-  Calendar, Pencil, ChevronRight, Receipt, MessageSquare,
+  Calendar, Pencil, ChevronRight, MessageSquare,
   Plus, X, Save, Radar,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -35,18 +35,12 @@ interface HistoricoData {
   id: string; tipo: string | null; texto: string | null
   valor: number | null; usuario_nome: string | null; criado_em: string
 }
-interface NotaFiscalData {
-  id: string; numero: string | null; status: string | null
-  valor: number | null; data_emissao: string | null; obs: string | null; criado_em: string
-}
-
 interface Props {
   cliente: Cliente
   oportunidades: OpData[]
   propostas: PropostaData[]
   pedidos: PedidoData[]
   historico: HistoricoData[]
-  notas: NotaFiscalData[]
   compromissos: CompromissoData[]
 }
 
@@ -96,10 +90,6 @@ function pedidoBadge(s: string) {
   if (s === 'cancelado')   return { label: 'Cancelado',   cls: 'bg-red-100 text-red-600' }
   return { label: 'Aguardando', cls: 'bg-yellow-100 text-yellow-700' }
 }
-function notaBadge(s: string | null) {
-  if (s === 'cancelada') return { label: 'Cancelada', cls: 'bg-red-100 text-red-600' }
-  return { label: 'Emitida', cls: 'bg-green-100 text-green-700' }
-}
 function tipoHistoricoIcon(tipo: string | null) {
   switch (tipo) {
     case 'ligacao':  return { icon: '📞', label: 'Ligação' }
@@ -116,7 +106,7 @@ function tipoHistoricoIcon(tipo: string | null) {
 
 /* ─────────────────────── Main ── */
 
-export default function Cliente360View({ cliente, oportunidades, propostas, pedidos, historico, notas, compromissos }: Props) {
+export default function Cliente360View({ cliente, oportunidades, propostas, pedidos, historico, compromissos }: Props) {
   const router    = useRouter()
   const tenantId  = useTenantId()
   const { setBreadcrumb } = useBreadcrumb()
@@ -295,14 +285,6 @@ export default function Cliente360View({ cliente, oportunidades, propostas, pedi
 
       {/* Financeiro do cliente (a receber / inadimplência via ERP) virá aqui — ver roadmap */}
 
-      {/* ── Notas Fiscais ── */}
-      <NotasFiscaisSection
-        clienteId={cliente.id}
-        tenantId={tenantId}
-        notas={notas}
-        onSaved={() => router.refresh()}
-      />
-
       {/* ── Atividades da Agenda ── */}
       <WhatsAppConversaSection clienteId={cliente.id} />
       <AgendaVinculada compromissos={compromissos} />
@@ -323,124 +305,6 @@ export default function Cliente360View({ cliente, oportunidades, propostas, pedi
 }
 
 /* ──────────────────── Notas Fiscais section ── */
-
-function NotasFiscaisSection({
-  clienteId, tenantId, notas, onSaved,
-}: { clienteId: string; tenantId: string; notas: NotaFiscalData[]; onSaved: () => void }) {
-  const [showForm, setShowForm] = useState(false)
-  const [numero, setNumero]     = useState('')
-  const [status, setStatus]     = useState('emitida')
-  const [valor, setValor]       = useState('')
-  const [data, setData]         = useState(new Date().toISOString().slice(0, 10))
-  const [obs, setObs]           = useState('')
-  const [saving, setSaving]     = useState(false)
-  const [erro, setErro]         = useState('')
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault()
-    if (!valor || Number(valor) <= 0) { setErro('Informe o valor.'); return }
-    setSaving(true); setErro('')
-    const supabase = createClient()
-    const { error } = await supabase.from('notas_fiscais').insert({
-      tenant_id: tenantId,
-      cliente_id: clienteId,
-      numero: numero.trim() || null,
-      status,
-      valor: Number(valor),
-      data_emissao: data,
-      obs: obs.trim() || null,
-    })
-    setSaving(false)
-    if (error) { setErro(error.message); return }
-    setNumero(''); setValor(''); setObs(''); setStatus('emitida')
-    setShowForm(false)
-    onSaved()
-  }
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-4">
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
-        <div className="flex items-center gap-2">
-          <Receipt size={15} className="text-gray-400 dark:text-gray-500" />
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notas Fiscais</h2>
-          {notas.length > 0 && (
-            <span className="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-full">{notas.length}</span>
-          )}
-        </div>
-        <button onClick={() => setShowForm(s => !s)}
-          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
-          {showForm ? <><X size={12} /> Cancelar</> : <><Plus size={12} /> Registrar</>}
-        </button>
-      </div>
-
-      {showForm && (
-        <form onSubmit={handleSave} className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50 space-y-3">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Número</label>
-              <input value={numero} onChange={e => setNumero(e.target.value)} placeholder="NF-000001"
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Status</label>
-              <select value={status} onChange={e => setStatus(e.target.value)}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100">
-                <option value="emitida">Emitida</option>
-                <option value="cancelada">Cancelada</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Valor *</label>
-              <input type="number" min="0.01" step="0.01" value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00"
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Data</label>
-              <input type="date" value={data} onChange={e => setData(e.target.value)}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Observação</label>
-            <input value={obs} onChange={e => setObs(e.target.value)} placeholder="Descrição do serviço/produto..."
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400" />
-          </div>
-          {erro && <p className="text-xs text-red-600">{erro}</p>}
-          <button type="submit" disabled={saving}
-            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors">
-            <Save size={13} /> {saving ? 'Salvando...' : 'Salvar nota'}
-          </button>
-        </form>
-      )}
-
-      <div className="px-5">
-        {notas.length === 0 && !showForm
-          ? <p className="py-6 text-sm text-gray-400 dark:text-gray-500 text-center">Nenhuma nota fiscal registrada.</p>
-          : notas.map((n) => {
-              const badge = notaBadge(n.status)
-              return (
-                <div key={n.id} className="flex items-center justify-between gap-3 py-3 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      {n.numero && <span className="text-xs font-mono text-gray-400 dark:text-gray-500">{n.numero}</span>}
-                      {n.obs && <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{n.obs}</span>}
-                    </div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 flex items-center gap-1">
-                      <Calendar size={10} /> {fmt(n.data_emissao ?? n.criado_em)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={`text-xs font-medium px-2 py-1 rounded-lg ${badge.cls}`}>{badge.label}</span>
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{brl(n.valor)}</span>
-                  </div>
-                </div>
-              )
-            })
-        }
-      </div>
-    </div>
-  )
-}
 
 /* ──────────────────── Agenda section ── */
 
