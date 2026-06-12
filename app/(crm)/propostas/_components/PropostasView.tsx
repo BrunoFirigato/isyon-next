@@ -17,6 +17,8 @@ import {
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useTenantConfig } from '@/app/(crm)/_components/TenantContext'
+import { usePeriodo } from '@/app/(crm)/_components/usePeriodo'
+import { PERIODO_OPTIONS } from '@/lib/periodo'
 
 interface VendedorRef { id: string; nome: string }
 interface EmpresaRef  { id: string; nome: string; sigla: string }
@@ -35,12 +37,16 @@ interface Props {
   temWhatsapp: boolean
 }
 
-export default function PropostasView({ propostas, clientes, vendedores, empresas, pedidoLinks, oportunidades, currentStatus, temWhatsapp }: Props) {
+export default function PropostasView({ propostas: propostasProp, clientes, vendedores, empresas, pedidoLinks, oportunidades, currentStatus, temWhatsapp }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const toast = useToast()
   const { tenantId, aprovacaoPedido } = useTenantConfig()
+
+  // Filtro de período (lembra a preferência) — recorta a lista por data de criação
+  const { periodo, setPeriodo, dentroDoPeriodo } = usePeriodo('periodo_propostas')
+  const propostas = propostasProp.filter(p => dentroDoPeriodo(p.criado_em))
 
   // Lookups de rastreabilidade
   const vendedorMap = Object.fromEntries(vendedores.map(v => [v.id, v.nome]))
@@ -373,6 +379,15 @@ export default function PropostasView({ propostas, clientes, vendedores, empresa
           {STATUS_PROPOSTA.map(({ value, label }) => (
             <option key={value} value={value}>{value === 'todos' ? 'Status: todos' : label}</option>
           ))}
+        </select>
+        <select
+          value={periodo}
+          onChange={(e) => setPeriodo(e.target.value)}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            periodo !== 'tudo' ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          {PERIODO_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         {currentStatus !== 'todos' && (
           <button onClick={() => setStatusFilter('todos')}

@@ -20,6 +20,8 @@ import {
 } from './types'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { useSegmentos, segmentoLabel } from '@/app/(crm)/_components/SegmentosContext'
+import { usePeriodo } from '@/app/(crm)/_components/usePeriodo'
+import { PERIODO_OPTIONS } from '@/lib/periodo'
 
 interface Props {
   ops: Oportunidade[]
@@ -27,11 +29,15 @@ interface Props {
 
 type Tab = 'abertas' | 'ganhas' | 'perdidas'
 
-export default function OpsView({ ops }: Props) {
+export default function OpsView({ ops: opsProp }: Props) {
   const router = useRouter()
   const toast = useToast()
   const segmentos = useSegmentos()
   const searchParams = useSearchParams()
+
+  // Filtro de período (lembra a preferência) — recorta por data de criação
+  const { periodo, setPeriodo, dentroDoPeriodo } = usePeriodo('periodo_oportunidades')
+  const ops = opsProp.filter(o => dentroDoPeriodo(o.criado_em))
 
   // Aba inicial pode vir do dashboard (?tab=ganhas)
   const tabInicial = searchParams.get('tab')
@@ -324,6 +330,15 @@ export default function OpsView({ ops }: Props) {
           <option value="abertas">Abertas ({abertas.length})</option>
           <option value="ganhas">Ganhas ({ganhas.length})</option>
           <option value="perdidas">Perdidas ({perdidas.length})</option>
+        </select>
+        <select
+          value={periodo}
+          onChange={(e) => setPeriodo(e.target.value)}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            periodo !== 'tudo' ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          {PERIODO_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </div>
 
