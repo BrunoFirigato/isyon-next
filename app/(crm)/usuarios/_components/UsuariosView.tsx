@@ -48,8 +48,13 @@ export default function UsuariosView({ usuarios }: Props) {
   const [resetLink, setResetLink] = useState<{ nome: string; link: string } | null>(null)
   const [copied, setCopied] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [filtroPerfil, setFiltroPerfil] = useState('')
+  const [filtroStatus, setFiltroStatus] = useState('') // '' = todos | 'ativo' | 'inativo'
 
   const filtered = usuarios.filter((u) => {
+    if (filtroPerfil && (u.perfil ?? '') !== filtroPerfil) return false
+    if (filtroStatus === 'ativo'   && u.ativo === false) return false
+    if (filtroStatus === 'inativo' && u.ativo !== false) return false
     if (!search.trim()) return true
     const q = search.toLowerCase()
     return u.nome.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
@@ -138,6 +143,37 @@ export default function UsuariosView({ usuarios }: Props) {
           <span className="hidden sm:inline">Novo usuário</span>
           <span className="sm:hidden">Novo</span>
         </button>
+      </div>
+
+      {/* Filtros — Status e Perfil como dropdowns (estilo Leads) */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <select
+          value={filtroStatus}
+          onChange={(e) => setFiltroStatus(e.target.value)}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            filtroStatus ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          <option value="">Status: todos</option>
+          <option value="ativo">Ativos</option>
+          <option value="inativo">Inativos</option>
+        </select>
+        <select
+          value={filtroPerfil}
+          onChange={(e) => setFiltroPerfil(e.target.value)}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            filtroPerfil ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          <option value="">Perfil: todos</option>
+          {PERFIS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+        </select>
+        {(filtroStatus || filtroPerfil) && (
+          <button onClick={() => { setFiltroStatus(''); setFiltroPerfil('') }}
+            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-2">
+            limpar filtros
+          </button>
+        )}
       </div>
 
       {/* Busca */}

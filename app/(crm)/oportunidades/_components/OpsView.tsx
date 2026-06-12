@@ -312,27 +312,19 @@ export default function OpsView({ ops }: Props) {
         </div>
       </div>
 
-      {/* Tabs status */}
-      <div className="flex gap-1.5 mb-5">
-        {([
-          { key: 'abertas', label: `Abertas (${abertas.length})` },
-          { key: 'ganhas', label: `Ganhas (${ganhas.length})` },
-          { key: 'perdidas', label: `Perdidas (${perdidas.length})` },
-        ] as { key: Tab; label: string }[]).map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              tab === key
-                ? key === 'ganhas' ? 'bg-green-600 text-white'
-                  : key === 'perdidas' ? 'bg-red-600 text-white'
-                  : 'bg-blue-600 text-white'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+      {/* Visão (Abertas/Ganhas/Perdidas) como dropdown (estilo Leads) */}
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        <select
+          value={tab}
+          onChange={(e) => setTab(e.target.value as Tab)}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            tab !== 'abertas' ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          <option value="abertas">Abertas ({abertas.length})</option>
+          <option value="ganhas">Ganhas ({ganhas.length})</option>
+          <option value="perdidas">Perdidas ({perdidas.length})</option>
+        </select>
       </div>
 
       {/* Ganhas / Perdidas */}

@@ -145,37 +145,29 @@ export default function AgendaView({ compromissos }: Props) {
         )}
       </div>
 
-      {/* Filtro por status */}
-      <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1">
-        {FILTROS.map(f => (
-          <button key={f.key} onClick={() => setFiltro(f.key)}
-            className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              filtro === f.key
-                ? 'bg-blue-600 text-white'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}>
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Filtro por tipo */}
-      <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1">
-        <button onClick={() => setTipoFiltro('')}
-          className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-            tipoFiltro === '' ? 'bg-gray-800 dark:bg-gray-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-          }`}>
-          Todos os tipos
-        </button>
-        {TIPOS_COMPROMISSO.map(t => (
-          <button key={t.value} onClick={() => setTipoFiltro(tipoFiltro === t.value ? '' : t.value)}
-            className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-              tipoFiltro === t.value ? 'bg-gray-800 dark:bg-gray-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${t.dot}`} />
-            {t.label}
-          </button>
-        ))}
+      {/* Filtros — Status e Tipo como dropdowns (estilo Leads) */}
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        <select
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value as Filtro)}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            filtro !== 'todos' ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          {FILTROS.map(f => (
+            <option key={f.key} value={f.key}>{f.key === 'todos' ? 'Status: todos' : f.label}</option>
+          ))}
+        </select>
+        <select
+          value={tipoFiltro}
+          onChange={(e) => setTipoFiltro(e.target.value)}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            tipoFiltro ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          <option value="">Tipo: todos</option>
+          {TIPOS_COMPROMISSO.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
       </div>
 
       {/* Conteúdo */}
