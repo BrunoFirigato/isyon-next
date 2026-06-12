@@ -22,7 +22,7 @@ export default async function SuperadminPage() {
     { data: metrics },
   ] = await Promise.all([
     admin.from('tenants').select('id, nome, plano, status, criado_em, expiracao_contrato, wa_limite, limite_usuarios').order('nome'),
-    admin.from('usuarios').select('tenant_id'),
+    admin.from('usuarios').select('tenant_id, email, perfil'),
     admin.from('usuarios').select('tenant_id, nome, ultimo_acesso').order('ultimo_acesso', { ascending: false }),
     admin.from('sistema_config').select('chave, valor, atualizado_em'),
     admin.from('wa_instancias').select('tenant_id'),
@@ -32,6 +32,15 @@ export default async function SuperadminPage() {
   /* ── Contagem de usuários por tenant ── */
   const contagem = (usuarios ?? []).reduce<Record<string, number>>((acc, u) => {
     if (u.tenant_id) acc[u.tenant_id] = (acc[u.tenant_id] ?? 0) + 1
+    return acc
+  }, {})
+
+  /* ── Dono da conta por tenant (e-mail estável p/ rastreabilidade) ──
+     Prioriza o usuário `admin`; na ausência, o primeiro encontrado. */
+  const donoMap = (usuarios ?? []).reduce<Record<string, string>>((acc, u) => {
+    const row = u as { tenant_id: string | null; email: string | null; perfil: string | null }
+    if (!row.tenant_id || !row.email) return acc
+    if (!acc[row.tenant_id] || row.perfil === 'admin') acc[row.tenant_id] = row.email
     return acc
   }, {})
 
@@ -68,6 +77,7 @@ export default async function SuperadminPage() {
     registros: metricsMap[t.id] ?? 0,
     ultimo_acesso: acessoMap[t.id]?.data ?? null,
     ultimo_usuario: acessoMap[t.id]?.nome ?? null,
+    dono_email: donoMap[t.id] ?? null,
   }))
 
   const logsAcesso = tenantsComContagem

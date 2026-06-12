@@ -25,6 +25,7 @@ export interface TenantComContagem {
   registros: number
   ultimo_acesso: string | null
   ultimo_usuario: string | null
+  dono_email: string | null
 }
 
 export interface LogAcesso {
@@ -206,7 +207,9 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
                   <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900 dark:text-gray-100">{t.nome}</div>
-                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">desde {fmt(t.criado_em)}</div>
+                      {t.dono_email
+                        ? <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mt-0.5"><Mail size={11} className="shrink-0" />{t.dono_email}</div>
+                        : <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">desde {fmt(t.criado_em)}</div>}
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <span className={`text-xs font-medium px-2 py-1 rounded-lg ${corPlano(t.plano)}`}>
@@ -373,6 +376,7 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
                 valor={modal.tenant.ultimo_acesso ? fmtDataHora(modal.tenant.ultimo_acesso) : 'nunca'}
                 sub={modal.tenant.ultimo_usuario ?? undefined} />
               <DetalheCard Icon={Building2} label="Cliente desde" valor={fmt(modal.tenant.criado_em)} />
+              <DetalheCard Icon={Mail} label="Dono da conta" valor={modal.tenant.dono_email ?? '—'} />
             </div>
 
             <button
@@ -397,7 +401,7 @@ function DetalheCard({ Icon, label, valor, sub, alerta }: {
       <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mb-1">
         <Icon size={13} /> {label}
       </div>
-      <p className={`text-sm font-semibold ${alerta ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-gray-100'}`}>{valor}</p>
+      <p className={`text-sm font-semibold break-words ${alerta ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-gray-100'}`}>{valor}</p>
       {sub && <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate">{sub}</p>}
     </div>
   )
