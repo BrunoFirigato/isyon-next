@@ -364,7 +364,7 @@ export default function WhatsAppNumerosView({ isSuperadmin = false }: { isSupera
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               {diag.ok
-                ? <>O webhook de <strong>{diag.nome}</strong> está ativo e apontando para o Isyon. As mensagens recebidas dos clientes vão aparecer nas Conversas. Se ainda não aparecerem, peça para o contato enviar uma nova mensagem.</>
+                ? <>O webhook de <strong>{diag.nome}</strong> está ativo e apontando para o Isyon. As mensagens recebidas dos clientes vão aparecer na tela WhatsApp. Se ainda não aparecerem, peça para o contato enviar uma nova mensagem.</>
                 : <>Reaplicamos o webhook de <strong>{diag.nome}</strong>, mas algo ainda não bateu (veja abaixo). Mensagens enviadas a partir de agora devem começar a chegar — teste pedindo uma nova mensagem ao contato.</>}
             </p>
 

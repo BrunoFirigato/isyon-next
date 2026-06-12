@@ -262,7 +262,7 @@ export default function ConversasView() {
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 6rem)' }}>
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2"><WhatsAppIcon size={18} className="text-emerald-500" /> Conversas</h1>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2"><WhatsAppIcon size={18} className="text-emerald-500" /> WhatsApp</h1>
         {!semNumero && (
           <button onClick={() => setNovaOpen(true)} className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg"><Plus size={15} /> Nova conversa</button>
         )}

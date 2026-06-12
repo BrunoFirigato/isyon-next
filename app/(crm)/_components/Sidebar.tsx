@@ -52,7 +52,7 @@ const navGroups: { label: string; icon: React.ElementType; items: NavItem[] }[] 
       { href: '/oportunidades', label: 'Oportunidades',icon: Briefcase },
       { href: '/clientes',      label: 'Clientes',     icon: Building2 },
       { href: '/agenda',        label: 'Agenda',       icon: Calendar },
-      { href: '/conversas',     label: 'Conversas',    icon: WhatsAppIcon },
+      { href: '/conversas',     label: 'WhatsApp',     icon: WhatsAppIcon },
       { href: '/campanhas',     label: 'Campanhas',    icon: Megaphone },
     ],
   },
