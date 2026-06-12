@@ -1,23 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-interface Tenant {
-  id: string
-  nome: string
-}
-
 export default function LoginPage() {
-  const [tenants, setTenants] = useState<Tenant[]>([])
-  const [tenantId, setTenantId] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [loadingTenants, setLoadingTenants] = useState(true)
   const [error, setError] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
   // Recuperação de senha
@@ -26,32 +18,16 @@ export default function LoginPage() {
   const [loadingRec, setLoadingRec] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .from('tenants')
-      .select('id, nome')
-      .eq('status', 'ativo')
-      .order('nome')
-      .then(({ data }) => {
-        if (data) setTenants(data)
-        setLoadingTenants(false)
-      })
-  }, [])
-
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    if (!tenantId) {
-      setError('Selecione a empresa antes de continuar.')
-      setLoading(false)
-      return
-    }
-
     const supabase = createClient()
 
+    // O e-mail é único no sistema todo, então e-mail + senha já identificam o
+    // usuário e, por consequência, o tenant dele. Não pedimos a empresa para não
+    // expor a lista de clientes do Isyon na tela de login.
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
     if (authError) {
       setError('E-mail ou senha incorretos.')
@@ -61,7 +37,7 @@ export default function LoginPage() {
 
     const { data: usuario, error: errUsuario } = await supabase
       .from('usuarios')
-      .select('tenant_id, ativo')
+      .select('ativo')
       .eq('email', email.trim().toLowerCase())
       .maybeSingle()
 
@@ -77,18 +53,11 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-    if (usuario.tenant_id !== tenantId) {
-      await supabase.auth.signOut()
-      setError('Este usuário não pertence à empresa selecionada.')
-      setLoading(false)
-      return
-    }
 
     supabase
       .from('usuarios')
       .update({ ultimo_acesso: new Date().toISOString() })
       .eq('email', email.trim().toLowerCase())
-      .eq('tenant_id', tenantId)
       .then(() => {})
 
     router.push('/dashboard')
@@ -168,22 +137,6 @@ export default function LoginPage() {
           /* ── Login ── */
           <form onSubmit={handleLogin} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4">
             <div>
-              <label className={labelCls}>Empresa</label>
-              <select
-                value={tenantId}
-                onChange={(e) => setTenantId(e.target.value)}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 dark:text-gray-100"
-                disabled={loadingTenants}
-                required
-              >
-                <option value="">{loadingTenants ? 'Carregando...' : 'Selecione a empresa'}</option>
-                {tenants.map((t) => (
-                  <option key={t.id} value={t.id}>{t.nome}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
               <label className={labelCls}>E-mail</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" required autoFocus className={inputCls} />
             </div>
@@ -207,7 +160,7 @@ export default function LoginPage() {
               <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2.5">{error}</div>
             )}
 
-            <button type="submit" disabled={loading || loadingTenants} className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg text-sm transition-colors mt-2">
+            <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg text-sm transition-colors mt-2">
               {loading ? 'Verificando...' : 'Entrar'}
             </button>
           </form>
