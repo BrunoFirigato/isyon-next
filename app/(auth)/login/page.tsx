@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
@@ -12,11 +12,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
+  const [confirmado, setConfirmado] = useState(false) // voltou do link de confirmação
   // Recuperação de senha
   const [recuperando, setRecuperando] = useState(false)
   const [recEnviado, setRecEnviado] = useState(false)
   const [loadingRec, setLoadingRec] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('confirmado') === '1') setConfirmado(true)
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -136,6 +141,12 @@ export default function LoginPage() {
         ) : (
           /* ── Login ── */
           <form onSubmit={handleLogin} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4">
+            {confirmado && (
+              <div className="flex items-start gap-2 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-lg px-3 py-2.5">
+                <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>E-mail confirmado! Faça login para acessar sua conta.</span>
+              </div>
+            )}
             <div>
               <label className={labelCls}>E-mail</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" required autoFocus className={inputCls} />

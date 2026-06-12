@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, CheckCircle2 } from 'lucide-react'
+import { Eye, EyeOff, CheckCircle2, MailCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function CadastroPage() {
@@ -23,6 +23,7 @@ export default function CadastroPage() {
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
   const [sucesso,  setSucesso]  = useState(false)
+  const [pendente, setPendente] = useState(false) // aguardando confirmação de e-mail
 
   // ── Camada 2: Turnstile (só renderiza se a site key estiver configurada) ──
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
@@ -97,6 +98,9 @@ export default function CadastroPage() {
       return
     }
 
+    // Modo verificação de e-mail: não loga; pede confirmação antes.
+    if (data.pending) { setPendente(true); setLoading(false); return }
+
     // 2. Login automático
     const supabase = createClient()
     const { error: errLogin } = await supabase.auth.signInWithPassword({
@@ -121,6 +125,28 @@ export default function CadastroPage() {
     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
     dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400
   `
+
+  // ── Tela de confirmação pendente (Camada 3 ligada) ───────────────────────
+  if (pendente) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm text-center">
+          <MailCheck size={48} className="mx-auto text-blue-500 mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Confirme seu e-mail</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            Enviamos um link de confirmação para <strong className="text-gray-700 dark:text-gray-300">{form.email.trim().toLowerCase()}</strong>.
+            Clique nele para ativar sua conta e fazer login. Confira também a caixa de spam.
+          </p>
+          <Link
+            href="/login"
+            className="w-full inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
+          >
+            Ir para o login
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   // ── Tela de sucesso (fallback se auto-login falhar) ──────────────────────
   if (sucesso) {

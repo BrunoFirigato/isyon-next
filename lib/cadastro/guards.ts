@@ -40,6 +40,29 @@ export function getClientIp(req: Request): string {
 export const RATE_LIMIT_MAX = 5
 export const RATE_LIMIT_JANELA_MIN = 60
 
+/** HTML do e-mail de confirmação de cadastro (Camada 3). */
+export function emailConfirmacaoHtml(nome: string, link: string): string {
+  const primeiroNome = (nome || '').split(' ')[0] || 'olá'
+  return `<!doctype html><html><body style="margin:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#111827">
+  <div style="max-width:480px;margin:0 auto;padding:32px 20px">
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:32px;text-align:center">
+      <h1 style="font-size:20px;margin:0 0 8px">Confirme seu e-mail</h1>
+      <p style="font-size:14px;color:#6b7280;margin:0 0 24px;line-height:1.6">
+        Olá, ${primeiroNome}! Falta só um passo para ativar sua conta no <strong>Isyon CRM</strong>.
+        Clique no botão abaixo para confirmar seu e-mail e acessar o sistema.
+      </p>
+      <a href="${link}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 28px;border-radius:10px">
+        Confirmar e-mail
+      </a>
+      <p style="font-size:12px;color:#9ca3af;margin:24px 0 0;line-height:1.6">
+        Se você não criou esta conta, ignore este e-mail.
+      </p>
+    </div>
+    <p style="font-size:11px;color:#9ca3af;text-align:center;margin:16px 0 0">Isyon CRM</p>
+  </div>
+  </body></html>`
+}
+
 /**
  * Valida o token do Cloudflare Turnstile (Camada 2). Gated: o chamador só
  * invoca se TURNSTILE_SECRET_KEY estiver definida. Fail-closed em erro de rede
