@@ -294,6 +294,10 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                     placeholder="Nome da sua empresa"
                     className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   />
+                  <p className="flex items-start gap-1.5 text-xs text-gray-400 dark:text-gray-500 mt-1.5">
+                    <Mail size={13} className="shrink-0 mt-0.5" />
+                    <span>É o nome da empresa que seus clientes veem como remetente nos e-mails e campanhas enviados pelo Isyon. Identifica também a sua conta no sistema.</span>
+                  </p>
                 </div>
 
                 {/* Info read-only */}
