@@ -178,39 +178,35 @@ export default function ProdutosView({ produtos, total: totalProp, currentTipo, 
         </div>
       </div>
 
-      {/* Filtros: tipo */}
-      <div className="flex gap-1.5 flex-wrap mb-3">
-        {TIPOS.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => updateParams({ tipo: value, ativo: currentAtivo, q: search })}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              currentTipo === value
-                ? 'bg-blue-600 text-white'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-          >
-            {label}
+      {/* Filtros — Tipo e Situação como dropdowns (estilo Leads) */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <select
+          value={currentTipo}
+          onChange={(e) => updateParams({ tipo: e.target.value, ativo: currentAtivo, q: search })}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            currentTipo !== 'todos' ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          {TIPOS.map(({ value, label }) => (
+            <option key={value} value={value}>{value === 'todos' ? 'Tipo: todos' : label}</option>
+          ))}
+        </select>
+        <select
+          value={currentAtivo}
+          onChange={(e) => updateParams({ tipo: currentTipo, ativo: e.target.value, q: search })}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            currentAtivo !== 'todos' ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          <option value="todos">Situação: todas</option>
+          {ativos.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+        </select>
+        {(currentTipo !== 'todos' || currentAtivo !== 'todos') && (
+          <button onClick={() => updateParams({ tipo: 'todos', ativo: 'todos', q: search })}
+            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-2">
+            limpar filtros
           </button>
-        ))}
-        <div className="w-px bg-gray-200 dark:bg-gray-700 mx-0.5 self-stretch" />
-        {ativos.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => updateParams({
-              tipo: currentTipo,
-              ativo: currentAtivo === value ? 'todos' : value,
-              q: search,
-            })}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              currentAtivo === value
-                ? 'bg-gray-800 dark:bg-gray-600 text-white'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+        )}
       </div>
 
       {/* Busca */}

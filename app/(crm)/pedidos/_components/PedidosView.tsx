@@ -144,21 +144,25 @@ export default function PedidosView({ pedidos, clientes, vendedores, empresas, p
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-5">
-        {STATUS_PEDIDO.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setStatusFilter(value)}
-            className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              currentStatus === value
-                ? 'bg-blue-600 text-white'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-          >
-            {label}
+      {/* Filtros — Status como dropdown (estilo Leads) */}
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        <select
+          value={currentStatus}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className={`text-sm border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 ${
+            currentStatus !== 'todos' ? 'border-blue-400 dark:border-blue-500 text-gray-800 dark:text-gray-100' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          {STATUS_PEDIDO.map(({ value, label }) => (
+            <option key={value} value={value}>{value === 'todos' ? 'Status: todos' : label}</option>
+          ))}
+        </select>
+        {currentStatus !== 'todos' && (
+          <button onClick={() => setStatusFilter('todos')}
+            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-2">
+            limpar filtros
           </button>
-        ))}
+        )}
       </div>
 
       {/* Lista vazia */}
