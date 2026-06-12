@@ -279,7 +279,7 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                 <Building2 size={15} className="text-gray-400 dark:text-gray-500" />
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dados da conta</h3>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Nome exibido no seletor de login</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Nome da sua empresa — usado nos e-mails enviados aos clientes</p>
                 </div>
               </div>
               <div className="p-5 space-y-4">
@@ -291,7 +291,7 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                     value={nomeConta}
                     onChange={e => setNomeConta(e.target.value)}
                     required
-                    placeholder="Nome que aparece no login"
+                    placeholder="Nome da sua empresa"
                     className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   />
                 </div>
