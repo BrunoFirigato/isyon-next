@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X, Mail, MessageCircle, BarChart2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Save, Building2, Tag, Plus, Trash2, GripVertical, Pencil, Check, X, Mail, MessageCircle, BarChart2, Loader2, CheckCircle2, AlertCircle, Users, Smartphone } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/app/(crm)/_components/Toast'
 import { type Segmento } from '@/app/(crm)/_components/SegmentosContext'
@@ -47,20 +47,37 @@ function diasRestantes(iso: string | null): number | null {
   if (!iso) return null
   return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000)
 }
-function UsoBar({ label, usado, limite }: { label: string; usado: number; limite: number }) {
+function UsoBar({ label, usado, limite, icon }: { label: string; usado: number; limite: number; icon: React.ReactNode }) {
   const pct = limite > 0 ? Math.min(100, Math.round((usado / limite) * 100)) : 0
-  const cheio = limite > 0 && usado >= limite
+  const restam = Math.max(0, limite - usado)
+  // Cor por nível de uso: tranquilo → atenção → cheio
+  const nivel = pct >= 100 ? 'cheio' : pct >= 80 ? 'alerta' : 'ok'
+  const cores = {
+    ok:     { bar: 'bg-emerald-500', icon: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300', txt: 'text-gray-900 dark:text-gray-100' },
+    alerta: { bar: 'bg-amber-500',   icon: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300',         txt: 'text-amber-700 dark:text-amber-300' },
+    cheio:  { bar: 'bg-red-500',     icon: 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300',                 txt: 'text-red-700 dark:text-red-300' },
+  }[nivel]
+
   return (
-    <div>
-      <div className="flex items-center justify-between text-xs mb-1">
-        <span className="text-gray-600 dark:text-gray-400">{label}</span>
-        <span className={cheio ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-gray-500 dark:text-gray-400'}>
-          {usado}{limite > 0 ? ` de ${limite}` : ''}
-        </span>
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+      <div className="flex items-center gap-3">
+        <span className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${cores.icon}`}>{icon}</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{label}</p>
+          <p className="text-lg font-bold leading-tight">
+            <span className={cores.txt}>{usado}</span>
+            <span className="text-sm font-normal text-gray-400 dark:text-gray-500"> / {limite > 0 ? limite : '∞'}</span>
+          </p>
+        </div>
+        {limite > 0 && (
+          <span className="text-[11px] text-gray-400 dark:text-gray-500 shrink-0">
+            {pct >= 100 ? 'limite atingido' : `${restam} ${restam === 1 ? 'livre' : 'livres'}`}
+          </span>
+        )}
       </div>
       {limite > 0 && (
-        <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-          <div className={`h-full rounded-full ${cheio ? 'bg-amber-500' : 'bg-blue-500'}`} style={{ width: `${pct}%` }} />
+        <div className="mt-3 h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+          <div className={`h-full rounded-full transition-all ${cores.bar}`} style={{ width: `${Math.max(pct, 3)}%` }} />
         </div>
       )}
     </div>
@@ -316,10 +333,12 @@ export default function ConfiguracoesView({ tenant, configs, usuarioId, segmento
                 </div>
 
                 {/* Uso do plano */}
-                <div className="space-y-2.5 pt-1">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Uso do plano</p>
-                  <UsoBar label="Usuários" usado={usuariosUsados} limite={tenant.limite_usuarios ?? 0} />
-                  <UsoBar label="Números de WhatsApp" usado={whatsappUsados} limite={tenant.wa_limite ?? 0} />
+                <div className="pt-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2.5">Uso do plano</p>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <UsoBar label="Usuários" usado={usuariosUsados} limite={tenant.limite_usuarios ?? 0} icon={<Users size={18} />} />
+                    <UsoBar label="Números de WhatsApp" usado={whatsappUsados} limite={tenant.wa_limite ?? 0} icon={<Smartphone size={18} />} />
+                  </div>
                 </div>
 
                 <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg px-3 py-2">
