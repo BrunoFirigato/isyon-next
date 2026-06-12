@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
-  isEmailValido, isEmailDescartavel, getClientIp,
+  isEmailValido, isEmailDescartavel, getClientIp, verifyTurnstile,
   RATE_LIMIT_MAX, RATE_LIMIT_JANELA_MIN,
 } from '@/lib/cadastro/guards'
 
@@ -28,8 +28,20 @@ export async function POST(req: NextRequest) {
   const admin = createAdminClient()
   const emailLimpo = email.trim().toLowerCase()
 
-  // Rate-limit por IP (best-effort: fail-open se a tabela ainda não existir).
   const ip = getClientIp(req)
+
+  // Camada 2 — Turnstile (gated: só valida se a secret estiver configurada).
+  const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
+  if (turnstileSecret) {
+    const captchaToken = typeof body.captchaToken === 'string' ? body.captchaToken : ''
+    if (!captchaToken)
+      return NextResponse.json({ error: 'Confirme que você não é um robô.' }, { status: 400 })
+    const okCaptcha = await verifyTurnstile(captchaToken, turnstileSecret, ip)
+    if (!okCaptcha)
+      return NextResponse.json({ error: 'Falha na verificação anti-robô. Tente novamente.' }, { status: 400 })
+  }
+
+  // Rate-limit por IP (best-effort: fail-open se a tabela ainda não existir).
   const desde = new Date(Date.now() - RATE_LIMIT_JANELA_MIN * 60_000).toISOString()
   const { count: tentativas, error: errRate } = await admin
     .from('signup_attempts')

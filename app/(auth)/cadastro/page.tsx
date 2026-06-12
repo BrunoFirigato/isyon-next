@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, CheckCircle2 } from 'lucide-react'
@@ -24,6 +24,38 @@ export default function CadastroPage() {
   const [error,    setError]    = useState('')
   const [sucesso,  setSucesso]  = useState(false)
 
+  // ── Camada 2: Turnstile (só renderiza se a site key estiver configurada) ──
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  const [captchaToken, setCaptchaToken] = useState('')
+  const turnstileRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!turnstileSiteKey) return
+    const SCRIPT_ID = 'cf-turnstile-script'
+    function render() {
+      const w = window as unknown as { turnstile?: { render: (el: HTMLElement, opts: object) => void } }
+      if (turnstileRef.current && w.turnstile && !turnstileRef.current.hasChildNodes()) {
+        w.turnstile.render(turnstileRef.current, {
+          sitekey: turnstileSiteKey,
+          callback: (t: string) => setCaptchaToken(t),
+          'error-callback': () => setCaptchaToken(''),
+          'expired-callback': () => setCaptchaToken(''),
+        })
+      }
+    }
+    if ((window as unknown as { turnstile?: unknown }).turnstile) { render(); return }
+    let s = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null
+    if (!s) {
+      s = document.createElement('script')
+      s.id = SCRIPT_ID
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+      s.async = true; s.defer = true
+      document.head.appendChild(s)
+    }
+    s.addEventListener('load', render)
+    return () => s?.removeEventListener('load', render)
+  }, [turnstileSiteKey])
+
   function set(field: keyof typeof form, value: string) {
     setForm(f => ({ ...f, [field]: value }))
     setError('')
@@ -38,6 +70,7 @@ export default function CadastroPage() {
     }
     if (form.senha !== form.confirmar) { setError('As senhas não coincidem'); return }
     if (!aceite) { setError('É preciso aceitar a Política de Privacidade e os Termos de Uso.'); return }
+    if (turnstileSiteKey && !captchaToken) { setError('Confirme que você não é um robô.'); return }
 
     setLoading(true)
     setError('')
@@ -52,6 +85,7 @@ export default function CadastroPage() {
         email:       form.email,
         senha:       form.senha,
         website:     form.website, // honeypot
+        captchaToken,              // Turnstile (vazio se gated/desligado)
       }),
     })
 
@@ -247,6 +281,9 @@ export default function CadastroPage() {
             </span>
           </label>
 
+          {/* Turnstile (renderiza só se a site key estiver configurada) */}
+          {turnstileSiteKey && <div ref={turnstileRef} className="flex justify-center" />}
+
           {/* Erro */}
           {error && (
             <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2.5">
@@ -256,7 +293,7 @@ export default function CadastroPage() {
 
           <button
             type="submit"
-            disabled={loading || !aceite}
+            disabled={loading || !aceite || (!!turnstileSiteKey && !captchaToken)}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg text-sm transition-colors mt-2"
           >
             {loading ? 'Criando conta...' : 'Criar conta grátis'}

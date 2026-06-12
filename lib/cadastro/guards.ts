@@ -39,3 +39,25 @@ export function getClientIp(req: Request): string {
 // Rate-limit por IP: nº máximo de tentativas dentro da janela.
 export const RATE_LIMIT_MAX = 5
 export const RATE_LIMIT_JANELA_MIN = 60
+
+/**
+ * Valida o token do Cloudflare Turnstile (Camada 2). Gated: o chamador só
+ * invoca se TURNSTILE_SECRET_KEY estiver definida. Fail-closed em erro de rede
+ * (retorna false) — quem chama decide se isso bloqueia.
+ */
+export async function verifyTurnstile(token: string, secret: string, ip?: string): Promise<boolean> {
+  try {
+    const form = new URLSearchParams()
+    form.append('secret', secret)
+    form.append('response', token)
+    if (ip && ip !== 'desconhecido') form.append('remoteip', ip)
+    const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: form,
+    })
+    const j = await r.json()
+    return !!j.success
+  } catch {
+    return false
+  }
+}
