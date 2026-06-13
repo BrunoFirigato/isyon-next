@@ -88,68 +88,41 @@ export default function LoginPage() {
     setError('')
   }
 
-  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400'
+  const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400'
   const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'
 
   return (
     <div className="min-h-screen flex">
-      {/* Painel de marca — some no mobile, aparece a partir de lg */}
-      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-12 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 text-white relative overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-white/5 blur-3xl" />
-
-        {/* Topo: marca (wordmark, sem repetir o logo) */}
-        <div className="relative">
-          <span className="text-xl font-bold tracking-tight">Isyon CRM</span>
-        </div>
-
-        {/* Centro: proposta de valor */}
-        <div className="relative">
-          <h2 className="text-3xl font-bold leading-tight mb-3">Do primeiro contato<br />ao pedido fechado.</h2>
-          <p className="text-blue-100 text-sm mb-10 max-w-sm">Toda a sua operação comercial em um só lugar — do lead que chega à venda concluída.</p>
-          <ul className="space-y-5">
-            <Destaque Icon={Route}        titulo="Funil completo"       texto="Leads, oportunidades, propostas e pedidos conectados." />
-            <Destaque Icon={WhatsAppIcon} titulo="WhatsApp integrado"   texto="Converse com o cliente sem sair do CRM." />
-            <Destaque Icon={FileCheck2}   titulo="Aceite digital"       texto="O cliente aprova a proposta pelo link." />
-            <Destaque Icon={Target}       titulo="Gestão por vendedor"  texto="Metas, carteira e desempenho por vendedor." />
-          </ul>
-        </div>
-
-        {/* Rodapé */}
-        <div className="relative text-xs text-blue-100/70">© {new Date().getFullYear()} Isyon CRM</div>
-      </div>
-
-      {/* Painel do formulário */}
-      <div className="flex-1 flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
+      {/* ── Formulário (esquerda) ── */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-white dark:bg-gray-950">
         <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-mark.svg" alt="Isyon" className="inline-block w-14 h-14 mb-4" />
-          <h1 className="lg:hidden text-2xl font-bold text-gray-900 dark:text-gray-100">Isyon CRM</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 lg:mt-0 lg:text-base lg:font-medium lg:text-gray-700 lg:dark:text-gray-300">
-            {recuperando ? 'Recuperar senha' : 'Acesse sua conta'}
-          </p>
-        </div>
+          {/* Logo + wordmark, alinhados à esquerda */}
+          <div className="flex items-center gap-2.5 mb-10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-mark.svg" alt="Isyon" className="w-10 h-10" />
+            <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+              Isyon <span className="font-normal text-gray-400 dark:text-gray-500">CRM</span>
+            </span>
+          </div>
 
-        {/* ── Recuperação de senha ── */}
-        {recuperando ? (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            {recEnviado ? (
-              <div className="text-center py-2">
-                <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-2xl mx-auto mb-3">✉️</div>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">Verifique seu e-mail</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
-                  Se houver uma conta com <strong className="text-gray-700 dark:text-gray-300">{email}</strong>, enviamos um link para você criar uma nova senha. Confira também a caixa de spam.
+          {recuperando ? (
+            recEnviado ? (
+              <div>
+                <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-2xl mb-4">✉️</div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Verifique seu e-mail</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Se houver uma conta com <strong className="text-gray-700 dark:text-gray-300">{email}</strong>, enviamos um link para criar uma nova senha. Confira também a caixa de spam.
                 </p>
-                <button onClick={voltarParaLogin} className="mt-5 text-sm font-medium text-blue-600 hover:underline">
+                <button onClick={voltarParaLogin} className="mt-6 text-sm font-medium text-blue-600 hover:underline">
                   Voltar ao login
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleRecuperar} className="space-y-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Informe seu e-mail e enviaremos um link para você criar uma nova senha.
-                </p>
+              <form onSubmit={handleRecuperar} className="space-y-5">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Recuperar senha</h1>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Informe seu e-mail e enviaremos um link para criar uma nova senha.</p>
+                </div>
                 <div>
                   <label className={labelCls}>E-mail</label>
                   <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" required autoFocus className={inputCls} />
@@ -164,60 +137,93 @@ export default function LoginPage() {
                   Voltar ao login
                 </button>
               </form>
-            )}
+            )
+          ) : (
+            <>
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Bem-vindo de volta</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">Acesse sua conta para continuar.</p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                {confirmado && (
+                  <div className="flex items-start gap-2 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-lg px-3 py-2.5">
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>E-mail confirmado! Faça login para acessar sua conta.</span>
+                  </div>
+                )}
+                <div>
+                  <label className={labelCls}>E-mail</label>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" required autoFocus className={inputCls} />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Senha</label>
+                    <button type="button" onClick={() => { setRecuperando(true); setError('') }} className="text-xs font-medium text-blue-600 hover:underline">
+                      Esqueci minha senha
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input type={mostrarSenha ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required className={`${inputCls} pr-10`} />
+                    <button type="button" onClick={() => setMostrarSenha((v) => !v)} aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                      {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2.5">{error}</div>
+                )}
+
+                <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg text-sm transition-colors mt-2">
+                  {loading ? 'Verificando...' : 'Entrar'}
+                </button>
+              </form>
+            </>
+          )}
+
+          {/* Rodapé de confiança */}
+          <div className="mt-10 space-y-2">
+            <p className="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+              <ShieldCheck size={13} className="text-emerald-500" />
+              Conexão segura · seus dados protegidos
+            </p>
+            <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+              <Link href="/politica-privacidade" className="hover:text-gray-600 dark:hover:text-gray-300">Política de Privacidade</Link>
+              <span className="text-gray-300 dark:text-gray-700">·</span>
+              <Link href="/termos-de-uso" className="hover:text-gray-600 dark:hover:text-gray-300">Termos de Uso</Link>
+            </div>
           </div>
-        ) : (
-          /* ── Login ── */
-          <form onSubmit={handleLogin} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-            {confirmado && (
-              <div className="flex items-start gap-2 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-lg px-3 py-2.5">
-                <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>E-mail confirmado! Faça login para acessar sua conta.</span>
-              </div>
-            )}
-            <div>
-              <label className={labelCls}>E-mail</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" required autoFocus className={inputCls} />
-            </div>
+        </div>
+      </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Senha</label>
-                <button type="button" onClick={() => { setRecuperando(true); setError('') }} className="text-xs font-medium text-blue-600 hover:underline">
-                  Esqueci minha senha
-                </button>
-              </div>
-              <div className="relative">
-                <input type={mostrarSenha ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required className={`${inputCls} pr-10`} />
-                <button type="button" onClick={() => setMostrarSenha((v) => !v)} aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                  {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
+      {/* ── Painel de marca (direita) — some no mobile ── */}
+      <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden flex-col justify-center p-14 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 text-white">
+        {/* Anéis concêntricos decorativos */}
+        <div className="absolute -right-48 top-1/2 -translate-y-1/2 w-[46rem] h-[46rem] rounded-full border border-white/[0.06]" />
+        <div className="absolute -right-32 top-1/2 -translate-y-1/2 w-[34rem] h-[34rem] rounded-full border border-white/[0.06]" />
+        <div className="absolute -right-16 top-1/2 -translate-y-1/2 w-[22rem] h-[22rem] rounded-full border border-white/[0.06]" />
+        {/* Grade de pontos no canto superior direito */}
+        <div
+          className="absolute top-12 right-12 w-44 h-28"
+          style={{ backgroundImage: 'radial-gradient(currentColor 1px, transparent 1px)', backgroundSize: '14px 14px', color: 'rgba(255,255,255,0.18)' }}
+        />
 
-            {error && (
-              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2.5">{error}</div>
-            )}
-
-            <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg text-sm transition-colors mt-2">
-              {loading ? 'Verificando...' : 'Entrar'}
-            </button>
-          </form>
-        )}
-
-        {/* Rodapé de confiança */}
-        <div className="mt-6 text-center space-y-2">
-          <p className="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
-            <ShieldCheck size={13} className="text-emerald-500" />
-            Conexão segura · seus dados protegidos
+        <div className="relative max-w-md">
+          <h2 className="text-4xl font-bold leading-[1.15] mb-5">Do primeiro contato<br />ao pedido fechado.</h2>
+          <p className="text-blue-100/85 text-base leading-relaxed mb-12">
+            Toda a sua operação comercial em um só lugar — do lead que chega à venda concluída, com WhatsApp, propostas e metas integrados.
           </p>
-          <div className="flex items-center justify-center gap-3 text-xs text-gray-400 dark:text-gray-500">
-            <Link href="/politica-privacidade" className="hover:text-gray-600 dark:hover:text-gray-300">Política de Privacidade</Link>
-            <span className="text-gray-300 dark:text-gray-700">·</span>
-            <Link href="/termos-de-uso" className="hover:text-gray-600 dark:hover:text-gray-300">Termos de Uso</Link>
-          </div>
+          <ul className="space-y-4">
+            <Destaque Icon={Route}        titulo="Funil completo"      texto="Leads, oportunidades, propostas e pedidos conectados." />
+            <Destaque Icon={WhatsAppIcon} titulo="WhatsApp integrado"  texto="Converse com o cliente sem sair do CRM." />
+            <Destaque Icon={FileCheck2}   titulo="Aceite digital"      texto="O cliente aprova a proposta pelo link." />
+            <Destaque Icon={Target}       titulo="Gestão por vendedor" texto="Metas, carteira e desempenho por vendedor." />
+          </ul>
         </div>
-        </div>
+
+        <div className="absolute bottom-8 left-14 text-xs text-blue-100/60">© {new Date().getFullYear()} Isyon CRM</div>
       </div>
     </div>
   )
