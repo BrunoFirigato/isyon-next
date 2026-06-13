@@ -186,6 +186,14 @@ export default function LoginPage() {
             )}
           </div>
 
+          {/* Link de cadastro (só na tela de login) */}
+          {!recuperando && (
+            <p className="mt-5 text-center text-sm text-gray-500 dark:text-gray-400">
+              Novo no Isyon?{' '}
+              <Link href="/cadastro" className="font-medium text-blue-600 hover:underline">Crie sua conta grátis</Link>
+            </p>
+          )}
+
           {/* Rodapé de confiança */}
           <div className="mt-6 text-center space-y-2">
             <p className="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
