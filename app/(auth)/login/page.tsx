@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, ShieldCheck, CheckCircle2, Mail, Route, FileCheck2, Target } from 'lucide-react'
+import { Eye, EyeOff, ShieldCheck, CheckCircle2, Mail, Route, FileCheck2, Target, Plug } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
@@ -215,13 +215,14 @@ export default function LoginPage() {
 
         <div className="relative max-w-md">
           <h2 className="text-4xl font-bold leading-[1.15] mb-5">Do primeiro contato<br />ao pedido fechado.</h2>
-          <p className="text-blue-100/85 text-base leading-relaxed mb-12">
-            Toda a sua operação comercial em um só lugar — do lead que chega à venda concluída, com WhatsApp, propostas e metas integrados.
+          <p className="text-blue-100/85 text-base leading-relaxed mb-9">
+            Toda a sua operação comercial em um só lugar — com WhatsApp e ERP integrados, do lead à venda concluída.
           </p>
           <ul className="space-y-4">
+            <Destaque Icon={WhatsAppIcon} titulo="WhatsApp integrado"  tag="Diferencial" texto="Vários números num só painel, conversas de todos os vendedores e propostas enviadas direto na conversa." />
             <Destaque Icon={Route}        titulo="Funil completo"      texto="Leads, oportunidades, propostas e pedidos conectados." />
-            <Destaque Icon={WhatsAppIcon} titulo="WhatsApp integrado"  texto="Converse com o cliente sem sair do CRM." />
-            <Destaque Icon={FileCheck2}   titulo="Aceite digital"      texto="O cliente aprova a proposta pelo link." />
+            <Destaque Icon={Plug}         titulo="Integração com ERP"  texto="Clientes, produtos e pedidos em sincronia com o seu ERP." />
+            <Destaque Icon={FileCheck2}   titulo="Aceite digital"      texto="O cliente aprova a proposta pelo link, sem burocracia." />
             <Destaque Icon={Target}       titulo="Gestão por vendedor" texto="Metas, carteira e desempenho por vendedor." />
           </ul>
         </div>
@@ -232,12 +233,15 @@ export default function LoginPage() {
   )
 }
 
-function Destaque({ Icon, titulo, texto, chipClassName = 'bg-white/15' }: { Icon: React.ElementType; titulo: string; texto: string; chipClassName?: string }) {
+function Destaque({ Icon, titulo, texto, tag, chipClassName = 'bg-white/15' }: { Icon: React.ElementType; titulo: string; texto: string; tag?: string; chipClassName?: string }) {
   return (
     <li className="flex items-start gap-3">
       <div className={`${chipClassName} rounded-lg p-2 shrink-0`}><Icon className="w-5 h-5" /></div>
       <div>
-        <p className="font-semibold text-sm">{titulo}</p>
+        <p className="font-semibold text-sm flex items-center gap-2">
+          {titulo}
+          {tag && <span className="text-[10px] font-semibold uppercase tracking-wide bg-emerald-400/20 text-emerald-300 px-1.5 py-0.5 rounded">{tag}</span>}
+        </p>
         <p className="text-blue-100/80 text-xs leading-relaxed">{texto}</p>
       </div>
     </li>
