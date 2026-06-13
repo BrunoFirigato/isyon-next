@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, ShieldCheck, CheckCircle2, Route, FileCheck2, Target } from 'lucide-react'
+import { Eye, EyeOff, ShieldCheck, CheckCircle2, Mail, Route, FileCheck2, Target } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
@@ -91,60 +91,60 @@ export default function LoginPage() {
   const inputCls = 'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400'
   const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'
 
+  const titulo = recEnviado ? 'Verifique seu e-mail' : recuperando ? 'Recuperar senha' : 'Acesse sua conta'
+  const subtitulo = recEnviado
+    ? 'Enviamos um link de redefinição, confira sua caixa de entrada.'
+    : recuperando
+      ? 'Enviaremos um link para você criar uma nova senha.'
+      : 'Entre com seu e-mail e senha para continuar.'
+
   return (
     <div className="min-h-screen flex">
       {/* ── Formulário (esquerda) ── */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-white dark:bg-gray-950">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-gray-50 dark:bg-gray-950">
         <div className="w-full max-w-sm">
-          {/* Logo + wordmark, alinhados à esquerda */}
-          <div className="flex items-center gap-2.5 mb-10">
+          {/* Cabeçalho centralizado */}
+          <div className="text-center mb-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-mark.svg" alt="Isyon" className="w-10 h-10" />
-            <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-              Isyon <span className="font-normal text-gray-400 dark:text-gray-500">CRM</span>
-            </span>
+            <img src="/logo-mark.svg" alt="Isyon" className="inline-block w-16 h-16 mb-4" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{titulo}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{subtitulo}</p>
           </div>
 
-          {recuperando ? (
-            recEnviado ? (
-              <div>
-                <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-2xl mb-4">✉️</div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Verifique seu e-mail</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Se houver uma conta com <strong className="text-gray-700 dark:text-gray-300">{email}</strong>, enviamos um link para criar uma nova senha. Confira também a caixa de spam.
-                </p>
-                <button onClick={voltarParaLogin} className="mt-6 text-sm font-medium text-blue-600 hover:underline">
-                  Voltar ao login
-                </button>
-              </div>
+          {/* Card */}
+          <div className="bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+            {recuperando ? (
+              recEnviado ? (
+                <div className="text-center py-2">
+                  <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-2xl mx-auto mb-3">✉️</div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Se houver uma conta com <strong className="text-gray-700 dark:text-gray-300">{email}</strong>, o link já está a caminho. Confira também o spam.
+                  </p>
+                  <button onClick={voltarParaLogin} className="mt-5 text-sm font-medium text-blue-600 hover:underline">
+                    Voltar ao login
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleRecuperar} className="space-y-4">
+                  <div>
+                    <label className={labelCls}>E-mail</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" required autoFocus className={`${inputCls} pl-10`} />
+                    </div>
+                  </div>
+                  {error && (
+                    <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2.5">{error}</div>
+                  )}
+                  <button type="submit" disabled={loadingRec} className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition-colors">
+                    {loadingRec ? 'Enviando...' : 'Enviar link de redefinição'}
+                  </button>
+                  <button type="button" onClick={voltarParaLogin} className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                    Voltar ao login
+                  </button>
+                </form>
+              )
             ) : (
-              <form onSubmit={handleRecuperar} className="space-y-5">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Recuperar senha</h1>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Informe seu e-mail e enviaremos um link para criar uma nova senha.</p>
-                </div>
-                <div>
-                  <label className={labelCls}>E-mail</label>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" required autoFocus className={inputCls} />
-                </div>
-                {error && (
-                  <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2.5">{error}</div>
-                )}
-                <button type="submit" disabled={loadingRec} className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm transition-colors">
-                  {loadingRec ? 'Enviando...' : 'Enviar link de redefinição'}
-                </button>
-                <button type="button" onClick={voltarParaLogin} className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                  Voltar ao login
-                </button>
-              </form>
-            )
-          ) : (
-            <>
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Bem-vindo de volta</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">Acesse sua conta para continuar.</p>
-              </div>
-
               <form onSubmit={handleLogin} className="space-y-4">
                 {confirmado && (
                   <div className="flex items-start gap-2 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-lg px-3 py-2.5">
@@ -154,7 +154,10 @@ export default function LoginPage() {
                 )}
                 <div>
                   <label className={labelCls}>E-mail</label>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" required autoFocus className={inputCls} />
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" required autoFocus className={`${inputCls} pl-10`} />
+                  </div>
                 </div>
 
                 <div>
@@ -176,20 +179,20 @@ export default function LoginPage() {
                   <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2.5">{error}</div>
                 )}
 
-                <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg text-sm transition-colors mt-2">
+                <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg text-sm transition-colors mt-1">
                   {loading ? 'Verificando...' : 'Entrar'}
                 </button>
               </form>
-            </>
-          )}
+            )}
+          </div>
 
           {/* Rodapé de confiança */}
-          <div className="mt-10 space-y-2">
+          <div className="mt-6 text-center space-y-2">
             <p className="inline-flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
               <ShieldCheck size={13} className="text-emerald-500" />
               Conexão segura · seus dados protegidos
             </p>
-            <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+            <div className="flex items-center justify-center gap-3 text-xs text-gray-400 dark:text-gray-500">
               <Link href="/politica-privacidade" className="hover:text-gray-600 dark:hover:text-gray-300">Política de Privacidade</Link>
               <span className="text-gray-300 dark:text-gray-700">·</span>
               <Link href="/termos-de-uso" className="hover:text-gray-600 dark:hover:text-gray-300">Termos de Uso</Link>
