@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, ShieldCheck, CheckCircle2 } from 'lucide-react'
+import { Eye, EyeOff, ShieldCheck, CheckCircle2, Route, MessageCircle, FileCheck2, Target } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
@@ -92,8 +92,38 @@ export default function LoginPage() {
   const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex">
+      {/* Painel de marca — some no mobile, aparece a partir de lg */}
+      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-12 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 text-white relative overflow-hidden">
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-white/5 blur-3xl" />
+
+        {/* Topo: logo */}
+        <div className="relative flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <div className="bg-white rounded-xl p-1.5 shadow-lg"><img src="/logo-mark.svg" alt="Isyon" className="w-8 h-8" /></div>
+          <span className="text-xl font-bold tracking-tight">Isyon CRM</span>
+        </div>
+
+        {/* Centro: proposta de valor */}
+        <div className="relative">
+          <h2 className="text-3xl font-bold leading-tight mb-3">Do primeiro contato<br />ao pedido fechado.</h2>
+          <p className="text-blue-100 text-sm mb-10 max-w-sm">Toda a sua operação comercial em um só lugar — do lead que chega à venda concluída.</p>
+          <ul className="space-y-5">
+            <Destaque Icon={Route}          titulo="Funil completo"       texto="Leads, oportunidades, propostas e pedidos conectados." />
+            <Destaque Icon={MessageCircle}  titulo="WhatsApp integrado"   texto="Converse com o cliente sem sair do CRM." />
+            <Destaque Icon={FileCheck2}     titulo="Aceite digital"       texto="O cliente aprova a proposta pelo link." />
+            <Destaque Icon={Target}         titulo="Gestão por vendedor"  texto="Metas, carteira e desempenho por vendedor." />
+          </ul>
+        </div>
+
+        {/* Rodapé */}
+        <div className="relative text-xs text-blue-100/70">© {new Date().getFullYear()} Isyon · Conexão segura</div>
+      </div>
+
+      {/* Painel do formulário */}
+      <div className="flex-1 flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
+        <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-mark.svg" alt="Isyon" className="inline-block w-14 h-14 mb-4" />
@@ -189,7 +219,20 @@ export default function LoginPage() {
             <Link href="/termos-de-uso" className="hover:text-gray-600 dark:hover:text-gray-300">Termos de Uso</Link>
           </div>
         </div>
+        </div>
       </div>
     </div>
+  )
+}
+
+function Destaque({ Icon, titulo, texto }: { Icon: React.ElementType; titulo: string; texto: string }) {
+  return (
+    <li className="flex items-start gap-3">
+      <div className="bg-white/15 rounded-lg p-2 shrink-0"><Icon className="w-5 h-5" /></div>
+      <div>
+        <p className="font-semibold text-sm">{titulo}</p>
+        <p className="text-blue-100/80 text-xs leading-relaxed">{texto}</p>
+      </div>
+    </li>
   )
 }
