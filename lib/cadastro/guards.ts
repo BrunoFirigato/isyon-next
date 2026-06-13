@@ -29,6 +29,23 @@ export function isEmailDescartavel(email: string): boolean {
   return DOMINIOS_DESCARTAVEIS.has(dominio)
 }
 
+// Provedores de e-mail pessoal/gratuito. NÃO bloqueamos por padrão (muita PME
+// usa Gmail/Hotmail como e-mail comercial). Só é usado se o tenant ligar o
+// "modo corporativo" via env (CADASTRO_SOMENTE_CORPORATIVO).
+const DOMINIOS_PESSOAIS = new Set([
+  'gmail.com', 'googlemail.com',
+  'hotmail.com', 'hotmail.com.br', 'outlook.com', 'outlook.com.br', 'live.com', 'msn.com',
+  'yahoo.com', 'yahoo.com.br', 'ymail.com',
+  'icloud.com', 'me.com', 'mac.com', 'aol.com', 'gmx.com', 'protonmail.com', 'proton.me',
+  'bol.com.br', 'uol.com.br', 'terra.com.br', 'ig.com.br', 'globo.com', 'globomail.com', 'r7.com',
+])
+
+/** true se o e-mail é de um provedor pessoal/gratuito (Gmail, Hotmail, etc.). */
+export function isEmailPessoal(email: string): boolean {
+  const dominio = email.trim().toLowerCase().split('@')[1] ?? ''
+  return DOMINIOS_PESSOAIS.has(dominio)
+}
+
 /** IP do cliente a partir dos headers (Vercel popula x-forwarded-for). */
 export function getClientIp(req: Request): string {
   const fwd = req.headers.get('x-forwarded-for')

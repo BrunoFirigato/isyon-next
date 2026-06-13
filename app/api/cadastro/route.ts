@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createResend } from '@/lib/email/resend'
 import {
-  isEmailValido, isEmailDescartavel, getClientIp, verifyTurnstile,
+  isEmailValido, isEmailDescartavel, isEmailPessoal, getClientIp, verifyTurnstile,
   emailConfirmacaoHtml, RATE_LIMIT_MAX, RATE_LIMIT_JANELA_MIN,
 } from '@/lib/cadastro/guards'
 
@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Informe um e-mail válido' }, { status: 400 })
   if (isEmailDescartavel(email))
     return NextResponse.json({ error: 'E-mails temporários não são aceitos. Use um e-mail válido.' }, { status: 400 })
+  // Modo corporativo (gated): bloqueia provedores pessoais (Gmail, Hotmail…).
+  if (process.env.CADASTRO_SOMENTE_CORPORATIVO === '1' && isEmailPessoal(email))
+    return NextResponse.json({ error: 'Use um e-mail corporativo da sua empresa para criar a conta.' }, { status: 400 })
   if (!senha || senha.length < 8)
     return NextResponse.json({ error: 'Senha deve ter no mínimo 8 caracteres' }, { status: 400 })
 
