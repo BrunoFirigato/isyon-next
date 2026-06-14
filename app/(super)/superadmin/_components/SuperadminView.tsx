@@ -95,9 +95,18 @@ function fmtDataHora(iso: string | null) {
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
+const PLANOS = ['Básico', 'Profissional', 'Enterprise']
+
+/** Normaliza o valor do plano para um dos canônicos (tolera caixa/legado minúsculo). */
+function normalizaPlano(plano: string | null): string {
+  if (!plano) return 'Básico'
+  return PLANOS.find(p => p.toLowerCase() === plano.trim().toLowerCase()) ?? 'Básico'
+}
+
 function corPlano(plano: string | null) {
-  if (plano === 'Enterprise')   return 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
-  if (plano === 'Profissional') return 'bg-blue-100   text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+  const p = normalizaPlano(plano)
+  if (p === 'Enterprise')   return 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+  if (p === 'Profissional') return 'bg-blue-100   text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
   return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
 }
 
@@ -213,7 +222,7 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <span className={`text-xs font-medium px-2 py-1 rounded-lg ${corPlano(t.plano)}`}>
-                        {t.plano ?? '—'}
+                        {t.plano ? normalizaPlano(t.plano) : '—'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -358,7 +367,7 @@ export default function SuperadminView({ tenants, logsAcesso, configs }: Props) 
                   : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
               }`}>{modal.tenant.status ?? '—'}</span>
               <span className={`text-xs font-medium px-2 py-1 rounded-lg ${corPlano(modal.tenant.plano)}`}>
-                {modal.tenant.plano ?? '—'}
+                {modal.tenant.plano ? normalizaPlano(modal.tenant.plano) : '—'}
               </span>
             </div>
 
@@ -655,7 +664,7 @@ function CriarTenantForm({ loading, erro, onSubmit, onClose }: {
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Plano</label>
         <select value={plano} onChange={e => setPlano(e.target.value)}
           className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-          {['Básico', 'Profissional', 'Enterprise'].map(p => <option key={p}>{p}</option>)}
+          {PLANOS.map(p => <option key={p}>{p}</option>)}
         </select>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -680,7 +689,7 @@ function EditarTenantForm({ tenant, loading, erro, onSubmit, onClose, onResetSen
   onResetSenha: (email: string) => void; onClose: () => void
 }) {
   const [nome,        setNome]        = useState(tenant.nome)
-  const [plano,       setPlano]       = useState(tenant.plano ?? 'Básico')
+  const [plano,       setPlano]       = useState(normalizaPlano(tenant.plano))
   const [expiracao,   setExpiracao]   = useState(tenant.expiracao_contrato ?? '')
   const [waLimite,    setWaLimite]    = useState(String(tenant.wa_limite ?? 1))
   const [limUsuarios, setLimUsuarios] = useState(String(tenant.limite_usuarios ?? 0))
@@ -694,7 +703,7 @@ function EditarTenantForm({ tenant, loading, erro, onSubmit, onClose, onResetSen
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Plano</label>
         <select value={plano} onChange={e => setPlano(e.target.value)}
           className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-          {['Básico', 'Profissional', 'Enterprise'].map(p => <option key={p}>{p}</option>)}
+          {PLANOS.map(p => <option key={p}>{p}</option>)}
         </select>
       </div>
       <div className="grid grid-cols-2 gap-3">

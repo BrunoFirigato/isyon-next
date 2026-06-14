@@ -67,10 +67,18 @@ export async function POST(req: NextRequest) {
   if (emailExistente)
     return NextResponse.json({ error: 'Este e-mail já está em uso.' }, { status: 409 })
 
-  // 1. Criar tenant
+  // 1. Criar tenant — trial: plano Profissional, 30 dias, limites de entrada
+  const expiracaoTrial = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10)
   const { data: tenant, error: errTenant } = await admin
     .from('tenants')
-    .insert({ nome: nomeEmpresa.trim(), status: 'ativo' })
+    .insert({
+      nome: nomeEmpresa.trim(),
+      status: 'ativo',
+      plano: 'Profissional',
+      expiracao_contrato: expiracaoTrial,
+      limite_usuarios: 5,
+      wa_limite: 1,
+    })
     .select('id')
     .single()
 
