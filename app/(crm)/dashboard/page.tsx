@@ -2,11 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import {
   Target, Briefcase, FileText, DollarSign,
-  ChevronRight, CheckCircle2, ArrowRight, Plus,
-  Building2, Package, Rocket, Lightbulb, BarChart3,
-  MessageCircle, Plug, Users, Smartphone, CalendarClock,
+  ChevronRight, ArrowRight, Plus,
+  Lightbulb, BarChart3,
 } from 'lucide-react'
-import DispensarOnboarding from './_components/DispensarOnboarding'
 import AgendaHojeCard from '@/app/(crm)/_components/AgendaHojeCard'
 import { type Compromisso } from '@/app/(crm)/agenda/_components/types'
 
@@ -36,37 +34,6 @@ const DICAS = [
   'Cadastre o custo dos produtos — assim você acompanha a margem em cada venda.',
 ]
 
-function Pilar({ href, Icon, titulo, texto, tag }: { href: string; Icon: React.ElementType; titulo: string; texto: string; tag?: string }) {
-  return (
-    <Link href={href} className="bg-white dark:bg-gray-800 flex items-start gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors group">
-      <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 shrink-0"><Icon size={16} /></div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
-          {titulo}
-          {tag && <span className="text-[10px] font-semibold uppercase tracking-wide bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 px-1.5 py-0.5 rounded">{tag}</span>}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{texto}</p>
-      </div>
-      <ChevronRight size={15} className="text-gray-300 group-hover:text-blue-500 transition-colors shrink-0 mt-0.5" />
-    </Link>
-  )
-}
-
-function UsoLinha({ Icon, label, usado, limite }: { Icon: React.ElementType; label: string; usado: number; limite: number }) {
-  const pct = limite > 0 ? Math.min(100, Math.round((usado / limite) * 100)) : 0
-  return (
-    <div className="mb-3 last:mb-0">
-      <div className="flex items-center justify-between text-xs mb-1">
-        <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300"><Icon size={13} />{label}</span>
-        <span className="text-gray-500 dark:text-gray-400 font-medium">{usado}{limite > 0 ? ` / ${limite}` : ''}</span>
-      </div>
-      <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  )
-}
-
 export default async function DashboardPage() {
   const supabase = await createClient()
   const inicio = inicioDeMes()
@@ -86,14 +53,8 @@ export default async function DashboardPage() {
     { data: props },
     { data: comps },
     { data: pedidos },
-    { count: totalLeads },
     { count: leadsDoMes },
-    { count: totalProdutos },
-    { count: totalFiliais },
     { data: pedidoLinks },
-    { data: tenantRow },
-    { count: totalUsuarios },
-    { count: totalWaInst },
   ] = await Promise.all([
     supabase.from('config_usuario').select('chave, valor').eq('usuario_id', usuario?.id ?? ''),
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'novo'),
@@ -101,14 +62,8 @@ export default async function DashboardPage() {
     supabase.from('propostas').select('id, status, validade'),
     supabase.from('compromissos').select('id, titulo, tipo, data_hora, duracao_min, descricao, cliente_id, lead_id, op_id, status, criado_em').eq('status', 'pendente').lte('data_hora', hojeFimISO).order('data_hora'),
     supabase.from('pedidos').select('valor, status, omie_pedido_id').gte('criado_em', inicio),
-    supabase.from('leads').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('*', { count: 'exact', head: true }).gte('criado_em', inicio),
-    supabase.from('produtos').select('*', { count: 'exact', head: true }),
-    supabase.from('empresas').select('*', { count: 'exact', head: true }),
     supabase.from('pedidos').select('proposta_id').not('proposta_id', 'is', null),
-    supabase.from('tenants').select('plano, limite_usuarios, wa_limite, expiracao_contrato').maybeSingle(),
-    supabase.from('usuarios').select('*', { count: 'exact', head: true }),
-    supabase.from('wa_instancias').select('*', { count: 'exact', head: true }),
   ])
 
   const cfg = Object.fromEntries((config ?? []).map(c => [c.chave, c.valor]))
@@ -127,26 +82,6 @@ export default async function DashboardPage() {
   const pedidosMes = (pedidos ?? []).filter(p => p.status !== 'cancelado')
   const receitaMes  = pedidosMes.filter(faturado).reduce((s, p) => s + (p.valor ?? 0), 0)
   const provisaoMes = pedidosMes.filter(p => !faturado(p)).reduce((s, p) => s + (p.valor ?? 0), 0)
-
-  // Onboarding
-  const passos = [
-    { ok: (totalFiliais ?? 0) > 0,  Icon: Building2,  label: 'Cadastrar sua empresa', href: '/empresas' },
-    { ok: (totalProdutos ?? 0) > 0, Icon: Package,    label: 'Cadastrar produtos ou serviços', href: '/produtos' },
-    { ok: (totalLeads ?? 0) > 0,    Icon: Target,     label: 'Criar seu primeiro lead',        href: '/leads' },
-    { ok: opList.length > 0,        Icon: Briefcase, label: 'Abrir uma oportunidade',         href: '/oportunidades' },
-  ]
-  const setupCompleto = passos.every(p => p.ok)
-  const passosFeitos = passos.filter(p => p.ok).length
-  const onboardingDispensado = cfg['onboarding_dispensado'] === 'true'
-  const mostrarOnboarding = !setupCompleto && !onboardingDispensado
-
-  // Plano / uso (para os blocos de descoberta enquanto o setup não termina)
-  const limUsuarios = (tenantRow?.limite_usuarios as number | null) ?? 0
-  const limWa       = (tenantRow?.wa_limite as number | null) ?? 0
-  const expira      = (tenantRow?.expiracao_contrato as string | null) ?? null
-  const diasRestantes = expira
-    ? Math.ceil((new Date(`${expira}T23:59:59-03:00`).getTime() - Date.now()) / 86_400_000)
-    : null
 
   // Pendências
   const limiteParada = Date.now() - diasOpParada * 864e5
@@ -178,11 +113,9 @@ export default async function DashboardPage() {
 
   // Os números das pendências já aparecem nos cards — aqui a saudação fica contextual, sem repetir
   const temPendencias = (leadsNovo ?? 0) > 0 || opsParadas.length > 0 || propsAVencer.length > 0 || propsAceitasSemPedido.length > 0 || compromissosHoje.length > 0
-  const subline = mostrarOnboarding
-    ? 'Vamos montar sua operação? Siga os primeiros passos abaixo. 🚀'
-    : temPendencias
-      ? 'Tem trabalho te esperando hoje — bora fazer acontecer! 💪'
-      : 'Tudo em dia por aqui! Ótimo momento pra prospectar novos clientes. 🚀'
+  const subline = temPendencias
+    ? 'Tem trabalho te esperando hoje — bora fazer acontecer! 💪'
+    : 'Tudo em dia por aqui! Ótimo momento pra prospectar novos clientes. 🚀'
 
   // Pipeline por etapa
   const pipelineMap = opAbertas.reduce((acc, o) => {
@@ -206,72 +139,6 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{saudacao()}{primeiroNome ? `, ${primeiroNome}` : ''} 👋</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{subline}</p>
       </div>
-
-      {/* Primeiros passos (onboarding) */}
-      {mostrarOnboarding && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-blue-100 dark:border-blue-900/40 shadow-sm overflow-hidden">
-          <div className="flex items-center gap-2.5 px-5 py-4 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/20">
-            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"><Rocket size={18} /></div>
-            <div className="flex-1">
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Primeiros passos</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{passosFeitos} de {passos.length} concluídos — deixe seu sistema pronto pra vender</p>
-            </div>
-            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{Math.round((passosFeitos / passos.length) * 100)}%</span>
-            <DispensarOnboarding usuarioId={usuario?.id ?? ''} />
-          </div>
-          <div className="divide-y divide-gray-50 dark:divide-gray-700">
-            {passos.map((p, i) => (
-              <Link key={i} href={p.href} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors group">
-                {p.ok
-                  ? <CheckCircle2 size={20} className="text-emerald-500 shrink-0" />
-                  : <span className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 shrink-0" />}
-                <span className={`flex-1 text-sm ${p.ok ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-700 dark:text-gray-300'}`}>{p.label}</span>
-                {!p.ok && <ArrowRight size={15} className="text-gray-300 group-hover:text-blue-500 transition-colors" />}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Onboarding: conheça o Isyon + seu plano (enquanto o setup não termina) */}
-      {!setupCompleto && (
-        <div className="grid lg:grid-cols-3 gap-3">
-          {/* Conheça o Isyon */}
-          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"><Lightbulb size={18} /></div>
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Conheça o Isyon</h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Os recursos que levam do lead ao pedido fechado</p>
-              </div>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-px bg-gray-100 dark:bg-gray-700">
-              <Pilar href="/conversas"   Icon={MessageCircle} titulo="WhatsApp integrado"  tag="Diferencial" texto="Atenda pelo WhatsApp dentro do CRM, com vários números." />
-              <Pilar href="/leads"       Icon={Target}        titulo="Funil completo"      texto="Leads → oportunidades → propostas → pedidos." />
-              <Pilar href="/propostas"   Icon={FileText}      titulo="Aceite digital"      texto="O cliente aprova a proposta pelo link." />
-              <Pilar href="/integracoes" Icon={Plug}          titulo="Integração com ERP"  texto="Sincronize clientes, produtos e pedidos." />
-            </div>
-          </div>
-
-          {/* Seu plano */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Seu plano</h2>
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{tenantRow?.plano ?? '—'}</span>
-            </div>
-            {diasRestantes !== null && (
-              <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-4">
-                <CalendarClock size={13} className="shrink-0" />
-                {diasRestantes > 0
-                  ? `Avaliação — ${diasRestantes} ${diasRestantes === 1 ? 'dia restante' : 'dias restantes'}`
-                  : 'Período de avaliação encerrado'}
-              </div>
-            )}
-            <UsoLinha Icon={Users}      label="Usuários" usado={totalUsuarios ?? 0} limite={limUsuarios} />
-            <UsoLinha Icon={Smartphone} label="WhatsApp" usado={totalWaInst ?? 0}   limite={limWa} />
-          </div>
-        </div>
-      )}
 
       {/* Cards unificados por entidade: métrica + alerta + criar */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
