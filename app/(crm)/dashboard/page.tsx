@@ -4,6 +4,7 @@ import {
   Target, Briefcase, FileText, DollarSign,
   ChevronRight, CheckCircle2, ArrowRight, Plus,
   Building2, Package, Rocket, Lightbulb, BarChart3,
+  MessageCircle, Plug, Users, Smartphone, CalendarClock,
 } from 'lucide-react'
 import DispensarOnboarding from './_components/DispensarOnboarding'
 import AgendaHojeCard from '@/app/(crm)/_components/AgendaHojeCard'
@@ -35,6 +36,37 @@ const DICAS = [
   'Cadastre o custo dos produtos — assim você acompanha a margem em cada venda.',
 ]
 
+function Pilar({ href, Icon, titulo, texto, tag }: { href: string; Icon: React.ElementType; titulo: string; texto: string; tag?: string }) {
+  return (
+    <Link href={href} className="bg-white dark:bg-gray-800 flex items-start gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors group">
+      <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 shrink-0"><Icon size={16} /></div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+          {titulo}
+          {tag && <span className="text-[10px] font-semibold uppercase tracking-wide bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 px-1.5 py-0.5 rounded">{tag}</span>}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{texto}</p>
+      </div>
+      <ChevronRight size={15} className="text-gray-300 group-hover:text-blue-500 transition-colors shrink-0 mt-0.5" />
+    </Link>
+  )
+}
+
+function UsoLinha({ Icon, label, usado, limite }: { Icon: React.ElementType; label: string; usado: number; limite: number }) {
+  const pct = limite > 0 ? Math.min(100, Math.round((usado / limite) * 100)) : 0
+  return (
+    <div className="mb-3 last:mb-0">
+      <div className="flex items-center justify-between text-xs mb-1">
+        <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300"><Icon size={13} />{label}</span>
+        <span className="text-gray-500 dark:text-gray-400 font-medium">{usado}{limite > 0 ? ` / ${limite}` : ''}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  )
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const inicio = inicioDeMes()
@@ -59,6 +91,9 @@ export default async function DashboardPage() {
     { count: totalProdutos },
     { count: totalFiliais },
     { data: pedidoLinks },
+    { data: tenantRow },
+    { count: totalUsuarios },
+    { count: totalWaInst },
   ] = await Promise.all([
     supabase.from('config_usuario').select('chave, valor').eq('usuario_id', usuario?.id ?? ''),
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'novo'),
@@ -71,6 +106,9 @@ export default async function DashboardPage() {
     supabase.from('produtos').select('*', { count: 'exact', head: true }),
     supabase.from('empresas').select('*', { count: 'exact', head: true }),
     supabase.from('pedidos').select('proposta_id').not('proposta_id', 'is', null),
+    supabase.from('tenants').select('plano, limite_usuarios, wa_limite, expiracao_contrato').maybeSingle(),
+    supabase.from('usuarios').select('*', { count: 'exact', head: true }),
+    supabase.from('wa_instancias').select('*', { count: 'exact', head: true }),
   ])
 
   const cfg = Object.fromEntries((config ?? []).map(c => [c.chave, c.valor]))
@@ -101,6 +139,14 @@ export default async function DashboardPage() {
   const passosFeitos = passos.filter(p => p.ok).length
   const onboardingDispensado = cfg['onboarding_dispensado'] === 'true'
   const mostrarOnboarding = !setupCompleto && !onboardingDispensado
+
+  // Plano / uso (para os blocos de descoberta enquanto o setup não termina)
+  const limUsuarios = (tenantRow?.limite_usuarios as number | null) ?? 0
+  const limWa       = (tenantRow?.wa_limite as number | null) ?? 0
+  const expira      = (tenantRow?.expiracao_contrato as string | null) ?? null
+  const diasRestantes = expira
+    ? Math.ceil((new Date(`${expira}T23:59:59-03:00`).getTime() - Date.now()) / 86_400_000)
+    : null
 
   // Pendências
   const limiteParada = Date.now() - diasOpParada * 864e5
@@ -183,6 +229,46 @@ export default async function DashboardPage() {
                 {!p.ok && <ArrowRight size={15} className="text-gray-300 group-hover:text-blue-500 transition-colors" />}
               </Link>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding: conheça o Isyon + seu plano (enquanto o setup não termina) */}
+      {!setupCompleto && (
+        <div className="grid lg:grid-cols-3 gap-3">
+          {/* Conheça o Isyon */}
+          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"><Lightbulb size={18} /></div>
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Conheça o Isyon</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Os recursos que levam do lead ao pedido fechado</p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-px bg-gray-100 dark:bg-gray-700">
+              <Pilar href="/conversas"   Icon={MessageCircle} titulo="WhatsApp integrado"  tag="Diferencial" texto="Atenda pelo WhatsApp dentro do CRM, com vários números." />
+              <Pilar href="/leads"       Icon={Target}        titulo="Funil completo"      texto="Leads → oportunidades → propostas → pedidos." />
+              <Pilar href="/propostas"   Icon={FileText}      titulo="Aceite digital"      texto="O cliente aprova a proposta pelo link." />
+              <Pilar href="/integracoes" Icon={Plug}          titulo="Integração com ERP"  texto="Sincronize clientes, produtos e pedidos." />
+            </div>
+          </div>
+
+          {/* Seu plano */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Seu plano</h2>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{tenantRow?.plano ?? '—'}</span>
+            </div>
+            {diasRestantes !== null && (
+              <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-4">
+                <CalendarClock size={13} className="shrink-0" />
+                {diasRestantes > 0
+                  ? `Avaliação — ${diasRestantes} ${diasRestantes === 1 ? 'dia restante' : 'dias restantes'}`
+                  : 'Período de avaliação encerrado'}
+              </div>
+            )}
+            <UsoLinha Icon={Users}      label="Usuários" usado={totalUsuarios ?? 0} limite={limUsuarios} />
+            <UsoLinha Icon={Smartphone} label="WhatsApp" usado={totalWaInst ?? 0}   limite={limWa} />
           </div>
         </div>
       )}
